@@ -220,12 +220,48 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlaylistData> => {
     try {
-      // Fetch personal playlists using server-side proxy via Yoto API
-      // Personal playlists require authentication and are fetched from the user endpoint
-      const data = await yotoGetJson<YotoPlaylistsResponse>(
-        context.userId,
-        "/user/playlists", // Server-side endpoint for user's personal playlists
-      );
+      // Try multiple endpoints to get personal playlists
+      let data: YotoPlaylistsResponse = { playlists: [] };
+      let lastError: Error | null = null;
+
+      // Try endpoint 1: /content/library/playlists
+      try {
+        data = await yotoGetJson<YotoPlaylistsResponse>(
+          context.userId,
+          "/content/library/playlists",
+        );
+      } catch (e1) {
+        lastError = e1 instanceof Error ? e1 : new Error(String(e1));
+        // Try endpoint 2: /library/playlists
+        try {
+          data = await yotoGetJson<YotoPlaylistsResponse>(
+            context.userId,
+            "/library/playlists",
+          );
+        } catch (e2) {
+          lastError = e2 instanceof Error ? e2 : new Error(String(e2));
+          // Try endpoint 3: /myo/playlists
+          try {
+            data = await yotoGetJson<YotoPlaylistsResponse>(
+              context.userId,
+              "/myo/playlists",
+            );
+          } catch (e3) {
+            lastError = e3 instanceof Error ? e3 : new Error(String(e3));
+            // Try endpoint 4: /v2/playlists
+            try {
+              data = await yotoGetJson<YotoPlaylistsResponse>(
+                context.userId,
+                "/v2/playlists",
+              );
+            } catch (e4) {
+              lastError = e4 instanceof Error ? e4 : new Error(String(e4));
+              // All endpoints failed
+              throw lastError;
+            }
+          }
+        }
+      }
 
       const playlists: PlaylistSummary[] = (data.playlists ?? []).map((p) => ({
         playlistId: p.playlistId,
