@@ -114,8 +114,8 @@ export interface PlayerStatus {
   artwork: string | null;
   sleepMinutesRemaining: number | null;
   batteryPercent: number | null;
-  raw?: unknown;
 }
+
 
 interface YotoDeviceStatusResponse {
   device?: {
