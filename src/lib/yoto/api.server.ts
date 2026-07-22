@@ -31,3 +31,33 @@ export async function yotoGetJson<T = unknown>(userId: string, path: string): Pr
   if (!res.ok) throw new Error(`Yoto API ${res.status} ${path}: ${text.slice(0, 300)}`);
   return text ? (JSON.parse(text) as T) : (undefined as T);
 }
+
+export async function yotoPost<T = unknown>(
+  userId: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await yotoFetch(userId, path, {
+    method: "POST",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Yoto API ${res.status} ${path}: ${text.slice(0, 300)}`);
+  return text ? (JSON.parse(text) as T) : (undefined as T);
+}
+
+export async function yotoPut<T = unknown>(
+  userId: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await yotoFetch(userId, path, {
+    method: "PUT",
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Yoto API ${res.status} ${path}: ${text.slice(0, 300)}`);
+  return text ? (JSON.parse(text) as T) : (undefined as T);
+}
