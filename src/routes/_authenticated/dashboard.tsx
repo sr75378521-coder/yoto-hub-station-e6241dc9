@@ -107,8 +107,11 @@ function DashboardPage() {
                 <h2 className="text-2xl font-semibold tracking-tight">
                   {data.players.length} player{data.players.length === 1 ? "" : "s"}
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Live status polls every 30 seconds. MQTT real-time is coming next.
+                <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                  <RealtimeBadge status={realtimeStatus} />
+                  {realtimeStatus === "mqtt"
+                    ? "Streaming live updates over MQTT."
+                    : "Polling for updates every 10 seconds."}
                 </p>
               </div>
               <div className="flex items-center gap-2">
