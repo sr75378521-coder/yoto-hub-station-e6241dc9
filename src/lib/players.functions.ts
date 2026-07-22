@@ -288,16 +288,21 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
 
 export const getPlaylistDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: any; data: { playlistId: string } }) => {
+  .inputValidator((d: unknown) => {
+    const obj = d as { playlistId?: unknown };
+    if (typeof obj?.playlistId !== "string") throw new Error("playlistId required");
+    return { playlistId: obj.playlistId };
+  })
+  .handler(async ({ context, data }) => {
     try {
-      const response = await yotoGetJson<any>(
+      const response = await yotoGetJson<Record<string, unknown>>(
         context.userId,
         `/playlist-v2/playlists/${data.playlistId}`,
       );
-      return { success: true, playlist: response };
+      return { success: true as const, playlist: response };
     } catch (e) {
       return {
-        success: false,
+        success: false as const,
         error: e instanceof Error ? e.message : "Unknown error",
       };
     }
