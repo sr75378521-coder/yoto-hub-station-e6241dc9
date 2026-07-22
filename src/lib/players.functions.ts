@@ -3,6 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { yotoGetJson, YotoNotConnectedError } from "@/lib/yoto/api.server";
 import { deleteConnection } from "@/lib/yoto/tokens.server";
 
+type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
+
+
 export interface PlayerSummary {
   deviceId: string;
   name: string;
@@ -299,7 +302,7 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
         context.userId,
         `/playlist-v2/playlists/${data.playlistId}`,
       );
-      return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as unknown };
+      return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as Json };
     } catch (e) {
       return {
         success: false as const,
