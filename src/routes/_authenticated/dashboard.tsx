@@ -153,6 +153,22 @@ function DashboardPage() {
   );
 }
 
+function RealtimeBadge({ status }: { status: "connecting" | "mqtt" | "polling" | "offline" }) {
+  const map = {
+    mqtt: { label: "Live", variant: "default" as const, icon: RadioTower },
+    polling: { label: "Polling", variant: "secondary" as const, icon: Radio },
+    connecting: { label: "Connecting", variant: "secondary" as const, icon: Radio },
+    offline: { label: "Offline", variant: "outline" as const, icon: Radio },
+  };
+  const { label, variant, icon: Icon } = map[status];
+  return (
+    <Badge variant={variant} className="gap-1">
+      <Icon className="size-3" />
+      {label}
+    </Badge>
+  );
+}
+
 function EmptyPlayers() {
   return (
     <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-10 text-center">
