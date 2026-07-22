@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -92,9 +92,6 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
   // Local slider state so drag feels smooth
   const [seekLocal, setSeekLocal] = useState<number | null>(null);
   const [volLocal, setVolLocal] = useState<number | null>(null);
-  useEffect(() => {
-    if (seekLocal !== null) return;
-  }, [status?.positionSeconds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const position = seekLocal ?? status?.positionSeconds ?? 0;
   const duration = status?.durationSeconds ?? 0;
