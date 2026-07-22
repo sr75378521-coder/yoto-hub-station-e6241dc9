@@ -9,8 +9,10 @@ import { PlayerCard } from "@/components/app/PlayerCard";
 import { ConnectYotoCard } from "@/components/app/ConnectYotoCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { getDashboardData, disconnectYoto } from "@/lib/players.functions";
-import { RefreshCw, Unplug } from "lucide-react";
+import { useYotoRealtime } from "@/hooks/useYotoRealtime";
+import { RefreshCw, Unplug, Radio, RadioTower } from "lucide-react";
 
 const dashboardQuery = (fn: () => Promise<import("@/lib/players.functions").DashboardData>) =>
   queryOptions({
@@ -70,6 +72,26 @@ function DashboardPage() {
     onSuccess: () => {
       toast.success("Disconnected");
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  const deviceIds = data.players.map((p) => p.deviceId);
+  const { status: realtimeStatus } = useYotoRealtime({
+    enabled: data.connected && deviceIds.length > 0,
+    deviceIds,
+    pollIntervalMs: 10_000,
+    onPoll: () => {
+      // Refresh device list + per-player status queries
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["player-status"] });
+    },
+    onDeviceEvent: (deviceId, payload) => {
+      // Push MQTT status into the per-player cache
+      queryClient.setQueryData(["player-status", deviceId], (prev: unknown) => ({
+        ...(prev && typeof prev === "object" ? prev : {}),
+        deviceId,
+        ...(payload && typeof payload === "object" ? payload : {}),
+      }));
     },
   });
 
