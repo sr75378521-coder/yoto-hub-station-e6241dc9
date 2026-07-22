@@ -1,7 +1,8 @@
-import { Radio, WifiOff, Wifi } from "lucide-react";
+import { Radio, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PlayerSummary } from "@/lib/players.functions";
+import { PlayerControls } from "./PlayerControls";
 
 export function PlayerCard({ player }: { player: PlayerSummary }) {
   return (
@@ -28,8 +29,8 @@ export function PlayerCard({ player }: { player: PlayerSummary }) {
           </p>
         </div>
 
-        <div className="rounded-lg border border-dashed border-border/70 bg-background/40 p-3 text-xs text-muted-foreground">
-          Live playback, battery, and controls arrive with the MQTT slice.
+        <div className="border-t border-border/60 pt-4">
+          <PlayerControls deviceId={player.deviceId} initialOnline={player.online} />
         </div>
       </CardContent>
     </Card>

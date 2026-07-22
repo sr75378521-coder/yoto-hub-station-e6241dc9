@@ -9,8 +9,10 @@ import { PlayerCard } from "@/components/app/PlayerCard";
 import { ConnectYotoCard } from "@/components/app/ConnectYotoCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { getDashboardData, disconnectYoto } from "@/lib/players.functions";
-import { RefreshCw, Unplug } from "lucide-react";
+import { useYotoRealtime } from "@/hooks/useYotoRealtime";
+import { RefreshCw, Unplug, Radio, RadioTower } from "lucide-react";
 
 const dashboardQuery = (fn: () => Promise<import("@/lib/players.functions").DashboardData>) =>
   queryOptions({
@@ -73,6 +75,26 @@ function DashboardPage() {
     },
   });
 
+  const deviceIds = data.players.map((p) => p.deviceId);
+  const { status: realtimeStatus } = useYotoRealtime({
+    enabled: data.connected && deviceIds.length > 0,
+    deviceIds,
+    pollIntervalMs: 10_000,
+    onPoll: () => {
+      // Refresh device list + per-player status queries
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["player-status"] });
+    },
+    onDeviceEvent: (deviceId, payload) => {
+      // Push MQTT status into the per-player cache
+      queryClient.setQueryData(["player-status", deviceId], (prev: unknown) => ({
+        ...(prev && typeof prev === "object" ? prev : {}),
+        deviceId,
+        ...(payload && typeof payload === "object" ? payload : {}),
+      }));
+    },
+  });
+
   return (
     <AppShell title="Players">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -85,8 +107,11 @@ function DashboardPage() {
                 <h2 className="text-2xl font-semibold tracking-tight">
                   {data.players.length} player{data.players.length === 1 ? "" : "s"}
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Live status polls every 30 seconds. MQTT real-time is coming next.
+                <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                  <RealtimeBadge status={realtimeStatus} />
+                  {realtimeStatus === "mqtt"
+                    ? "Streaming live updates over MQTT."
+                    : "Polling for updates every 10 seconds."}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -125,6 +150,22 @@ function DashboardPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function RealtimeBadge({ status }: { status: "connecting" | "mqtt" | "polling" | "offline" }) {
+  const map = {
+    mqtt: { label: "Live", variant: "default" as const, icon: RadioTower },
+    polling: { label: "Polling", variant: "secondary" as const, icon: Radio },
+    connecting: { label: "Connecting", variant: "secondary" as const, icon: Radio },
+    offline: { label: "Offline", variant: "outline" as const, icon: Radio },
+  };
+  const { label, variant, icon: Icon } = map[status];
+  return (
+    <Badge variant={variant} className="gap-1">
+      <Icon className="size-3" />
+      {label}
+    </Badge>
   );
 }
 

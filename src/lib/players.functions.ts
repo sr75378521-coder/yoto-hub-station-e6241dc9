@@ -3,6 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { yotoGetJson, YotoNotConnectedError } from "@/lib/yoto/api.server";
 import { deleteConnection } from "@/lib/yoto/tokens.server";
 
+type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
+
+
 export interface PlayerSummary {
   deviceId: string;
   name: string;
@@ -288,16 +291,21 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
 
 export const getPlaylistDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }: { context: any; data: { playlistId: string } }) => {
+  .inputValidator((d: unknown) => {
+    const obj = d as { playlistId?: unknown };
+    if (typeof obj?.playlistId !== "string") throw new Error("playlistId required");
+    return { playlistId: obj.playlistId };
+  })
+  .handler(async ({ context, data }) => {
     try {
-      const response = await yotoGetJson<any>(
+      const response = await yotoGetJson<unknown>(
         context.userId,
         `/playlist-v2/playlists/${data.playlistId}`,
       );
-      return { success: true, playlist: response };
+      return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as Json };
     } catch (e) {
       return {
-        success: false,
+        success: false as const,
         error: e instanceof Error ? e.message : "Unknown error",
       };
     }
