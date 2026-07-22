@@ -295,11 +295,11 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
   })
   .handler(async ({ context, data }) => {
     try {
-      const response = await yotoGetJson<Record<string, unknown>>(
+      const response = await yotoGetJson<unknown>(
         context.userId,
         `/playlist-v2/playlists/${data.playlistId}`,
       );
-      return { success: true as const, playlist: response };
+      return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as unknown };
     } catch (e) {
       return {
         success: false as const,
