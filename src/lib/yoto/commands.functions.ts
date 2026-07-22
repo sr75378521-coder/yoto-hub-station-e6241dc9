@@ -14,8 +14,14 @@ const deviceCmd = (deviceId: string, cmd: string) =>
 
 const baseInput = z.object({ deviceId: z.string().min(1) });
 
-async function send(userId: string, deviceId: string, cmd: string, body?: unknown) {
-  return yotoPut(userId, deviceCmd(deviceId, cmd), body);
+async function send(
+  userId: string,
+  deviceId: string,
+  cmd: string,
+  body?: unknown,
+): Promise<{ ok: true }> {
+  await yotoPut(userId, deviceCmd(deviceId, cmd), body);
+  return { ok: true };
 }
 
 export const playerPlay = createServerFn({ method: "POST" })
@@ -163,7 +169,6 @@ export const getPlayerStatus = createServerFn({ method: "GET" })
         artwork: pickString(playback.artwork, s.artwork, playback.coverUri),
         sleepMinutesRemaining: pickNumber(playback.sleepMinutes, s.sleepMinutesRemaining),
         batteryPercent: pickNumber(s.batteryLevel, s.battery, s.batteryPercent),
-        raw: s,
       };
     } catch (e) {
       if (e instanceof YotoNotConnectedError) return { notConnected: true };
