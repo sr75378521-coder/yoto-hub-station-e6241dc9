@@ -180,7 +180,7 @@ export const getFamilyData = createServerFn({ method: "GET" })
     }
   });
 
-// Playlist Types
+// Playlist (Card) Types
 export interface PlaylistTrack {
   trackId: string;
   title?: string;
@@ -198,6 +198,9 @@ export interface PlaylistSummary {
   trackCount?: number;
   createdDate?: string;
   isEditable?: boolean;
+  author?: string;
+  description?: string;
+  source: "myo" | "family";
 }
 
 export interface PlaylistData {
@@ -206,76 +209,82 @@ export interface PlaylistData {
   errorMessage?: string;
 }
 
-interface YotoPlaylistsResponse {
-  playlists?: Array<{
-    playlistId: string;
-    name?: string;
-    type?: string;
-    artwork?: string;
+interface YotoCard {
+  cardId: string;
+  title?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  metadata?: {
+    title?: string;
+    description?: string;
+    author?: string;
     duration?: number;
-    trackCount?: number;
-    createdDate?: string;
-    isEditable?: boolean;
-  }>;
+    cover?: { imageL?: string; imageM?: string; imageS?: string };
+    media?: { duration?: number; fileSize?: number };
+  };
+  content?: {
+    chapters?: Array<{ tracks?: unknown[] }>;
+  };
+}
+
+interface YotoCardsResponse {
+  cards?: YotoCard[];
+}
+
+function mapCard(card: YotoCard, source: "myo" | "family"): PlaylistSummary {
+  const title = card.metadata?.title ?? card.title ?? "Untitled";
+  const chapters = card.content?.chapters ?? [];
+  const trackCount = chapters.reduce((acc, ch) => acc + (ch.tracks?.length ?? 0), 0);
+  return {
+    playlistId: card.cardId,
+    name: title,
+    type: source === "myo" ? "myo_playlist" : "playlist",
+    artwork: card.metadata?.cover?.imageL ?? card.metadata?.cover?.imageM ?? "",
+    duration: card.metadata?.duration ?? card.metadata?.media?.duration ?? 0,
+    trackCount: trackCount || undefined,
+    createdDate: card.createdAt ?? "",
+    isEditable: source === "myo",
+    author: card.metadata?.author ?? "",
+    description: card.metadata?.description ?? "",
+    source,
+  };
 }
 
 export const getPlaylistsData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PlaylistData> => {
     try {
-      // Try multiple endpoints to get personal playlists
-      let data: YotoPlaylistsResponse = { playlists: [] };
-      let lastError: Error | null = null;
+      const [myoRes, familyRes] = await Promise.allSettled([
+        yotoGetJson<YotoCardsResponse>(context.userId, "/card/mine"),
+        yotoGetJson<YotoCardsResponse>(context.userId, "/card/family/library"),
+      ]);
 
-      // Try endpoint 1: /content/library/playlists
-      try {
-        data = await yotoGetJson<YotoPlaylistsResponse>(
-          context.userId,
-          "/content/library/playlists",
-        );
-      } catch (e1) {
-        lastError = e1 instanceof Error ? e1 : new Error(String(e1));
-        // Try endpoint 2: /library/playlists
-        try {
-          data = await yotoGetJson<YotoPlaylistsResponse>(
-            context.userId,
-            "/library/playlists",
-          );
-        } catch (e2) {
-          lastError = e2 instanceof Error ? e2 : new Error(String(e2));
-          // Try endpoint 3: /myo/playlists
-          try {
-            data = await yotoGetJson<YotoPlaylistsResponse>(
-              context.userId,
-              "/myo/playlists",
-            );
-          } catch (e3) {
-            lastError = e3 instanceof Error ? e3 : new Error(String(e3));
-            // Try endpoint 4: /v2/playlists
-            try {
-              data = await yotoGetJson<YotoPlaylistsResponse>(
-                context.userId,
-                "/v2/playlists",
-              );
-            } catch (e4) {
-              lastError = e4 instanceof Error ? e4 : new Error(String(e4));
-              // All endpoints failed
-              throw lastError;
-            }
-          }
-        }
+      const myo = myoRes.status === "fulfilled" ? (myoRes.value.cards ?? []) : [];
+      const family = familyRes.status === "fulfilled" ? (familyRes.value.cards ?? []) : [];
+
+      // Deduplicate: MYO cards may also appear in the family library
+      const seen = new Set<string>();
+      const playlists: PlaylistSummary[] = [];
+      for (const c of myo) {
+        if (seen.has(c.cardId)) continue;
+        seen.add(c.cardId);
+        playlists.push(mapCard(c, "myo"));
+      }
+      for (const c of family) {
+        if (seen.has(c.cardId)) continue;
+        seen.add(c.cardId);
+        playlists.push(mapCard(c, "family"));
       }
 
-      const playlists: PlaylistSummary[] = (data.playlists ?? []).map((p) => ({
-        playlistId: p.playlistId,
-        name: p.name ?? "Untitled Playlist",
-        type: p.type ?? "playlist",
-        artwork: p.artwork ?? "",
-        duration: p.duration ?? 0,
-        trackCount: p.trackCount ?? 0,
-        createdDate: p.createdDate ?? "",
-        isEditable: p.isEditable ?? false,
-      }));
+      // If both failed, surface the first error
+      if (myoRes.status === "rejected" && familyRes.status === "rejected") {
+        const err = myoRes.reason;
+        if (err instanceof YotoNotConnectedError) {
+          return { connected: false, playlists: [] };
+        }
+        throw err;
+      }
+
       return { connected: true, playlists };
     } catch (e) {
       if (e instanceof YotoNotConnectedError) {
@@ -289,6 +298,7 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
     }
   });
 
+
 export const getPlaylistDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => {
@@ -300,7 +310,7 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
     try {
       const response = await yotoGetJson<unknown>(
         context.userId,
-        `/playlist-v2/playlists/${data.playlistId}`,
+        `/content/${data.playlistId}`,
       );
       return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as Json };
     } catch (e) {
