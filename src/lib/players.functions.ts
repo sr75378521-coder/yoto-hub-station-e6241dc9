@@ -310,7 +310,7 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
     try {
       const response = await yotoGetJson<unknown>(
         context.userId,
-        `/playlist-v2/playlists/${data.playlistId}`,
+        `/content/${data.playlistId}`,
       );
       return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as Json };
     } catch (e) {
