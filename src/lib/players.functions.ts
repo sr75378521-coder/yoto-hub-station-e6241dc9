@@ -209,11 +209,8 @@ export interface PlaylistData {
   errorMessage?: string;
 }
 
-interface YotoCard {
-  cardId: string;
+interface YotoCardInner {
   title?: string;
-  createdAt?: string;
-  updatedAt?: string;
   metadata?: {
     title?: string;
     description?: string;
@@ -227,25 +224,35 @@ interface YotoCard {
   };
 }
 
-interface YotoCardsResponse {
-  cards?: YotoCard[];
+interface YotoCard extends YotoCardInner {
+  cardId: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Family library wraps the card object here
+  card?: YotoCardInner;
 }
 
-function mapCard(card: YotoCard, source: "myo" | "family"): PlaylistSummary {
-  const title = card.metadata?.title ?? card.title ?? "Untitled";
-  const chapters = card.content?.chapters ?? [];
+function mapCard(raw: YotoCard, source: "myo" | "family"): PlaylistSummary {
+  // Family library nests the real card fields under `card`
+  const inner: YotoCardInner = raw.card ?? raw;
+  const title = inner.metadata?.title ?? inner.title ?? raw.title ?? "Untitled";
+  const chapters = inner.content?.chapters ?? [];
   const trackCount = chapters.reduce((acc, ch) => acc + (ch.tracks?.length ?? 0), 0);
   return {
-    playlistId: card.cardId,
+    playlistId: raw.cardId,
     name: title,
     type: source === "myo" ? "myo_playlist" : "playlist",
-    artwork: card.metadata?.cover?.imageL ?? card.metadata?.cover?.imageM ?? "",
-    duration: card.metadata?.duration ?? card.metadata?.media?.duration ?? 0,
+    artwork:
+      inner.metadata?.cover?.imageL ??
+      inner.metadata?.cover?.imageM ??
+      inner.metadata?.cover?.imageS ??
+      "",
+    duration: inner.metadata?.duration ?? inner.metadata?.media?.duration ?? 0,
     trackCount: trackCount || undefined,
-    createdDate: card.createdAt ?? "",
+    createdDate: raw.createdAt ?? "",
     isEditable: source === "myo",
-    author: card.metadata?.author ?? "",
-    description: card.metadata?.description ?? "",
+    author: inner.metadata?.author ?? "",
+    description: inner.metadata?.description ?? "",
     source,
   };
 }
@@ -255,8 +262,8 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PlaylistData> => {
     try {
       const [myoRes, familyRes] = await Promise.allSettled([
-        yotoGetJson<YotoCardsResponse>(context.userId, "/card/mine"),
-        yotoGetJson<YotoCardsResponse>(context.userId, "/card/family/library"),
+        yotoGetJson<{ cards?: YotoCard[] }>(context.userId, "/content/mine"),
+        yotoGetJson<{ cards?: YotoCard[] }>(context.userId, "/card/family/library"),
       ]);
 
       const myo = myoRes.status === "fulfilled" ? (myoRes.value.cards ?? []) : [];
@@ -266,15 +273,16 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
       const seen = new Set<string>();
       const playlists: PlaylistSummary[] = [];
       for (const c of myo) {
-        if (seen.has(c.cardId)) continue;
+        if (!c.cardId || seen.has(c.cardId)) continue;
         seen.add(c.cardId);
         playlists.push(mapCard(c, "myo"));
       }
       for (const c of family) {
-        if (seen.has(c.cardId)) continue;
+        if (!c.cardId || seen.has(c.cardId)) continue;
         seen.add(c.cardId);
         playlists.push(mapCard(c, "family"));
       }
+
 
       // If both failed, surface the first error
       if (myoRes.status === "rejected" && familyRes.status === "rejected") {
