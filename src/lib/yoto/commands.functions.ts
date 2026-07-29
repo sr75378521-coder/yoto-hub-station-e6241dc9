@@ -97,6 +97,21 @@ export const playerSleepTimer = createServerFn({ method: "POST" })
     send(context.userId, data.deviceId, "sleep", { minutes: data.minutes }),
   );
 
+export const playerPlayCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    baseInput.extend({ cardId: z.string().min(1) }).parse(d),
+  )
+  .handler(({ data, context }) =>
+    send(context.userId, data.deviceId, "card-play", {
+      cardId: data.cardId,
+      secondsSince: 0,
+      cutOff: 0,
+      chapterKey: "01",
+      trackKey: "01",
+    }),
+  );
+
 /** Fetch live status for a single device. */
 export interface PlayerStatus {
   deviceId: string;
