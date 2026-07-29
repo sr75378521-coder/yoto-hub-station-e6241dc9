@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
 import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -141,6 +142,7 @@ function PlaylistsPage() {
 }
 
 function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
+  const navigate = useNavigate();
   const hours = Math.floor((playlist.duration ?? 0) / 3600);
   const minutes = Math.floor(((playlist.duration ?? 0) % 3600) / 60);
   const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
@@ -183,12 +185,24 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
             )}
           </div>
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" size="sm" className="flex-1">
-              Edit
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() =>
+                navigate({
+                  to: "/playlists/$playlistId",
+                  params: { playlistId: playlist.playlistId },
+                })
+              }
+            >
+              {playlist.isEditable ? "Edit" : "View"}
             </Button>
-            <Button variant="ghost" size="sm" className="flex-1">
-              Play
-            </Button>
+            <PlayOnDeviceButton
+              cardId={playlist.playlistId}
+              variant="ghost"
+              className="flex-1"
+            />
           </div>
         </div>
       </CardContent>
