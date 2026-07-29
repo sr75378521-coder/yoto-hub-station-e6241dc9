@@ -255,12 +255,42 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PlaylistData> => {
     try {
       const [myoRes, familyRes] = await Promise.allSettled([
-        yotoGetJson<YotoCardsResponse>(context.userId, "/card/mine"),
-        yotoGetJson<YotoCardsResponse>(context.userId, "/card/family/library"),
+        yotoGetJson<unknown>(context.userId, "/card/mine"),
+        yotoGetJson<unknown>(context.userId, "/card/family/library"),
       ]);
 
-      const myo = myoRes.status === "fulfilled" ? (myoRes.value.cards ?? []) : [];
-      const family = familyRes.status === "fulfilled" ? (familyRes.value.cards ?? []) : [];
+      console.log("[playlists] myo status:", myoRes.status, "family status:", familyRes.status);
+      if (myoRes.status === "fulfilled") {
+        const v = myoRes.value as Record<string, unknown>;
+        console.log("[playlists] myo keys:", Object.keys(v ?? {}));
+        const arr = (v?.cards ?? v?.card ?? v) as unknown;
+        if (Array.isArray(arr) && arr.length) {
+          console.log("[playlists] myo first item:", JSON.stringify(arr[0]).slice(0, 800));
+        }
+      } else {
+        console.log("[playlists] myo err:", String(myoRes.reason).slice(0, 300));
+      }
+      if (familyRes.status === "fulfilled") {
+        const v = familyRes.value as Record<string, unknown>;
+        console.log("[playlists] family keys:", Object.keys(v ?? {}));
+        const arr = (v?.cards ?? v?.card ?? v) as unknown;
+        if (Array.isArray(arr) && arr.length) {
+          console.log("[playlists] family count:", arr.length, "first:", JSON.stringify(arr[0]).slice(0, 800));
+        }
+      } else {
+        console.log("[playlists] family err:", String(familyRes.reason).slice(0, 300));
+      }
+
+      const extractCards = (v: unknown): YotoCard[] => {
+        if (!v) return [];
+        if (Array.isArray(v)) return v as YotoCard[];
+        const obj = v as Record<string, unknown>;
+        if (Array.isArray(obj.cards)) return obj.cards as YotoCard[];
+        if (Array.isArray(obj.card)) return obj.card as YotoCard[];
+        return [];
+      };
+      const myo = myoRes.status === "fulfilled" ? extractCards(myoRes.value) : [];
+      const family = familyRes.status === "fulfilled" ? extractCards(familyRes.value) : [];
 
       // Deduplicate: MYO cards may also appear in the family library
       const seen = new Set<string>();
