@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Loader2 } from "lucide-react";
+import { Play, Loader2, MonitorSpeaker } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,8 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getDashboardData } from "@/lib/players.functions";
+import { getDashboardData, getPlaylistTracks } from "@/lib/players.functions";
 import { playerPlayCard } from "@/lib/yoto/commands.functions";
+import { useWebPlayer } from "./WebPlayer";
 
 interface Props {
   cardId: string;
@@ -33,7 +34,9 @@ export function PlayOnDeviceButton({
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const fetchDashboard = useServerFn(getDashboardData);
+  const fetchTracks = useServerFn(getPlaylistTracks);
   const playCard = useServerFn(playerPlayCard);
+  const { playQueue } = useWebPlayer();
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -54,6 +57,24 @@ export function PlayOnDeviceButton({
     }
   };
 
+  const handlePlayHere = async () => {
+    setBusyId("__browser__");
+    try {
+      const res = await fetchTracks({ data: { playlistId: cardId } });
+      const playable = res.tracks.filter((t) => t.url);
+      if (playable.length === 0) {
+        toast.error("This playlist has no streamable audio for browser playback");
+        return;
+      }
+      playQueue({ title: res.title, artwork: res.artwork, tracks: playable });
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't load audio");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const players = data?.players ?? [];
 
   return (
@@ -66,10 +87,33 @@ export function PlayOnDeviceButton({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Play on device</DialogTitle>
-          <DialogDescription>Choose a Yoto player to start playback.</DialogDescription>
+          <DialogTitle>Play</DialogTitle>
+          <DialogDescription>Play in this browser or on a Yoto player.</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
+          <Button
+            variant="default"
+            className="w-full justify-between"
+            disabled={busyId !== null}
+            onClick={handlePlayHere}
+          >
+            <span className="flex items-center gap-2">
+              <MonitorSpeaker className="size-4" />
+              This device (browser)
+            </span>
+            {busyId === "__browser__" ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4" />
+            )}
+          </Button>
+
+          <div className="flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">Yoto players</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           {isLoading && (
             <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" /> Loading players…
