@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getPlaylistDetails } from "@/lib/players.functions";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
+import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
 
 const detailsQuery = (fn: (a: { data: { playlistId: string } }) => Promise<any>, id: string) =>
   queryOptions({
