@@ -37,8 +37,16 @@ function PlaylistDetailPage() {
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/playlists" })}>
             <ArrowLeft className="size-4" /> Back
           </Button>
-          <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-            Couldn't load this playlist{data?.error ? `: ${data.error}` : "."}
+          <Card><CardContent className="space-y-4 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Couldn't load this playlist{data?.error ? `: ${data.error}` : "."}
+            </p>
+            {String(data?.error ?? "").includes("scope") && (
+              <p className="text-sm text-muted-foreground">
+                Your Yoto connection is missing content permissions. Reconnect to grant them.
+              </p>
+            )}
+            <div className="flex justify-center"><ReconnectYotoButton /></div>
           </CardContent></Card>
         </div>
       </AppShell>
