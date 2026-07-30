@@ -29,7 +29,7 @@ const playlistsQuery = (fn: () => Promise<PlaylistData>) =>
     refetchInterval: 60_000,
   });
 
-export const Route = createFileRoute("/_authenticated/playlists")({
+export const Route = createFileRoute("/_authenticated/playlists/")({
   head: () => ({
     meta: [
       { title: "Playlists · Yoto Control Center" },

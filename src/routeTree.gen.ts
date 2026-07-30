@@ -13,10 +13,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
 import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
 import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
@@ -40,11 +40,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPlaylistsRoute = AuthenticatedPlaylistsRouteImport.update({
-  id: '/playlists',
-  path: '/playlists',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   id: '/library',
   path: '/library',
@@ -60,6 +55,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlaylistsIndexRoute =
+  AuthenticatedPlaylistsIndexRouteImport.update({
+    id: '/playlists/',
+    path: '/playlists/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiYotoCallbackRoute = ApiYotoCallbackRouteImport.update({
   id: '/api/yoto/callback',
   path: '/api/yoto/callback',
@@ -72,9 +73,9 @@ const ApiYotoAuthorizeRoute = ApiYotoAuthorizeRouteImport.update({
 } as any)
 const AuthenticatedPlaylistsPlaylistIdRoute =
   AuthenticatedPlaylistsPlaylistIdRouteImport.update({
-    id: '/$playlistId',
-    path: '/$playlistId',
-    getParentRoute: () => AuthenticatedPlaylistsRoute,
+    id: '/playlists/$playlistId',
+    path: '/playlists/$playlistId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -83,11 +84,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/library': typeof AuthenticatedLibraryRoute
-  '/playlists': typeof AuthenticatedPlaylistsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/playlists/': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -95,11 +96,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/family': typeof AuthenticatedFamilyRoute
   '/library': typeof AuthenticatedLibraryRoute
-  '/playlists': typeof AuthenticatedPlaylistsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/playlists': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -109,11 +110,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/family': typeof AuthenticatedFamilyRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
-  '/_authenticated/playlists': typeof AuthenticatedPlaylistsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/_authenticated/playlists/': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,11 +124,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/family'
     | '/library'
-    | '/playlists'
     | '/settings'
     | '/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/playlists/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -135,11 +136,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/family'
     | '/library'
-    | '/playlists'
     | '/settings'
     | '/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/playlists'
   id:
     | '__root__'
     | '/'
@@ -148,11 +149,11 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/family'
     | '/_authenticated/library'
-    | '/_authenticated/playlists'
     | '/_authenticated/settings'
     | '/_authenticated/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/_authenticated/playlists/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,13 +194,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/playlists': {
-      id: '/_authenticated/playlists'
-      path: '/playlists'
-      fullPath: '/playlists'
-      preLoaderRoute: typeof AuthenticatedPlaylistsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/library': {
       id: '/_authenticated/library'
       path: '/library'
@@ -221,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/playlists/': {
+      id: '/_authenticated/playlists/'
+      path: '/playlists'
+      fullPath: '/playlists/'
+      preLoaderRoute: typeof AuthenticatedPlaylistsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/yoto/callback': {
       id: '/api/yoto/callback'
       path: '/api/yoto/callback'
@@ -237,43 +238,30 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/playlists/$playlistId': {
       id: '/_authenticated/playlists/$playlistId'
-      path: '/$playlistId'
+      path: '/playlists/$playlistId'
       fullPath: '/playlists/$playlistId'
       preLoaderRoute: typeof AuthenticatedPlaylistsPlaylistIdRouteImport
-      parentRoute: typeof AuthenticatedPlaylistsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
-
-interface AuthenticatedPlaylistsRouteChildren {
-  AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
-}
-
-const AuthenticatedPlaylistsRouteChildren: AuthenticatedPlaylistsRouteChildren =
-  {
-    AuthenticatedPlaylistsPlaylistIdRoute:
-      AuthenticatedPlaylistsPlaylistIdRoute,
-  }
-
-const AuthenticatedPlaylistsRouteWithChildren =
-  AuthenticatedPlaylistsRoute._addFileChildren(
-    AuthenticatedPlaylistsRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFamilyRoute: typeof AuthenticatedFamilyRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
-  AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
+  AuthenticatedPlaylistsIndexRoute: typeof AuthenticatedPlaylistsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFamilyRoute: AuthenticatedFamilyRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
-  AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
+  AuthenticatedPlaylistsIndexRoute: AuthenticatedPlaylistsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
