@@ -371,3 +371,60 @@ export const getSettingsData = createServerFn({ method: "GET" })
       };
     }
   });
+
+export interface WebTrack {
+  key: string;
+  title: string;
+  duration?: number;
+  url: string | null;
+  artwork?: string;
+}
+
+export const getPlaylistTracks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => {
+    const obj = d as { playlistId?: unknown };
+    if (typeof obj?.playlistId !== "string") throw new Error("playlistId required");
+    return { playlistId: obj.playlistId };
+  })
+  .handler(
+    async ({
+      context,
+      data,
+    }): Promise<{ title: string; artwork?: string; tracks: WebTrack[]; error?: string }> => {
+      try {
+        const res = await yotoGetJson<Record<string, any>>(
+          context.userId,
+          `/content/${data.playlistId}`,
+        );
+        const card = (res?.card ?? res) as Record<string, any>;
+        const meta = card?.metadata ?? {};
+        const cover =
+          meta?.cover?.imageL ?? meta?.cover?.imageM ?? meta?.cover?.imageS ?? undefined;
+        const chapters: any[] = card?.content?.chapters ?? [];
+        const tracks: WebTrack[] = [];
+        chapters.forEach((ch: any, ci: number) => {
+          const list: any[] = ch?.tracks ?? [];
+          list.forEach((t: any, ti: number) => {
+            const raw: string | undefined = t?.trackUrl ?? t?.url;
+            const url = typeof raw === "string" && /^https?:\/\//.test(raw) ? raw : null;
+            tracks.push({
+              key: `${ci}-${ti}-${t?.key ?? ""}`,
+              title: t?.title ?? ch?.title ?? `Track ${tracks.length + 1}`,
+              duration: typeof t?.duration === "number" ? t.duration : undefined,
+              url,
+              artwork:
+                ch?.display?.icon16x16 ?? t?.display?.icon16x16 ?? cover ?? undefined,
+            });
+          });
+        });
+        return { title: meta?.title ?? card?.title ?? "Playlist", artwork: cover, tracks };
+      } catch (e) {
+        return {
+          title: "Playlist",
+          tracks: [],
+          error: e instanceof Error ? e.message : "Unknown error",
+        };
+      }
+    },
+  );
