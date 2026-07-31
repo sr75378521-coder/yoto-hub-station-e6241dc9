@@ -103,24 +103,28 @@ function PlaylistDetailPage() {
             {chapters.length === 0 && (
               <p className="text-sm text-muted-foreground">No tracks in this playlist.</p>
             )}
-            {chapters.map((ch: any, i: number) => (
-              <div key={ch.key ?? i} className="space-y-2">
-                <div className="text-sm font-medium">{ch.title ?? `Chapter ${i + 1}`}</div>
-                <ul className="space-y-1 pl-4">
-                  {(ch.tracks ?? []).map((t: any, ti: number) => (
-                    <li key={t.key ?? ti} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Play className="size-3" />
-                      <span>{t.title ?? `Track ${ti + 1}`}</span>
-                      {t.duration && (
-                        <span className="ml-auto text-xs">
-                          {Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {chapters.map((ch: any, i: number) => {
+              const list: any[] = ch?.tracks?.length ? ch.tracks : [ch];
+              return (
+                <div key={ch.key ?? i} className="space-y-2">
+                  <div className="text-sm font-medium">{ch.title ?? `Chapter ${i + 1}`}</div>
+                  <ul className="space-y-1 pl-4">
+                    {list.map((t: any, ti: number) => (
+                      <li key={t.key ?? ti} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Play className="size-3" />
+                        <span>{t.title ?? `Track ${ti + 1}`}</span>
+                        {t.duration && (
+                          <span className="ml-auto text-xs">
+                            {Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+
           </CardContent>
         </Card>
       </div>

@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
 import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
 import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
+import { Route as ApiYotoAudioRouteImport } from './routes/api/yoto/audio'
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -71,6 +72,11 @@ const ApiYotoAuthorizeRoute = ApiYotoAuthorizeRouteImport.update({
   path: '/api/yoto/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiYotoAudioRoute = ApiYotoAudioRouteImport.update({
+  id: '/api/yoto/audio',
+  path: '/api/yoto/audio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlaylistsPlaylistIdRoute =
   AuthenticatedPlaylistsPlaylistIdRouteImport.update({
     id: '/playlists/$playlistId',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
   '/playlists/': typeof AuthenticatedPlaylistsIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
   '/playlists': typeof AuthenticatedPlaylistsIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
   '/_authenticated/playlists/': typeof AuthenticatedPlaylistsIndexRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/settings'
     | '/playlists/$playlistId'
+    | '/api/yoto/audio'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
     | '/playlists/'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/settings'
     | '/playlists/$playlistId'
+    | '/api/yoto/audio'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
     | '/playlists'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/settings'
     | '/_authenticated/playlists/$playlistId'
+    | '/api/yoto/audio'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
     | '/_authenticated/playlists/'
@@ -160,6 +172,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiYotoAudioRoute: typeof ApiYotoAudioRoute
   ApiYotoAuthorizeRoute: typeof ApiYotoAuthorizeRoute
   ApiYotoCallbackRoute: typeof ApiYotoCallbackRoute
 }
@@ -236,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiYotoAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/yoto/audio': {
+      id: '/api/yoto/audio'
+      path: '/api/yoto/audio'
+      fullPath: '/api/yoto/audio'
+      preLoaderRoute: typeof ApiYotoAudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/playlists/$playlistId': {
       id: '/_authenticated/playlists/$playlistId'
       path: '/playlists/$playlistId'
@@ -271,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiYotoAudioRoute: ApiYotoAudioRoute,
   ApiYotoAuthorizeRoute: ApiYotoAuthorizeRoute,
   ApiYotoCallbackRoute: ApiYotoCallbackRoute,
 }
