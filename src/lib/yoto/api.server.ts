@@ -61,3 +61,33 @@ export async function yotoPut<T = unknown>(
   if (!res.ok) throw new Error(`Yoto API ${res.status} ${path}: ${text.slice(0, 300)}`);
   return text ? (JSON.parse(text) as T) : (undefined as T);
 }
+
+/**
+ * MYO / library cards must be "resolved" to get signed, playable track URLs.
+ * `/card/resolve/{id}` returns real https mp3 urls; `/content/{id}` returns
+ * `yoto:#<sha256>` placeholders that a browser cannot play.
+ */
+export async function resolveCardRaw(
+  userId: string,
+  cardId: string,
+): Promise<Record<string, any>> {
+  let resolved: Record<string, any> | null = null;
+  try {
+    resolved = await yotoGetJson<Record<string, any>>(userId, `/card/resolve/${cardId}`);
+  } catch {
+    resolved = null;
+  }
+  const hasChapters = (o: any) => {
+    const c = o?.card ?? o;
+    return Array.isArray(c?.content?.chapters) && c.content.chapters.length > 0;
+  };
+  if (resolved && hasChapters(resolved)) return resolved;
+
+  try {
+    const content = await yotoGetJson<Record<string, any>>(userId, `/content/${cardId}`);
+    if (content) return content;
+  } catch (e) {
+    if (!resolved) throw e;
+  }
+  return resolved ?? {};
+}
