@@ -63,9 +63,14 @@ export function PlayOnDeviceButton({
       const res = await fetchTracks({ data: { playlistId: cardId } });
       const playable = res.tracks.filter((t) => t.url);
       if (playable.length === 0) {
-        toast.error("This playlist has no streamable audio for browser playback");
+        toast.error(
+          res.error
+            ? `Couldn't load audio: ${res.error}`
+            : "This playlist has no streamable audio for browser playback",
+        );
         return;
       }
+
       playQueue({ title: res.title, artwork: res.artwork, tracks: playable });
       setOpen(false);
     } catch (e) {
