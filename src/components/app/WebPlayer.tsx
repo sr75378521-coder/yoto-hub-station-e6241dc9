@@ -105,11 +105,17 @@ export function WebPlayerProvider({ children }: { children: ReactNode }) {
       {children}
       <audio
         ref={audioRef}
+        preload="metadata"
         onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
         onEnded={next}
+        onError={() => {
+          setPlaying(false);
+          toast.error(`Couldn't play "${current?.title ?? "track"}"`);
+        }}
         className="hidden"
       />
+
       {tracks.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center gap-4">
