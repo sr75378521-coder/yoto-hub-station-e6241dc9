@@ -394,10 +394,7 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
       data,
     }): Promise<{ title: string; artwork?: string; tracks: WebTrack[]; error?: string }> => {
       try {
-        const res = await yotoGetJson<Record<string, any>>(
-          context.userId,
-          `/content/${data.playlistId}`,
-        );
+        const res = await resolveCardRaw(context.userId, data.playlistId);
         const card = (res?.card ?? res) as Record<string, any>;
         const meta = card?.metadata ?? {};
         const cover =
@@ -405,10 +402,16 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
         const chapters: any[] = card?.content?.chapters ?? [];
         const tracks: WebTrack[] = [];
         chapters.forEach((ch: any, ci: number) => {
-          const list: any[] = ch?.tracks ?? [];
+          const list: any[] = ch?.tracks?.length ? ch.tracks : [ch];
           list.forEach((t: any, ti: number) => {
-            const raw: string | undefined = t?.trackUrl ?? t?.url;
-            const url = typeof raw === "string" && /^https?:\/\//.test(raw) ? raw : null;
+            const raw: string | undefined =
+              t?.trackUrl ?? t?.url ?? t?.audioUrl ?? t?.transcodedAudioUrl;
+            let url: string | null = null;
+            if (typeof raw === "string" && /^https?:\/\//.test(raw)) {
+              // Proxy through our own origin: signed Yoto media URLs can block
+              // cross-origin media requests and redirect chains.
+              url = `/api/yoto/audio?u=${encodeURIComponent(raw)}`;
+            }
             tracks.push({
               key: `${ci}-${ti}-${t?.key ?? ""}`,
               title: t?.title ?? ch?.title ?? `Track ${tracks.length + 1}`,
@@ -420,6 +423,7 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
           });
         });
         return { title: meta?.title ?? card?.title ?? "Playlist", artwork: cover, tracks };
+
       } catch (e) {
         return {
           title: "Playlist",
