@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { yotoGetJson, YotoNotConnectedError } from "@/lib/yoto/api.server";
+import { yotoGetJson, resolveCardRaw, YotoNotConnectedError } from "@/lib/yoto/api.server";
 import { deleteConnection } from "@/lib/yoto/tokens.server";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
