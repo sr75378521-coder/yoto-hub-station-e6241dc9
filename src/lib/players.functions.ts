@@ -307,6 +307,27 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
   });
 
 
+/**
+ * MYO / library cards must be "resolved" to get signed, playable track URLs.
+ * `/card/resolve/{id}` returns real https mp3 urls; `/content/{id}` returns
+ * `yoto:#<sha256>` placeholders that a browser cannot play.
+ */
+async function resolveCardRaw(userId: string, cardId: string): Promise<Record<string, any>> {
+  let resolved: Record<string, any> | null = null;
+  try {
+    resolved = await yotoGetJson<Record<string, any>>(userId, `/card/resolve/${cardId}`);
+  } catch {
+    resolved = null;
+  }
+  const hasChapters = (o: any) =>
+    Array.isArray((o?.card ?? o)?.content?.chapters) &&
+    (o?.card ?? o).content.chapters.length > 0;
+  if (resolved && hasChapters(resolved)) return resolved;
+
+  const content = await yotoGetJson<Record<string, any>>(userId, `/content/${cardId}`);
+  return content ?? resolved ?? {};
+}
+
 export const getPlaylistDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => {
@@ -316,10 +337,7 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
   })
   .handler(async ({ context, data }) => {
     try {
-      const response = await yotoGetJson<unknown>(
-        context.userId,
-        `/content/${data.playlistId}`,
-      );
+      const response = await resolveCardRaw(context.userId, data.playlistId);
       return { success: true as const, playlist: JSON.parse(JSON.stringify(response)) as Json };
     } catch (e) {
       return {
@@ -328,6 +346,7 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
       };
     }
   });
+
 
 // Settings Types
 export interface UserSettings {
