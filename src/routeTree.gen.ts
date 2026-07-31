@@ -17,6 +17,7 @@ import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedFamilyRouteImport } from './routes/_authenticated/family'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
+import { Route as ApiYotoDebugCardRouteImport } from './routes/api/yoto/debug-card'
 import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
 import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
@@ -61,6 +62,11 @@ const AuthenticatedPlaylistsIndexRoute =
     path: '/playlists/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiYotoDebugCardRoute = ApiYotoDebugCardRouteImport.update({
+  id: '/api/yoto/debug-card',
+  path: '/api/yoto/debug-card',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiYotoCallbackRoute = ApiYotoCallbackRouteImport.update({
   id: '/api/yoto/callback',
   path: '/api/yoto/callback',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/api/yoto/debug-card': typeof ApiYotoDebugCardRoute
   '/playlists/': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/api/yoto/debug-card': typeof ApiYotoDebugCardRoute
   '/playlists': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRoutesById {
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
   '/api/yoto/callback': typeof ApiYotoCallbackRoute
+  '/api/yoto/debug-card': typeof ApiYotoDebugCardRoute
   '/_authenticated/playlists/': typeof AuthenticatedPlaylistsIndexRoute
 }
 export interface FileRouteTypes {
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/api/yoto/debug-card'
     | '/playlists/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/api/yoto/debug-card'
     | '/playlists'
   id:
     | '__root__'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/playlists/$playlistId'
     | '/api/yoto/authorize'
     | '/api/yoto/callback'
+    | '/api/yoto/debug-card'
     | '/_authenticated/playlists/'
   fileRoutesById: FileRoutesById
 }
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiYotoAuthorizeRoute: typeof ApiYotoAuthorizeRoute
   ApiYotoCallbackRoute: typeof ApiYotoCallbackRoute
+  ApiYotoDebugCardRoute: typeof ApiYotoDebugCardRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -222,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlaylistsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/yoto/debug-card': {
+      id: '/api/yoto/debug-card'
+      path: '/api/yoto/debug-card'
+      fullPath: '/api/yoto/debug-card'
+      preLoaderRoute: typeof ApiYotoDebugCardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/yoto/callback': {
       id: '/api/yoto/callback'
       path: '/api/yoto/callback'
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiYotoAuthorizeRoute: ApiYotoAuthorizeRoute,
   ApiYotoCallbackRoute: ApiYotoCallbackRoute,
+  ApiYotoDebugCardRoute: ApiYotoDebugCardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
