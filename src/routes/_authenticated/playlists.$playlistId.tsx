@@ -1,13 +1,16 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Disc3, Music, Play } from "lucide-react";
+import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
+import { ArrowLeft, Clock, Disc3, Loader2, Music } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getPlaylistDetails } from "@/lib/players.functions";
+import { getCardForEdit } from "@/lib/yoto/myo.functions";
+import { PlaylistEditor } from "@/components/app/PlaylistEditor";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
 import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
+
 
 const detailsQuery = (fn: (a: { data: { playlistId: string } }) => Promise<any>, id: string) =>
   queryOptions({
