@@ -95,39 +95,39 @@ function PlaylistDetailPage() {
           </CardHeader>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Tracks</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {chapters.length === 0 && (
-              <p className="text-sm text-muted-foreground">No tracks in this playlist.</p>
-            )}
-            {chapters.map((ch: any, i: number) => {
-              const list: any[] = ch?.tracks?.length ? ch.tracks : [ch];
-              return (
-                <div key={ch.key ?? i} className="space-y-2">
-                  <div className="text-sm font-medium">{ch.title ?? `Chapter ${i + 1}`}</div>
-                  <ul className="space-y-1 pl-4">
-                    {list.map((t: any, ti: number) => (
-                      <li key={t.key ?? ti} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Play className="size-3" />
-                        <span>{t.title ?? `Track ${ti + 1}`}</span>
-                        {t.duration && (
-                          <span className="ml-auto text-xs">
-                            {Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-
-          </CardContent>
-        </Card>
+        <EditorSection cardId={p.cardId ?? playlistId} />
       </div>
     </AppShell>
   );
 }
+
+function EditorSection({ cardId }: { cardId: string }) {
+  const fetchCard = useServerFn(getCardForEdit);
+  const { data, isLoading } = useQuery({
+    queryKey: ["card-edit", cardId],
+    queryFn: () => fetchCard({ data: { cardId } }),
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center gap-2 p-8 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Loading editor…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data?.success || !data.card) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          Editing isn't available for this playlist{data?.error ? `: ${data.error}` : "."}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return <PlaylistEditor key={cardId} card={data.card} />;
+}
+
