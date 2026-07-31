@@ -18,7 +18,9 @@ import {
   X,
   Music,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+
 import { Slider } from "@/components/ui/slider";
 import type { WebTrack } from "@/lib/players.functions";
 
