@@ -11,8 +11,11 @@ export const Route = createFileRoute("/api/yoto/audio")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const target = new URL(request.url).searchParams.get("u");
+        const params = new URL(request.url).searchParams;
+        const target = params.get("u");
+        const downloadName = params.get("dl");
         if (!target) return new Response("missing u", { status: 400 });
+
 
         let upstream: URL;
         try {
