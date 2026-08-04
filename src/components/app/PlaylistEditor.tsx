@@ -397,7 +397,9 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                 )}
 
               </div>
-            ))}
+              );
+            })}
+
           </div>
 
           {dirty && (
