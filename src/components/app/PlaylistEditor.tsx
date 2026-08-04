@@ -1,12 +1,12 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
   ChevronUp,
+  Download,
   Loader2,
-  Music,
   Plus,
   Save,
   Trash2,
@@ -29,6 +29,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { IconPicker } from "@/components/app/IconPicker";
+import { getPlaylistTracks } from "@/lib/players.functions";
 import {
   deleteCard,
   saveCard,
@@ -42,6 +44,11 @@ function fmtDur(s?: number) {
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 }
 
+function downloadHref(url: string, name: string) {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}dl=${encodeURIComponent(`${name}.mp3`)}`;
+}
+
 export function PlaylistEditor({ card }: { card: EditableCard }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -49,6 +56,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
   const doSave = useServerFn(saveCard);
   const doDelete = useServerFn(deleteCard);
   const doUpload = useServerFn(uploadTrack);
+  const fetchTracks = useServerFn(getPlaylistTracks);
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description);
@@ -57,6 +65,22 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+
+  // Resolved, streamable URLs so each track can also be downloaded.
+  const { data: resolved } = useQuery({
+    queryKey: ["playlist-tracks", card.cardId],
+    queryFn: () => fetchTracks({ data: { playlistId: card.cardId } }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const urlByTitle = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of resolved?.tracks ?? []) {
+      if (t.url && t.title && !map.has(t.title)) map.set(t.title, t.url);
+    }
+    return map;
+  }, [resolved]);
+
 
   const mutate = (next: EditableChapter[]) => {
     setChapters(next);
