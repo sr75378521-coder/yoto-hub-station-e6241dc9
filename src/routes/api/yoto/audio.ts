@@ -52,6 +52,11 @@ export const Route = createFileRoute("/api/yoto/audio")({
         if (!out.has("content-type")) out.set("content-type", "audio/mpeg");
         if (!out.has("accept-ranges")) out.set("accept-ranges", "bytes");
         out.set("cache-control", "private, max-age=3600");
+        if (downloadName) {
+          const safe = downloadName.replace(/[^\w.\- ]+/g, "_").slice(0, 120) || "track";
+          out.set("content-disposition", `attachment; filename="${safe}"`);
+        }
+
 
         return new Response(res.body, { status: res.status, headers: out });
       },
