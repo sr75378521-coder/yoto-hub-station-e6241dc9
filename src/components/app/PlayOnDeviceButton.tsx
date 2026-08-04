@@ -71,7 +71,7 @@ export function PlayOnDeviceButton({
         return;
       }
 
-      playQueue({ title: res.title, artwork: res.artwork, tracks: playable });
+      playQueue({ id: cardId, title: res.title, artwork: res.artwork, tracks: playable });
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't load audio");
