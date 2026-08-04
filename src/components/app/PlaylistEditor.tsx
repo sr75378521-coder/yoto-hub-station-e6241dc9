@@ -288,25 +288,45 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
           )}
 
           <div className="space-y-2">
-            {chapters.map((ch, ci) => (
-              <div key={`${ch.key}-${ci}`} className="rounded-md border border-border/70 p-3">
+            {chapters.map((ch, ci) => {
+              const chUrl = urlByTitle.get(ch.tracks[0]?.title ?? "") ?? urlByTitle.get(ch.title);
+              return (
+              <div key={`${ch.key}-${ci}`} className="rounded-2xl border border-border/70 p-3">
                 <div className="flex items-center gap-2">
                   <span className="w-6 text-xs tabular-nums text-muted-foreground">{ci + 1}.</span>
-                  {ch.icon ? (
-                    <img src={ch.icon} alt="" className="size-6 rounded [image-rendering:pixelated]" />
-                  ) : (
-                    <div className="flex size-6 items-center justify-center rounded bg-primary/10">
-                      <Music className="size-3 text-primary/60" />
-                    </div>
-                  )}
+                  <IconPicker
+                    value={ch.icon}
+                    onChange={(ref) =>
+                      mutate(
+                        chapters.map((c, x) =>
+                          x === ci
+                            ? {
+                                ...c,
+                                icon: ref,
+                                tracks: c.tracks.map((t, ti) =>
+                                  ti === 0 ? { ...t, icon: ref } : t,
+                                ),
+                              }
+                            : c,
+                        ),
+                      )
+                    }
+                  />
                   <Input
                     value={ch.title}
                     onChange={(e) => renameChapter(ci, e.target.value)}
-                    className="h-8 flex-1"
+                    className="h-9 flex-1"
                   />
                   <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
                     {fmtDur(ch.tracks[0]?.duration)}
                   </span>
+                  {chUrl && (
+                    <Button size="icon" variant="ghost" className="size-8" asChild>
+                      <a href={downloadHref(chUrl, ch.title)} download title="Download audio">
+                        <Download className="size-4" />
+                      </a>
+                    </Button>
+                  )}
                   <Button size="icon" variant="ghost" className="size-8" onClick={() => move(ci, -1)} disabled={ci === 0}>
                     <ChevronUp className="size-4" />
                   </Button>
@@ -326,16 +346,42 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
 
                 {ch.tracks.length > 1 && (
                   <div className="mt-2 space-y-1 pl-8">
-                    {ch.tracks.map((t, ti) => (
+                    {ch.tracks.map((t, ti) => {
+                      const tUrl = urlByTitle.get(t.title);
+                      return (
                       <div key={`${t.key}-${ti}`} className="flex items-center gap-2">
+                        <IconPicker
+                          value={t.icon}
+                          onChange={(ref) =>
+                            mutate(
+                              chapters.map((c, x) =>
+                                x === ci
+                                  ? {
+                                      ...c,
+                                      tracks: c.tracks.map((tt, y) =>
+                                        y === ti ? { ...tt, icon: ref } : tt,
+                                      ),
+                                    }
+                                  : c,
+                              ),
+                            )
+                          }
+                        />
                         <Input
                           value={t.title}
                           onChange={(e) => renameTrack(ci, ti, e.target.value)}
-                          className="h-7 flex-1 text-xs"
+                          className="h-8 flex-1 text-xs"
                         />
                         <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
                           {fmtDur(t.duration)}
                         </span>
+                        {tUrl && (
+                          <Button size="icon" variant="ghost" className="size-7" asChild>
+                            <a href={downloadHref(tUrl, t.title)} download title="Download audio">
+                              <Download className="size-3.5" />
+                            </a>
+                          </Button>
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -345,9 +391,11 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                           <Trash2 className="size-3.5" />
                         </Button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
+
               </div>
             ))}
           </div>
