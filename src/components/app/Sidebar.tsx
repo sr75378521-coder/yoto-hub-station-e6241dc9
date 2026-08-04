@@ -1,14 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ListMusic, Library, Settings, Radio } from "lucide-react";
+import { LayoutDashboard, Users, ListMusic, Sparkles, Settings, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Players", icon: LayoutDashboard },
   { to: "/family", label: "Family", icon: Users },
   { to: "/playlists", label: "Playlists", icon: ListMusic },
-  { to: "/library", label: "Library", icon: Library },
+  { to: "/icons", label: "My Icons", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
+
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
