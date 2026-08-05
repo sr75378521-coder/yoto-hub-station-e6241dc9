@@ -14,13 +14,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { listIcons, uploadIcon, type YotoIcon } from "@/lib/yoto/icons.functions";
+import { IconDesignerButton } from "@/components/app/IconDesigner";
+
 
 export function iconSrc(ref?: string | null): string | undefined {
   if (!ref) return undefined;
-  if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
-  return id ? `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64` : undefined;
+  if (!id) return undefined;
+  // Always go through our proxy — Yoto's media host blocks hot-linked icons.
+  return `/api/yoto/icon?id=${encodeURIComponent(id)}`;
 }
+
 
 export function useYotoIcons() {
   const fetchIcons = useServerFn(listIcons);
@@ -129,7 +133,10 @@ export function IconPicker({
     return needle ? all.filter((i) => i.title.toLowerCase().includes(needle)) : all;
   }, [data, q]);
 
-  const src = iconSrc(value);
+  // Prefer the URL Yoto returned for this icon, falling back to the proxy.
+  const known = (data?.icons ?? []).find((i) => i.ref === value || i.mediaId === value);
+  const src = iconSrc(known?.url || value);
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -163,8 +170,10 @@ export function IconPicker({
               className="pl-9"
             />
           </div>
+          <IconDesignerButton onCreated={(icon) => onChange(icon.ref)} />
           <IconUploadButton onUploaded={(icon) => onChange(icon.ref)} />
         </div>
+
         <div className="max-h-[50vh] overflow-y-auto pr-1">
           {isLoading ? (
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">

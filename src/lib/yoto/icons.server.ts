@@ -19,15 +19,15 @@ export function iconDisplayUrl(ref?: string | null): string | undefined {
   if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
   if (!id) return undefined;
-  return `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64`;
+  return `https://cdn.yoto.io/icons/${id}`;
 }
 
 function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
   const mediaId: string | undefined =
     raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
   if (!mediaId) return null;
-  const url: string =
-    raw?.url ?? raw?.displayIconUrl ?? iconDisplayUrl(mediaId) ?? "";
+  // Prefer the URL Yoto gives us; the client proxies whatever we return.
+  const url: string = raw?.url ?? raw?.displayIconUrl ?? "";
   return {
     mediaId,
     title: raw?.title ?? raw?.name ?? "Icon",
@@ -36,6 +36,7 @@ function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
     source,
   };
 }
+
 
 function extract(res: any): any[] {
   if (Array.isArray(res)) return res;
