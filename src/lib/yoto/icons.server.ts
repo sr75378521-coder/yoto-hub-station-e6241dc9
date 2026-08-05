@@ -4,6 +4,7 @@
  * gallery, and uploading new ones.
  */
 import { yotoFetch, yotoGetJson } from "./api.server";
+import { signIconTicket } from "@/lib/crypto.server";
 
 export interface YotoIcon {
   mediaId: string;
@@ -12,7 +13,16 @@ export interface YotoIcon {
   /** Value stored on a card: `yoto:#<mediaId>` */
   ref: string;
   source: "mine" | "yoto";
+  /**
+   * Short-lived signed ticket (see crypto.server) that lets the client's
+   * unauthenticated <img> request to /api/yoto/icon prove which user it's
+   * for, so the proxy can retry with that user's Yoto Bearer token when the
+   * icon host requires auth.
+   */
+  ticket: string;
 }
+
+const ICON_TICKET_TTL_MS = 15 * 60 * 1000; // 15 min — comfortably longer than the 5 min client cache
 
 export function iconDisplayUrl(ref?: string | null): string | undefined {
   if (!ref) return undefined;
@@ -22,7 +32,7 @@ export function iconDisplayUrl(ref?: string | null): string | undefined {
   return `https://cdn.yoto.io/icons/${id}`;
 }
 
-function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
+function normalize(raw: any, source: "mine" | "yoto", ticket: string): YotoIcon | null {
   const mediaId: string | undefined =
     raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
   if (!mediaId) return null;
@@ -38,6 +48,7 @@ function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
     url,
     ref: `yoto:#${mediaId}`,
     source,
+    ticket,
   };
 }
 
@@ -54,6 +65,7 @@ function extract(res: any): any[] {
 }
 
 export async function listIconsRaw(userId: string): Promise<YotoIcon[]> {
+  const ticket = signIconTicket(userId, Date.now() + ICON_TICKET_TTL_MS);
   const [mine, yoto] = await Promise.allSettled([
     yotoGetJson<any>(userId, "/media/displayIcons/user/me"),
     yotoGetJson<any>(userId, "/media/displayIcons/user/yoto"),
@@ -63,7 +75,7 @@ export async function listIconsRaw(userId: string): Promise<YotoIcon[]> {
   const seen = new Set<string>();
   const push = (list: any[], source: "mine" | "yoto") => {
     for (const raw of list) {
-      const icon = normalize(raw, source);
+      const icon = normalize(raw, source, ticket);
       if (icon && !seen.has(icon.mediaId)) {
         seen.add(icon.mediaId);
         out.push(icon);
@@ -94,7 +106,8 @@ export async function uploadIconRaw(
     throw new Error(`Yoto icon upload ${res.status}: ${text.slice(0, 200)}`);
   }
   const json = text ? JSON.parse(text) : {};
-  const icon = normalize(json?.displayIcon ?? json, "mine");
+  const ticket = signIconTicket(userId, Date.now() + ICON_TICKET_TTL_MS);
+  const icon = normalize(json?.displayIcon ?? json, "mine", ticket);
   if (!icon) throw new Error("Yoto did not return an icon id");
   return { ...icon, title: file.name.replace(/\.[^.]+$/, "") };
 }

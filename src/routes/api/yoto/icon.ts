@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyIconTicket } from "@/lib/crypto.server";
+import { getValidAccessToken } from "@/lib/yoto/tokens.server";
 
 // Yoto serves display-icon images from several different hosts depending on
 // endpoint and environment (e.g. cdn.yoto.io, media.yotoplay.com, and
@@ -39,6 +41,13 @@ export const Route = createFileRoute("/api/yoto/icon")({
         const raw = params.get("id");
         if (!raw) return new Response("missing id", { status: 400 });
 
+        // The <img> tag that requests this route can't send cookies or a
+        // custom Authorization header, so we can't know which user is asking
+        // via normal means. The ticket (minted server-side, alongside the
+        // icon list, by a request that *was* authenticated) tells us.
+        const ticketParam = params.get("t");
+        const ticket = ticketParam ? verifyIconTicket(ticketParam) : null;
+
         const id = raw.startsWith("yoto:#") ? raw.slice(6) : raw;
         const candidates = /^https?:\/\//.test(id)
           ? [id]
@@ -47,6 +56,15 @@ export const Route = createFileRoute("/api/yoto/icon")({
               `https://cdn.yoto.io/myo-icon/${encodeURIComponent(id)}.png`,
               `https://media.yotoplay.com/icons/${encodeURIComponent(id)}`,
             ];
+
+        // Lazily resolved — only hit the token store if a candidate actually
+        // needs a retry with auth.
+        let bearerToken: string | null | undefined;
+        const getBearerToken = async (): Promise<string | null> => {
+          if (bearerToken !== undefined) return bearerToken;
+          bearerToken = ticket ? await getValidAccessToken(ticket.userId) : null;
+          return bearerToken;
+        };
 
         for (const candidate of candidates) {
           let url: URL;
@@ -58,15 +76,32 @@ export const Route = createFileRoute("/api/yoto/icon")({
           if (url.protocol !== "https:" || !isAllowedIconHost(url.hostname)) {
             continue;
           }
-          try {
-            const res = await fetch(url.toString(), { redirect: "follow" });
-            if (!res.ok) continue;
-            const out = new Headers();
-            out.set("content-type", res.headers.get("content-type") ?? "image/png");
-            out.set("cache-control", "public, max-age=86400");
-            return new Response(res.body, { status: 200, headers: out });
-          } catch {
-            continue;
+
+          // Try un-authenticated first (works for public/presigned URLs, and
+          // avoids sending credentials somewhere that doesn't expect them).
+          // If that's rejected and we have a valid ticket, retry the same
+          // URL with the user's Yoto Bearer token — the icon media host
+          // turned out to require it, same as every other Yoto API call.
+          for (const withAuth of [false, true]) {
+            if (withAuth && !ticket) break;
+            try {
+              const headers: HeadersInit = {};
+              if (withAuth) {
+                const token = await getBearerToken();
+                if (!token) break;
+                headers["Authorization"] = `Bearer ${token}`;
+              }
+              const res = await fetch(url.toString(), { redirect: "follow", headers });
+              if (!res.ok) continue;
+              const out = new Headers();
+              out.set("content-type", res.headers.get("content-type") ?? "image/png");
+              // Auth-gated responses are per-user — don't let shared/edge
+              // caches store them; anonymous ones are safe to cache.
+              out.set("cache-control", withAuth ? "private, max-age=86400" : "public, max-age=86400");
+              return new Response(res.body, { status: 200, headers: out });
+            } catch {
+              continue;
+            }
           }
         }
 
