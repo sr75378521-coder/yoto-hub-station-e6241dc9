@@ -133,7 +133,10 @@ export function IconPicker({
     return needle ? all.filter((i) => i.title.toLowerCase().includes(needle)) : all;
   }, [data, q]);
 
-  const src = iconSrc(value);
+  // Prefer the URL Yoto returned for this icon, falling back to the proxy.
+  const known = (data?.icons ?? []).find((i) => i.ref === value || i.mediaId === value);
+  const src = iconSrc(known?.url || value);
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
