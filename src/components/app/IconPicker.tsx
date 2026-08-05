@@ -14,17 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { listIcons, uploadIcon, type YotoIcon } from "@/lib/yoto/icons.functions";
-import { IconDesignerButton } from "@/components/app/IconDesigner";
-
 
 export function iconSrc(ref?: string | null): string | undefined {
   if (!ref) return undefined;
+  if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
-  if (!id) return undefined;
-  // Always go through our proxy — Yoto's media host blocks hot-linked icons.
-  return `/api/yoto/icon?id=${encodeURIComponent(id)}`;
+  return id ? `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64` : undefined;
 }
-
 
 export function useYotoIcons() {
   const fetchIcons = useServerFn(listIcons);
@@ -81,25 +77,6 @@ export function IconUploadButton({ onUploaded }: { onUploaded?: (icon: YotoIcon)
   );
 }
 
-/** Swaps a broken icon <img> for a placeholder glyph when the asset 403/404s. */
-function handleIconImgError(e: React.SyntheticEvent<HTMLImageElement>) {
-  const img = e.currentTarget;
-  if (img.dataset.fallback === "1") return; // already showing the placeholder
-  img.dataset.fallback = "1";
-  img.src = ICON_PLACEHOLDER_SRC;
-}
-
-// Small inline pixel-art "?" placeholder — no network request, so it can never
-// itself 403/404.
-const ICON_PLACEHOLDER_SRC =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">` +
-      `<rect width="16" height="16" rx="3" fill="#c9c9d1"/>` +
-      `<text x="8" y="12" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b6b76">?</text>` +
-      `</svg>`,
-  );
-
 export function IconGrid({
   icons,
   selected,
@@ -126,7 +103,6 @@ export function IconGrid({
             alt={icon.title}
             className="size-full pixel-icon object-contain"
             loading="lazy"
-            onError={handleIconImgError}
           />
         </button>
       ))}
@@ -153,10 +129,7 @@ export function IconPicker({
     return needle ? all.filter((i) => i.title.toLowerCase().includes(needle)) : all;
   }, [data, q]);
 
-  // Prefer the URL Yoto returned for this icon, falling back to the proxy.
-  const known = (data?.icons ?? []).find((i) => i.ref === value || i.mediaId === value);
-  const src = iconSrc(known?.url || value);
-
+  const src = iconSrc(value);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -167,12 +140,7 @@ export function IconPicker({
           className="flex size-9 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/60 transition hover:border-primary"
         >
           {src ? (
-            <img
-              src={src}
-              alt=""
-              className="size-6 pixel-icon object-contain"
-              onError={handleIconImgError}
-            />
+            <img src={src} alt="" className="size-6 pixel-icon object-contain" />
           ) : (
             <Sparkles className="size-4 text-primary/70" />
           )}
@@ -195,10 +163,8 @@ export function IconPicker({
               className="pl-9"
             />
           </div>
-          <IconDesignerButton onCreated={(icon) => onChange(icon.ref)} />
           <IconUploadButton onUploaded={(icon) => onChange(icon.ref)} />
         </div>
-
         <div className="max-h-[50vh] overflow-y-auto pr-1">
           {isLoading ? (
             <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">

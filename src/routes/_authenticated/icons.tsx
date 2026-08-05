@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconGrid, IconUploadButton, useYotoIcons } from "@/components/app/IconPicker";
-import { IconDesignerButton } from "@/components/app/IconDesigner";
-
 
 export const Route = createFileRoute("/_authenticated/icons")({
   head: () => ({
@@ -73,9 +71,7 @@ function IconsPage() {
                 onChange={(e) => setQ(e.target.value)}
                 className="h-9 w-40"
               />
-              <IconDesignerButton />
               <IconUploadButton />
-
             </div>
           </CardHeader>
           <CardContent>

@@ -14,150 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      families: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          owner_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          owner_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          owner_id?: string
-        }
-        Relationships: []
-      }
-      family_invites: {
-        Row: {
-          accepted_at: string | null
-          can_edit: boolean
-          created_at: string
-          email: string
-          family_id: string
-          id: string
-          invited_by: string
-          role: Database["public"]["Enums"]["family_role"]
-        }
-        Insert: {
-          accepted_at?: string | null
-          can_edit?: boolean
-          created_at?: string
-          email: string
-          family_id: string
-          id?: string
-          invited_by: string
-          role?: Database["public"]["Enums"]["family_role"]
-        }
-        Update: {
-          accepted_at?: string | null
-          can_edit?: boolean
-          created_at?: string
-          email?: string
-          family_id?: string
-          id?: string
-          invited_by?: string
-          role?: Database["public"]["Enums"]["family_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_invites_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      family_members: {
-        Row: {
-          can_edit: boolean
-          created_at: string
-          display_name: string | null
-          email: string | null
-          family_id: string
-          id: string
-          role: Database["public"]["Enums"]["family_role"]
-          user_id: string
-        }
-        Insert: {
-          can_edit?: boolean
-          created_at?: string
-          display_name?: string | null
-          email?: string | null
-          family_id: string
-          id?: string
-          role?: Database["public"]["Enums"]["family_role"]
-          user_id: string
-        }
-        Update: {
-          can_edit?: boolean
-          created_at?: string
-          display_name?: string | null
-          email?: string | null
-          family_id?: string
-          id?: string
-          role?: Database["public"]["Enums"]["family_role"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_members_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      family_shared_playlists: {
-        Row: {
-          artwork: string | null
-          can_edit: boolean
-          card_id: string
-          created_at: string
-          family_id: string
-          id: string
-          shared_by: string
-          title: string
-        }
-        Insert: {
-          artwork?: string | null
-          can_edit?: boolean
-          card_id: string
-          created_at?: string
-          family_id: string
-          id?: string
-          shared_by: string
-          title: string
-        }
-        Update: {
-          artwork?: string | null
-          can_edit?: boolean
-          card_id?: string
-          created_at?: string
-          family_id?: string
-          id?: string
-          shared_by?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_shared_playlists_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       yoto_connections: {
         Row: {
           access_token_ciphertext: string
@@ -229,17 +85,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_family_admin: {
-        Args: { _family_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_family_member: {
-        Args: { _family_id: string; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      family_role: "admin" | "member"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -366,8 +215,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      family_role: ["admin", "member"],
-    },
+    Enums: {},
   },
 } as const

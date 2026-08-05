@@ -51,11 +51,7 @@ export const getCardForEdit = createServerFn({ method: "GET" })
           (ch: any, i: number) => ({
             key: String(ch?.key ?? i + 1).padStart(2, "0"),
             title: ch?.title ?? `Chapter ${i + 1}`,
-            icon:
-              ch?.display?.icon16x16 ??
-              ch?.tracks?.[0]?.display?.icon16x16 ??
-              undefined,
-
+            icon: ch?.display?.icon16x16 ?? undefined,
             tracks: (ch?.tracks?.length ? ch.tracks : []).map((t: any, ti: number) => ({
               key: String(t?.key ?? ti + 1).padStart(2, "0"),
               title: t?.title ?? `Track ${ti + 1}`,
@@ -136,38 +132,15 @@ export const saveCard = createServerFn({ method: "POST" })
         };
       });
 
-      // Yoto replaces the whole card on POST /content, so merge the existing
-      // metadata first — otherwise saving wipes the cover art, author, etc.
-      let existingMeta: Record<string, any> = {};
-      if (data.cardId) {
-        try {
-          const cur = await yotoGetJson<Record<string, any>>(
-            context.userId,
-            `/content/${data.cardId}`,
-          );
-          const curCard = (cur?.card ?? cur) as Record<string, any>;
-          existingMeta = { ...(curCard?.metadata ?? {}) };
-        } catch {
-          existingMeta = {};
-        }
-      }
-
       const body: Record<string, unknown> = {
         ...(data.cardId ? { cardId: data.cardId } : {}),
         title: data.title,
         content: { chapters },
         metadata: {
-          ...existingMeta,
-          title: data.title,
           description: data.description,
-          media: {
-            ...(existingMeta.media ?? {}),
-            duration: totalDuration,
-            fileSize: totalSize,
-          },
+          media: { duration: totalDuration, fileSize: totalSize },
         },
       };
-
 
       const res = await yotoPost<Record<string, any>>(context.userId, "/content", body);
       const cardId = res?.cardId ?? res?.card?.cardId ?? data.cardId;

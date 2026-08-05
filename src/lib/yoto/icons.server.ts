@@ -19,19 +19,15 @@ export function iconDisplayUrl(ref?: string | null): string | undefined {
   if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
   if (!id) return undefined;
-  return `https://cdn.yoto.io/icons/${id}`;
+  return `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64`;
 }
 
 function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
   const mediaId: string | undefined =
     raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
   if (!mediaId) return null;
-  // Prefer the URL Yoto gives us; the client proxies whatever we return.
-  // Yoto sometimes returns `url: {}` (an empty object) instead of a string
-  // for icons that already existed on a re-upload — guard against that, and
-  // against any other non-string shape, so we don't hand junk to the client.
-  const rawUrl = raw?.url ?? raw?.displayIconUrl;
-  const url: string = typeof rawUrl === "string" ? rawUrl : "";
+  const url: string =
+    raw?.url ?? raw?.displayIconUrl ?? iconDisplayUrl(mediaId) ?? "";
   return {
     mediaId,
     title: raw?.title ?? raw?.name ?? "Icon",
@@ -40,7 +36,6 @@ function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
     source,
   };
 }
-
 
 function extract(res: any): any[] {
   if (Array.isArray(res)) return res;

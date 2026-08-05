@@ -82,33 +82,10 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
   }, [resolved]);
 
 
-  const downloadableTracks = useMemo(
-    () => (resolved?.tracks ?? []).filter((t) => !!t.url),
-    [resolved],
-  );
-
-  const downloadAll = async () => {
-    if (!downloadableTracks.length) {
-      toast.error("No downloadable audio on this playlist");
-      return;
-    }
-    toast.success(`Downloading ${downloadableTracks.length} tracks…`);
-    for (const [i, t] of downloadableTracks.entries()) {
-      const a = document.createElement("a");
-      a.href = downloadHref(t.url as string, `${String(i + 1).padStart(2, "0")} ${t.title}`);
-      a.download = "";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      await new Promise((r) => setTimeout(r, 700));
-    }
-  };
-
   const mutate = (next: EditableChapter[]) => {
     setChapters(next);
     setDirty(true);
   };
-
 
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -279,17 +256,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
             <span className="text-sm font-medium">
               Tracks ({chapters.reduce((a, c) => a + c.tracks.length, 0)})
             </span>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void downloadAll()}
-                disabled={downloadableTracks.length === 0}
-              >
-                <Download className="size-4" />
-                Download all ({downloadableTracks.length})
-              </Button>
-
+            <div>
               <input
                 ref={fileRef}
                 type="file"
