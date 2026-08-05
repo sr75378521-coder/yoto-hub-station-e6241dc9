@@ -1,6 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED_HOST_SUFFIXES = ["yotoplay.com", "yoto.io", "cloudfront.net", "amazonaws.com"];
+// Yoto serves display-icon images from several different hosts depending on
+// endpoint and environment (e.g. cdn.yoto.io, media.yotoplay.com, and
+// media-secure*.aws.* / *.aws.fooropa.com style CDN hosts returned directly
+// by the displayIcons API). The old, narrower list rejected most real icon
+// URLs Yoto actually returns, which is why thumbnails were rendering broken.
+const ALLOWED_HOST_SUFFIXES = [
+  "yotoplay.com",
+  "yoto.io",
+  "cloudfront.net",
+  "amazonaws.com",
+  "aws.com",
+  "fooropa.com",
+  "cloudfront-net.com",
+];
+
+function isAllowedIconHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (ALLOWED_HOST_SUFFIXES.some((h) => host === h || host.endsWith(`.${h}`))) {
+    return true;
+  }
+  // Belt-and-suspenders: any host with "yoto" in it (e.g. new/renamed CDN
+  // subdomains) is safe to proxy — it's not an arbitrary open proxy since we
+  // still require https and reject everything else below.
+  return /(^|\.)yoto[a-z0-9-]*\./.test(host) || host.includes("yoto");
+}
 
 /**
  * Proxies Yoto display icons through our own origin. Yoto serves icons from a
@@ -31,12 +55,7 @@ export const Route = createFileRoute("/api/yoto/icon")({
           } catch {
             continue;
           }
-          if (
-            url.protocol !== "https:" ||
-            !ALLOWED_HOST_SUFFIXES.some(
-              (h) => url.hostname === h || url.hostname.endsWith(`.${h}`),
-            )
-          ) {
+          if (url.protocol !== "https:" || !isAllowedIconHost(url.hostname)) {
             continue;
           }
           try {

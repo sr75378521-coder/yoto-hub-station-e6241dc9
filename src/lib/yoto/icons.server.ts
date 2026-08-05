@@ -27,7 +27,11 @@ function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
     raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
   if (!mediaId) return null;
   // Prefer the URL Yoto gives us; the client proxies whatever we return.
-  const url: string = raw?.url ?? raw?.displayIconUrl ?? "";
+  // Yoto sometimes returns `url: {}` (an empty object) instead of a string
+  // for icons that already existed on a re-upload — guard against that, and
+  // against any other non-string shape, so we don't hand junk to the client.
+  const rawUrl = raw?.url ?? raw?.displayIconUrl;
+  const url: string = typeof rawUrl === "string" ? rawUrl : "";
   return {
     mediaId,
     title: raw?.title ?? raw?.name ?? "Icon",

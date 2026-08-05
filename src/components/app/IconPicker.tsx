@@ -81,6 +81,25 @@ export function IconUploadButton({ onUploaded }: { onUploaded?: (icon: YotoIcon)
   );
 }
 
+/** Swaps a broken icon <img> for a placeholder glyph when the asset 403/404s. */
+function handleIconImgError(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  if (img.dataset.fallback === "1") return; // already showing the placeholder
+  img.dataset.fallback = "1";
+  img.src = ICON_PLACEHOLDER_SRC;
+}
+
+// Small inline pixel-art "?" placeholder — no network request, so it can never
+// itself 403/404.
+const ICON_PLACEHOLDER_SRC =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">` +
+      `<rect width="16" height="16" rx="3" fill="#c9c9d1"/>` +
+      `<text x="8" y="12" text-anchor="middle" font-family="monospace" font-size="10" fill="#6b6b76">?</text>` +
+      `</svg>`,
+  );
+
 export function IconGrid({
   icons,
   selected,
@@ -107,6 +126,7 @@ export function IconGrid({
             alt={icon.title}
             className="size-full pixel-icon object-contain"
             loading="lazy"
+            onError={handleIconImgError}
           />
         </button>
       ))}
@@ -147,7 +167,12 @@ export function IconPicker({
           className="flex size-9 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/60 transition hover:border-primary"
         >
           {src ? (
-            <img src={src} alt="" className="size-6 pixel-icon object-contain" />
+            <img
+              src={src}
+              alt=""
+              className="size-6 pixel-icon object-contain"
+              onError={handleIconImgError}
+            />
           ) : (
             <Sparkles className="size-4 text-primary/70" />
           )}
