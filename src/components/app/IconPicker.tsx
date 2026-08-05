@@ -17,16 +17,12 @@ import { listIcons, uploadIcon, type YotoIcon } from "@/lib/yoto/icons.functions
 import { IconDesignerButton } from "@/components/app/IconDesigner";
 
 
-export function iconSrc(ref?: string | null, ticket?: string | null): string | undefined {
+export function iconSrc(ref?: string | null): string | undefined {
   if (!ref) return undefined;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
   if (!id) return undefined;
-  // Always go through our proxy — Yoto's media host blocks hot-linked icons
-  // and, for account/library icons, requires the user's Yoto access token.
-  // The ticket lets the (cookie-less) <img> request prove which user it's
-  // for so the proxy can attach that token.
-  const t = ticket ? `&t=${encodeURIComponent(ticket)}` : "";
-  return `/api/yoto/icon?id=${encodeURIComponent(id)}${t}`;
+  // Always go through our proxy — Yoto's media host blocks hot-linked icons.
+  return `/api/yoto/icon?id=${encodeURIComponent(id)}`;
 }
 
 
@@ -126,7 +122,7 @@ export function IconGrid({
           }`}
         >
           <img
-            src={iconSrc(icon.url || icon.ref, icon.ticket)}
+            src={iconSrc(icon.url || icon.ref)}
             alt={icon.title}
             className="size-full pixel-icon object-contain"
             loading="lazy"
@@ -159,7 +155,7 @@ export function IconPicker({
 
   // Prefer the URL Yoto returned for this icon, falling back to the proxy.
   const known = (data?.icons ?? []).find((i) => i.ref === value || i.mediaId === value);
-  const src = iconSrc(known?.url || value, known?.ticket);
+  const src = iconSrc(known?.url || value);
 
 
   return (
