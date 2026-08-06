@@ -270,31 +270,71 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="pl-title">Title</Label>
-            <Input
-              id="pl-title"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                setDirty(true);
-              }}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="space-y-2">
+            <Label>Album cover</Label>
+            <div className="relative">
+              {cover ? (
+                <img
+                  src={cover}
+                  alt="Album cover"
+                  className="size-28 rounded-2xl border border-border object-cover"
+                />
+              ) : (
+                <div className="flex size-28 items-center justify-center rounded-2xl border-2 border-dashed border-border text-xs text-muted-foreground">
+                  No cover
+                </div>
+              )}
+            </div>
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => void handleCover(e.target.files)}
             />
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-28"
+              disabled={coverBusy}
+              onClick={() => coverRef.current?.click()}
+            >
+              {coverBusy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ImageIcon className="size-4" />
+              )}
+              Change
+            </Button>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="pl-desc">Description</Label>
-            <Textarea
-              id="pl-desc"
-              rows={2}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                setDirty(true);
-              }}
-            />
+          <div className="grid flex-1 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pl-title">Title</Label>
+              <Input
+                id="pl-title"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setDirty(true);
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pl-desc">Description</Label>
+              <Textarea
+                id="pl-desc"
+                rows={3}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setDirty(true);
+                }}
+              />
+            </div>
           </div>
         </div>
+
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
