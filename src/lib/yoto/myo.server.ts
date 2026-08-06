@@ -84,6 +84,28 @@ export async function uploadAudioToYoto(
   throw new Error("Timed out waiting for Yoto to process the audio");
 }
 
+export async function uploadCoverImageRaw(
+  userId: string,
+  file: { name: string; type: string; bytes: ArrayBuffer },
+): Promise<string> {
+  const res = await yotoFetch(
+    userId,
+    `/media/coverImage/user/me/upload?autoConvert=true&filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": file.type || "image/png" },
+      body: file.bytes,
+    },
+  );
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Yoto cover upload ${res.status}: ${text.slice(0, 200)}`);
+  const json = text ? JSON.parse(text) : {};
+  const url: string | undefined =
+    json?.coverImage?.mediaUrl ?? json?.coverImage?.url ?? json?.mediaUrl ?? json?.url;
+  if (!url) throw new Error("Yoto did not return a cover image url");
+  return url;
+}
+
 export async function deleteCardRaw(userId: string, cardId: string): Promise<void> {
   const res = await yotoFetch(userId, `/content/${cardId}`, { method: "DELETE" });
   if (!res.ok) {
