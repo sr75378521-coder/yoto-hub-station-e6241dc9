@@ -47,11 +47,13 @@ export const getCardForEdit = createServerFn({ method: "GET" })
         );
         const card = (res?.card ?? res) as Record<string, any>;
         const meta = card?.metadata ?? {};
+        const pickIcon = (o: any): string | undefined =>
+          o?.display?.icon16x16 ?? o?.icon16x16 ?? o?.display?.icon ?? o?.icon ?? undefined;
         const chapters: EditableChapter[] = (card?.content?.chapters ?? []).map(
           (ch: any, i: number) => ({
             key: String(ch?.key ?? i + 1).padStart(2, "0"),
             title: ch?.title ?? `Chapter ${i + 1}`,
-            icon: ch?.display?.icon16x16 ?? undefined,
+            icon: pickIcon(ch) ?? pickIcon(ch?.tracks?.[0]),
             tracks: (ch?.tracks?.length ? ch.tracks : []).map((t: any, ti: number) => ({
               key: String(t?.key ?? ti + 1).padStart(2, "0"),
               title: t?.title ?? `Track ${ti + 1}`,
@@ -60,7 +62,7 @@ export const getCardForEdit = createServerFn({ method: "GET" })
               fileSize: typeof t?.fileSize === "number" ? t.fileSize : undefined,
               channels: t?.channels ?? undefined,
               format: t?.format ?? undefined,
-              icon: t?.display?.icon16x16 ?? undefined,
+              icon: pickIcon(t) ?? pickIcon(ch),
             })),
           }),
         );
