@@ -34,6 +34,7 @@ import { getPlaylistTracks } from "@/lib/players.functions";
 import {
   deleteCard,
   saveCard,
+  uploadCover,
   uploadTrack,
   type EditableCard,
   type EditableChapter,
@@ -201,7 +202,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     setSaving(true);
     try {
       const res = await doSave({
-        data: { cardId: card.cardId, title, description, chapters },
+        data: { cardId: card.cardId, title, description, cover, chapters },
       });
       if (!res.success) {
         toast.error(res.error ?? "Couldn't save playlist");
@@ -388,7 +389,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                   </Button>
                 </div>
 
-                {ch.tracks.length > 1 && (
+                {ch.tracks.length > 0 && (
                   <div className="mt-2 space-y-1 pl-8">
                     {ch.tracks.map((t, ti) => {
                       const tUrl = urlByTitle.get(t.title);
