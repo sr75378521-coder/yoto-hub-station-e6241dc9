@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  Image as ImageIcon,
   Loader2,
   Plus,
   Save,
@@ -34,6 +35,7 @@ import { getPlaylistTracks } from "@/lib/players.functions";
 import {
   deleteCard,
   saveCard,
+  uploadCover,
   uploadTrack,
   type EditableCard,
   type EditableChapter,
@@ -53,17 +55,21 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
   const doSave = useServerFn(saveCard);
   const doDelete = useServerFn(deleteCard);
   const doUpload = useServerFn(uploadTrack);
+  const doUploadCover = useServerFn(uploadCover);
   const fetchTracks = useServerFn(getPlaylistTracks);
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description);
+  const [cover, setCover] = useState(card.cover);
   const [chapters, setChapters] = useState<EditableChapter[]>(card.chapters);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [coverBusy, setCoverBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   // Resolved, streamable URLs so each track can also be downloaded.
@@ -80,6 +86,46 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     }
     return map;
   }, [resolved]);
+
+  const downloadAll = async () => {
+    const list = (resolved?.tracks ?? []).filter((t) => t.url);
+    if (!list.length) {
+      toast.error("No downloadable audio for this playlist yet");
+      return;
+    }
+    toast.success(`Downloading ${list.length} track${list.length === 1 ? "" : "s"}…`);
+    for (const [i, t] of list.entries()) {
+      const a = document.createElement("a");
+      a.href = downloadHref(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`);
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 700));
+    }
+  };
+
+  const handleCover = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setCoverBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await doUploadCover({ data: fd });
+      if (!res.success || !res.url) {
+        toast.error(res.error ?? "Couldn't upload cover");
+        return;
+      }
+      setCover(res.url);
+      setDirty(true);
+      toast.success("New cover ready — click Save to apply");
+    } finally {
+      setCoverBusy(false);
+      if (coverRef.current) coverRef.current.value = "";
+    }
+  };
+
 
 
   const mutate = (next: EditableChapter[]) => {
@@ -157,7 +203,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     setSaving(true);
     try {
       const res = await doSave({
-        data: { cardId: card.cardId, title, description, chapters },
+        data: { cardId: card.cardId, title, description, cover, chapters },
       });
       if (!res.success) {
         toast.error(res.error ?? "Couldn't save playlist");
@@ -225,31 +271,71 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="pl-title">Title</Label>
-            <Input
-              id="pl-title"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                setDirty(true);
-              }}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="space-y-2">
+            <Label>Album cover</Label>
+            <div className="relative">
+              {cover ? (
+                <img
+                  src={cover}
+                  alt="Album cover"
+                  className="size-28 rounded-2xl border border-border object-cover"
+                />
+              ) : (
+                <div className="flex size-28 items-center justify-center rounded-2xl border-2 border-dashed border-border text-xs text-muted-foreground">
+                  No cover
+                </div>
+              )}
+            </div>
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => void handleCover(e.target.files)}
             />
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-28"
+              disabled={coverBusy}
+              onClick={() => coverRef.current?.click()}
+            >
+              {coverBusy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ImageIcon className="size-4" />
+              )}
+              Change
+            </Button>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="pl-desc">Description</Label>
-            <Textarea
-              id="pl-desc"
-              rows={2}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                setDirty(true);
-              }}
-            />
+          <div className="grid flex-1 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pl-title">Title</Label>
+              <Input
+                id="pl-title"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setDirty(true);
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pl-desc">Description</Label>
+              <Textarea
+                id="pl-desc"
+                rows={3}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setDirty(true);
+                }}
+              />
+            </div>
           </div>
         </div>
+
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -265,6 +351,14 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                 className="hidden"
                 onChange={(e) => void handleFiles(e.target.files)}
               />
+              <Button
+                size="sm"
+                variant="outline"
+                className="mr-2"
+                onClick={() => void downloadAll()}
+              >
+                <Download className="size-4" /> Download all
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -344,7 +438,7 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                   </Button>
                 </div>
 
-                {ch.tracks.length > 1 && (
+                {ch.tracks.length > 0 && (
                   <div className="mt-2 space-y-1 pl-8">
                     {ch.tracks.map((t, ti) => {
                       const tUrl = urlByTitle.get(t.title);

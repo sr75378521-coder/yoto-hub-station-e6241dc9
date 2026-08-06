@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconGrid, IconUploadButton, useYotoIcons } from "@/components/app/IconPicker";
+import { PixelIconEditor } from "@/components/app/PixelIconEditor";
 
 export const Route = createFileRoute("/_authenticated/icons")({
   head: () => ({
@@ -42,6 +43,7 @@ function IconsPage() {
   return (
     <AppShell title="My Icons">
       <div className="mx-auto max-w-5xl space-y-6">
+        <PixelIconEditor />
         <div className="rounded-3xl bg-[image:var(--gradient-player)] p-6">
           <h2 className="flex items-center gap-2 text-2xl font-bold">
             <Sparkles className="size-6 text-primary" /> My Yoto icons

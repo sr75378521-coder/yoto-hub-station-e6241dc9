@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Disc3, Loader2, Music } from "lucide-react";
+import { ArrowLeft, Clock, Disc3, Download, Loader2, Music } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getPlaylistDetails } from "@/lib/players.functions";
+import { getPlaylistDetails, getPlaylistTracks } from "@/lib/players.functions";
 import { getCardForEdit } from "@/lib/yoto/myo.functions";
 import { PlaylistEditor } from "@/components/app/PlaylistEditor";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
@@ -98,11 +98,83 @@ function PlaylistDetailPage() {
           </CardHeader>
         </Card>
 
+        <FilesCard playlistId={p.cardId ?? playlistId} />
+
         <EditorSection cardId={p.cardId ?? playlistId} />
       </div>
     </AppShell>
   );
 }
+
+function FilesCard({ playlistId }: { playlistId: string }) {
+  const fetchTracks = useServerFn(getPlaylistTracks);
+  const { data, isLoading } = useQuery({
+    queryKey: ["playlist-tracks", playlistId],
+    queryFn: () => fetchTracks({ data: { playlistId } }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const tracks = (data?.tracks ?? []).filter((t) => t.url);
+  const dl = (url: string, name: string) =>
+    `${url}${url.includes("?") ? "&" : "?"}dl=${encodeURIComponent(`${name}.mp3`)}`;
+
+  const downloadAll = async () => {
+    for (const [i, t] of tracks.entries()) {
+      const a = document.createElement("a");
+      a.href = dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`);
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 700));
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
+        {tracks.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => void downloadAll()}>
+            <Download className="size-4" /> Download all
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-1">
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading files…
+          </div>
+        ) : tracks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No downloadable audio files for this playlist.
+          </p>
+        ) : (
+          tracks.map((t, i) => (
+            <div
+              key={t.key}
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-secondary/60"
+            >
+              <span className="w-6 text-xs tabular-nums text-muted-foreground">{i + 1}.</span>
+              <span className="min-w-0 flex-1 truncate text-sm">{t.title}</span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {t.duration
+                  ? `${Math.floor(t.duration / 60)}:${String(Math.floor(t.duration % 60)).padStart(2, "0")}`
+                  : ""}
+              </span>
+              <Button size="icon" variant="ghost" className="size-8" asChild>
+                <a href={dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`)} download>
+                  <Download className="size-4" />
+                </a>
+              </Button>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function EditorSection({ cardId }: { cardId: string }) {
   const fetchCard = useServerFn(getCardForEdit);

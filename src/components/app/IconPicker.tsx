@@ -19,7 +19,7 @@ export function iconSrc(ref?: string | null): string | undefined {
   if (!ref) return undefined;
   if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
-  return id ? `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64` : undefined;
+  return id ? `https://media-secure.yotoplay.com/icons/${id}` : undefined;
 }
 
 export function useYotoIcons() {
