@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { yotoGetJson, yotoPost } from "@/lib/yoto/api.server";
-import { deleteCardRaw, uploadAudioToYoto } from "@/lib/yoto/myo.server";
+import { deleteCardRaw, uploadAudioToYoto, uploadCoverImageRaw } from "@/lib/yoto/myo.server";
 
 export interface EditableTrack {
   key: string;
