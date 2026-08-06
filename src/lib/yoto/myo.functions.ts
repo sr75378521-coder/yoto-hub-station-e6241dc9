@@ -236,3 +236,25 @@ export const uploadTrack = createServerFn({ method: "POST" })
       }
     },
   );
+
+export const uploadCover = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => {
+    if (!(d instanceof FormData)) throw new Error("FormData required");
+    const file = d.get("file");
+    if (!(file instanceof File)) throw new Error("file required");
+    return { file };
+  })
+  .handler(async ({ context, data }): Promise<{ success: boolean; url?: string; error?: string }> => {
+    try {
+      const bytes = await data.file.arrayBuffer();
+      const url = await uploadCoverImageRaw(context.userId, {
+        name: data.file.name,
+        type: data.file.type,
+        bytes,
+      });
+      return { success: true, url };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
