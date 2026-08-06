@@ -53,17 +53,21 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
   const doSave = useServerFn(saveCard);
   const doDelete = useServerFn(deleteCard);
   const doUpload = useServerFn(uploadTrack);
+  const doUploadCover = useServerFn(uploadCover);
   const fetchTracks = useServerFn(getPlaylistTracks);
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description);
+  const [cover, setCover] = useState(card.cover);
   const [chapters, setChapters] = useState<EditableChapter[]>(card.chapters);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [coverBusy, setCoverBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   // Resolved, streamable URLs so each track can also be downloaded.
@@ -80,6 +84,46 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     }
     return map;
   }, [resolved]);
+
+  const downloadAll = async () => {
+    const list = (resolved?.tracks ?? []).filter((t) => t.url);
+    if (!list.length) {
+      toast.error("No downloadable audio for this playlist yet");
+      return;
+    }
+    toast.success(`Downloading ${list.length} track${list.length === 1 ? "" : "s"}…`);
+    for (const [i, t] of list.entries()) {
+      const a = document.createElement("a");
+      a.href = downloadHref(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`);
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 700));
+    }
+  };
+
+  const handleCover = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setCoverBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await doUploadCover({ data: fd });
+      if (!res.success || !res.url) {
+        toast.error(res.error ?? "Couldn't upload cover");
+        return;
+      }
+      setCover(res.url);
+      setDirty(true);
+      toast.success("New cover ready — click Save to apply");
+    } finally {
+      setCoverBusy(false);
+      if (coverRef.current) coverRef.current.value = "";
+    }
+  };
+
 
 
   const mutate = (next: EditableChapter[]) => {
