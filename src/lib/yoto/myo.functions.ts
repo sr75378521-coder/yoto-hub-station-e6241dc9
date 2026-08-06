@@ -138,13 +138,40 @@ export const saveCard = createServerFn({ method: "POST" })
         };
       });
 
+      // Preserve everything Yoto already stores on this card (cover art,
+      // author, category, etc.) — a bare metadata object wipes the cover.
+      let existingMeta: Record<string, any> = {};
+      if (data.cardId) {
+        try {
+          const cur = await yotoGetJson<Record<string, any>>(
+            context.userId,
+            `/content/${data.cardId}`,
+          );
+          existingMeta = ((cur?.card ?? cur) as Record<string, any>)?.metadata ?? {};
+        } catch {
+          existingMeta = {};
+        }
+      }
+
+      const cover = data.cover?.trim()
+        ? { imageL: data.cover.trim() }
+        : (existingMeta.cover ?? undefined);
+
       const body: Record<string, unknown> = {
         ...(data.cardId ? { cardId: data.cardId } : {}),
         title: data.title,
         content: { chapters },
         metadata: {
+          ...existingMeta,
+          title: data.title,
           description: data.description,
-          media: { duration: totalDuration, fileSize: totalSize },
+          ...(data.author !== undefined ? { author: data.author } : {}),
+          ...(cover ? { cover } : {}),
+          media: {
+            ...(existingMeta.media ?? {}),
+            duration: totalDuration,
+            fileSize: totalSize,
+          },
         },
       };
 
