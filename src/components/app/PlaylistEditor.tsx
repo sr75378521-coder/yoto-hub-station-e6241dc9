@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  Image as ImageIcon,
   Loader2,
   Plus,
   Save,
@@ -350,6 +351,14 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                 className="hidden"
                 onChange={(e) => void handleFiles(e.target.files)}
               />
+              <Button
+                size="sm"
+                variant="outline"
+                className="mr-2"
+                onClick={() => void downloadAll()}
+              >
+                <Download className="size-4" /> Download all
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
