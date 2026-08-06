@@ -91,6 +91,8 @@ export const saveCard = createServerFn({ method: "POST" })
       cardId?: unknown;
       title?: unknown;
       description?: unknown;
+      cover?: unknown;
+      author?: unknown;
       chapters?: unknown;
     };
     if (typeof o?.title !== "string" || !o.title.trim()) throw new Error("Title required");
@@ -99,6 +101,8 @@ export const saveCard = createServerFn({ method: "POST" })
       cardId: typeof o.cardId === "string" ? o.cardId : undefined,
       title: o.title,
       description: typeof o.description === "string" ? o.description : "",
+      cover: typeof o.cover === "string" ? o.cover : undefined,
+      author: typeof o.author === "string" ? o.author : undefined,
       chapters: o.chapters as EditableChapter[],
     };
   })
