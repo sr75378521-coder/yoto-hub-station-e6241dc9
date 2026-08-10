@@ -140,14 +140,18 @@ export function IconPicker({
   value,
   onChange,
   label = "Choose icon",
+  onApplyAll,
 }: {
   value?: string;
   onChange: (ref: string) => void;
   label?: string;
+  /** When provided, the dialog shows an "apply to every track" action. */
+  onApplyAll?: (ref: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const { data, isLoading } = useYotoIcons();
+  const resolve = useIconSrc();
 
   const icons = useMemo(() => {
     const all = data?.icons ?? [];
@@ -155,7 +159,8 @@ export function IconPicker({
     return needle ? all.filter((i) => i.title.toLowerCase().includes(needle)) : all;
   }, [data, q]);
 
-  const src = iconSrc(value);
+  const src = resolve(value);
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
