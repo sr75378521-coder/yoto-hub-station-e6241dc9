@@ -100,7 +100,10 @@ function PlaylistDetailPage() {
 
         <FilesCard playlistId={p.cardId ?? playlistId} />
 
+        <LinkCardSection cardId={p.cardId ?? playlistId} />
+
         <EditorSection cardId={p.cardId ?? playlistId} />
+
       </div>
     </AppShell>
   );
