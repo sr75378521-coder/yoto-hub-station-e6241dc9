@@ -179,7 +179,51 @@ function FilesCard({ playlistId }: { playlistId: string }) {
 }
 
 
+function LinkCardSection({ cardId }: { cardId: string }) {
+  const doLink = useServerFn(linkPhysicalCard);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const link = async () => {
+    if (!code.trim()) return toast.error("Enter the card's code");
+    setBusy(true);
+    try {
+      const res = await doLink({ data: { contentId: cardId, cardId: code.trim() } });
+      if (!res.success) toast.error(res.error ?? "Couldn't link that card");
+      else toast.success("Card linked to this playlist");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't link that card");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Link a physical card</CardTitle>
+        <CardDescription>
+          Enter the code from a blank Make Your Own card to point it at this playlist.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          placeholder="Card code (e.g. abc123)"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="sm:max-w-xs"
+        />
+        <Button onClick={() => void link()} disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <LinkIcon className="size-4" />}
+          Link card
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function EditorSection({ cardId }: { cardId: string }) {
+
   const fetchCard = useServerFn(getCardForEdit);
   const { data, isLoading } = useQuery({
     queryKey: ["card-edit", cardId],
