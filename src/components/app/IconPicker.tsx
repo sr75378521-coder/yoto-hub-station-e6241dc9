@@ -216,6 +216,22 @@ export function IconPicker({
             />
           )}
         </div>
+        {onApplyAll && (
+          <div className="flex justify-end border-t border-border/60 pt-3">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!value}
+              onClick={() => {
+                if (value) onApplyAll(value);
+                setOpen(false);
+              }}
+            >
+              <Sparkles className="size-4" /> Apply this icon to all tracks
+            </Button>
+          </div>
+        )}
+
       </DialogContent>
     </Dialog>
   );
