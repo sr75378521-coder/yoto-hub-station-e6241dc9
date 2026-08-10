@@ -488,7 +488,9 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                               ),
                             )
                           }
+                          onApplyAll={applyIconToAll}
                         />
+
                         <Input
                           value={t.title}
                           onChange={(e) => renameTrack(ci, ti, e.target.value)}
