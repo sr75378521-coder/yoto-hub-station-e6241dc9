@@ -133,6 +133,18 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     setDirty(true);
   };
 
+  const applyIconToAll = (ref: string) => {
+    mutate(
+      chapters.map((c) => ({
+        ...c,
+        icon: ref,
+        tracks: c.tracks.map((t) => ({ ...t, icon: ref })),
+      })),
+    );
+    toast.success("Icon applied to every track");
+  };
+
+
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= chapters.length) return;
