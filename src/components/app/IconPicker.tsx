@@ -19,7 +19,7 @@ export function iconSrc(ref?: string | null): string | undefined {
   if (!ref) return undefined;
   if (/^https?:\/\//.test(ref)) return ref;
   const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
-  return id ? `https://media-secure.yotoplay.com/icons/${id}` : undefined;
+  return id ? `https://media-secure.yotoplay.com/icons/${id}?width=64&height=64` : undefined;
 }
 
 export function useYotoIcons() {
@@ -30,6 +30,32 @@ export function useYotoIcons() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+/**
+ * Resolves a card's stored icon ref to a real image URL. Yoto's direct
+ * media-secure URLs sometimes 403, so prefer the URL that came back with the
+ * icon listing and fall back to the direct one.
+ */
+export function useIconSrc() {
+  const { data } = useYotoIcons();
+  const map = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const i of data?.icons ?? []) {
+      if (i.url) {
+        m.set(i.ref, i.url);
+        m.set(i.mediaId, i.url);
+      }
+    }
+    return m;
+  }, [data]);
+  return (ref?: string | null): string | undefined => {
+    if (!ref) return undefined;
+    if (/^https?:\/\//.test(ref)) return ref;
+    const id = ref.startsWith("yoto:#") ? ref.slice(6) : ref;
+    return map.get(ref) ?? map.get(id) ?? iconSrc(ref);
+  };
+}
+
 
 export function IconUploadButton({ onUploaded }: { onUploaded?: (icon: YotoIcon) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
