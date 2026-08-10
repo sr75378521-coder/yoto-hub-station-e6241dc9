@@ -1,14 +1,24 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Wrench, ListMusic, Sparkles, Settings, Radio } from "lucide-react";
+import {
+  LayoutDashboard,
+  Wrench,
+  ListMusic,
+  Sparkles,
+  Settings,
+  Radio,
+  AudioWaveform,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Players", icon: LayoutDashboard },
   { to: "/tools", label: "Tools", icon: Wrench },
+  { to: "/audio", label: "Audio Playground", icon: AudioWaveform },
   { to: "/playlists", label: "Playlists", icon: ListMusic },
   { to: "/icons", label: "My Icons", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
+
 
 
 export function AppSidebar() {

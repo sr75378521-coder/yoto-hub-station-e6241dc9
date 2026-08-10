@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Disc3, Download, Loader2, Music } from "lucide-react";
+import { ArrowLeft, Clock, Disc3, Download, Link2, Loader2, Music } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getPlaylistDetails, getPlaylistTracks } from "@/lib/players.functions";
-import { getCardForEdit } from "@/lib/yoto/myo.functions";
+import { getCardForEdit, linkPhysicalCard } from "@/lib/yoto/myo.functions";
 import { PlaylistEditor } from "@/components/app/PlaylistEditor";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
 import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
+
 
 
 const detailsQuery = (fn: (a: { data: { playlistId: string } }) => Promise<any>, id: string) =>
@@ -100,7 +104,10 @@ function PlaylistDetailPage() {
 
         <FilesCard playlistId={p.cardId ?? playlistId} />
 
+        <LinkCardSection cardId={p.cardId ?? playlistId} />
+
         <EditorSection cardId={p.cardId ?? playlistId} />
+
       </div>
     </AppShell>
   );
@@ -176,7 +183,51 @@ function FilesCard({ playlistId }: { playlistId: string }) {
 }
 
 
+function LinkCardSection({ cardId }: { cardId: string }) {
+  const doLink = useServerFn(linkPhysicalCard);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const link = async () => {
+    if (!code.trim()) return toast.error("Enter the card's code");
+    setBusy(true);
+    try {
+      const res = await doLink({ data: { contentId: cardId, cardId: code.trim() } });
+      if (!res.success) toast.error(res.error ?? "Couldn't link that card");
+      else toast.success("Card linked to this playlist");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't link that card");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Link a physical card</CardTitle>
+        <CardDescription>
+          Enter the code from a blank Make Your Own card to point it at this playlist.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          placeholder="Card code (e.g. abc123)"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="sm:max-w-xs"
+        />
+        <Button onClick={() => void link()} disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
+          Link card
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function EditorSection({ cardId }: { cardId: string }) {
+
   const fetchCard = useServerFn(getCardForEdit);
   const { data, isLoading } = useQuery({
     queryKey: ["card-edit", cardId],
