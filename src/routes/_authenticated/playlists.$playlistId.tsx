@@ -218,7 +218,7 @@ function LinkCardSection({ cardId }: { cardId: string }) {
           className="sm:max-w-xs"
         />
         <Button onClick={() => void link()} disabled={busy}>
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <LinkIcon className="size-4" />}
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />}
           Link card
         </Button>
       </CardContent>
