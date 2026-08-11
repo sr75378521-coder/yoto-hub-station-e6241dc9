@@ -466,7 +466,9 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                   </Button>
                 </div>
 
-                {ch.tracks.length > 0 && (
+                {/* Only list tracks separately when a chapter holds more than
+                    one — otherwise the single track duplicates the row above. */}
+                {ch.tracks.length > 1 && (
                   <div className="mt-2 space-y-1 pl-8">
                     {ch.tracks.map((t, ti) => {
                       const tUrl = urlByTitle.get(t.title);
