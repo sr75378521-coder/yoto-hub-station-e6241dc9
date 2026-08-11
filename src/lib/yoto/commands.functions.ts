@@ -112,6 +112,48 @@ export const playerPlayCard = createServerFn({ method: "POST" })
     }),
   );
 
+/**
+ * Read the card currently sitting in a player's NFC slot.
+ * Yoto exposes this on the device status payload under a few different keys
+ * depending on firmware, so probe all the known ones.
+ */
+export const getInsertedCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => baseInput.parse(d))
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ success: boolean; cardId?: string; title?: string; error?: string }> => {
+      try {
+        const res = await yotoGetJson<Record<string, any>>(
+          context.userId,
+          `/device-v2/${encodeURIComponent(data.deviceId)}/status`,
+        );
+        const s = (res?.status ?? res?.device?.status ?? res ?? {}) as Record<string, any>;
+        const p = (s.playback ?? s.player ?? {}) as Record<string, any>;
+        const cardId =
+          pickString(
+            s.cardId,
+            s.card,
+            s.activeCard,
+            s.nfcCardId,
+            s.insertedCard,
+            p.cardId,
+            p.card,
+            res?.device?.cardId,
+          ) ?? undefined;
+        if (!cardId || cardId === "none")
+          return { success: false, error: "No card is in that player right now" };
+        const title = pickString(s.cardTitle, p.cardTitle, s.title) ?? undefined;
+        return { success: true, cardId, title };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );
+
+
 /** Fetch live status for a single device. */
 export interface PlayerStatus {
   deviceId: string;

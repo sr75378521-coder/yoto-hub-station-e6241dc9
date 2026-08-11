@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getPlaylistsData, type PlaylistData, type PlaylistSummary } from "@/lib/players.functions";
-import { Music, Plus, RefreshCw, Search, Clock, Disc3 } from "lucide-react";
+import { Music, Plus, RefreshCw, Search, Clock, Disc3, Eye, Pencil } from "lucide-react";
 
 const playlistsQuery = (fn: () => Promise<PlaylistData>) =>
   queryOptions({
@@ -226,7 +226,7 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
               </div>
             )}
           </div>
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             <Button
               variant="outline"
               size="sm"
@@ -235,17 +235,37 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
                 navigate({
                   to: "/playlists/$playlistId",
                   params: { playlistId: playlist.playlistId },
+                  search: { mode: "view" },
                 })
               }
             >
-              {playlist.isEditable ? "Edit" : "View"}
+              <Eye className="size-4" />
+              View
             </Button>
+            {playlist.isEditable && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() =>
+                  navigate({
+                    to: "/playlists/$playlistId",
+                    params: { playlistId: playlist.playlistId },
+                    search: { mode: "edit" },
+                  })
+                }
+              >
+                <Pencil className="size-4" />
+                Edit
+              </Button>
+            )}
             <PlayOnDeviceButton
               cardId={playlist.playlistId}
-              variant="ghost"
+              variant="default"
               className="flex-1"
             />
           </div>
+
         </div>
       </CardContent>
     </Card>

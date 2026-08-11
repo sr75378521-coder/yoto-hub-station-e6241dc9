@@ -412,7 +412,8 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
               const chUrl = urlByTitle.get(ch.tracks[0]?.title ?? "") ?? urlByTitle.get(ch.title);
               return (
               <div key={`${ch.key}-${ci}`} className="rounded-2xl border border-border/70 p-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+
                   <span className="w-6 text-xs tabular-nums text-muted-foreground">{ci + 1}.</span>
                   <IconPicker
                     value={ch.icon}
@@ -466,7 +467,9 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
                   </Button>
                 </div>
 
-                {ch.tracks.length > 0 && (
+                {/* Only list tracks separately when a chapter holds more than
+                    one — otherwise the single track duplicates the row above. */}
+                {ch.tracks.length > 1 && (
                   <div className="mt-2 space-y-1 pl-8">
                     {ch.tracks.map((t, ti) => {
                       const tUrl = urlByTitle.get(t.title);

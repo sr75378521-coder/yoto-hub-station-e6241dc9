@@ -80,7 +80,11 @@ export function PlayOnDeviceButton({
     }
   };
 
-  const players = data?.players ?? [];
+  // Online players first — they're the ones you can actually stream to now.
+  const players = [...(data?.players ?? [])].sort(
+    (a, b) => Number(b.online) - Number(a.online),
+  );
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -90,7 +94,7 @@ export function PlayOnDeviceButton({
           {label}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Play</DialogTitle>
           <DialogDescription>Play in this browser or on a Yoto player.</DialogDescription>
