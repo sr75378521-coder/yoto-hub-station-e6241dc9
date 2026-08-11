@@ -94,7 +94,7 @@ export function PlayOnDeviceButton({
           {label}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Play</DialogTitle>
           <DialogDescription>Play in this browser or on a Yoto player.</DialogDescription>
