@@ -13,7 +13,10 @@ import {
   Repeat,
   Repeat1,
   Moon,
+  Rewind,
+  FastForward,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -146,7 +149,7 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
       </div>
 
       {/* Transport */}
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -155,6 +158,19 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           aria-label="Previous"
         >
           <SkipBack className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={disabled || seek.isPending}
+          onClick={() =>
+            seek.mutate({
+              data: { deviceId, positionSeconds: Math.max(0, Math.round(position) - 10) },
+            })
+          }
+          aria-label="Back 10 seconds"
+        >
+          <Rewind className="size-4" />
         </Button>
         {playing ? (
           <Button
@@ -178,6 +194,22 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         <Button
           variant="ghost"
           size="icon"
+          disabled={disabled || seek.isPending}
+          onClick={() =>
+            seek.mutate({
+              data: {
+                deviceId,
+                positionSeconds: Math.round(position) + 10,
+              },
+            })
+          }
+          aria-label="Forward 10 seconds"
+        >
+          <FastForward className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           disabled={disabled || stop.isPending}
           onClick={() => stop.mutate({ data: { deviceId } })}
           aria-label="Stop"
@@ -194,6 +226,7 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           <SkipForward className="size-4" />
         </Button>
       </div>
+
 
       {/* Volume + Mute */}
       <div className="flex items-center gap-2">
