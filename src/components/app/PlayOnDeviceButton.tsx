@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getDashboardData, getPlaylistTracks } from "@/lib/players.functions";
-import { playerPlayCard } from "@/lib/yoto/commands.functions";
+import { yotoDevice } from "@/lib/yoto/mqtt-client";
 import { useWebPlayer } from "./WebPlayer";
 
 interface Props {
@@ -35,7 +35,6 @@ export function PlayOnDeviceButton({
   const [busyId, setBusyId] = useState<string | null>(null);
   const fetchDashboard = useServerFn(getDashboardData);
   const fetchTracks = useServerFn(getPlaylistTracks);
-  const playCard = useServerFn(playerPlayCard);
   const { playQueue } = useWebPlayer();
 
   const { data, isLoading } = useQuery({
@@ -47,7 +46,7 @@ export function PlayOnDeviceButton({
   const handlePlay = async (deviceId: string) => {
     setBusyId(deviceId);
     try {
-      await playCard({ data: { deviceId, cardId } });
+      await yotoDevice.startCard(deviceId, { cardId });
       toast.success("Playing on your Yoto");
       setOpen(false);
     } catch (e) {
@@ -138,7 +137,7 @@ export function PlayOnDeviceButton({
               key={p.deviceId}
               variant="outline"
               className="w-full justify-between"
-              disabled={busyId !== null}
+              disabled={busyId !== null || !p.online}
               onClick={() => handlePlay(p.deviceId)}
             >
               <span className="flex items-center gap-2">
@@ -146,6 +145,7 @@ export function PlayOnDeviceButton({
                   className={`inline-block size-2 rounded-full ${p.online ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
                 />
                 {p.name}
+                {!p.online && " (offline)"}
               </span>
               {busyId === p.deviceId ? (
                 <Loader2 className="size-4 animate-spin" />
