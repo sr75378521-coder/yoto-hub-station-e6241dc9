@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Link2, Loader2, Nfc, RefreshCw } from "lucide-react";
+import { Loader2, Nfc, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -14,20 +13,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getDashboardData } from "@/lib/players.functions";
-import { getInsertedCard } from "@/lib/yoto/commands.functions";
 import { linkPhysicalCard } from "@/lib/yoto/myo.functions";
+import { readInsertedCard } from "@/lib/yoto/mqtt-client";
 
 /**
- * "Link to card" — pick an online player, read whatever NFC card is inserted
- * in it, and bind that card to this playlist. Manual code entry stays as a
- * fallback for cards that aren't in a player.
+ * "Link to card" — pick an online player, read the NFC card sitting in it
+ * over MQTT, and bind that card to this playlist.
  */
 export function LinkCardDialog({ contentId }: { contentId: string }) {
   const [open, setOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [manual, setManual] = useState("");
   const fetchDashboard = useServerFn(getDashboardData);
-  const readCard = useServerFn(getInsertedCard);
   const doLink = useServerFn(linkPhysicalCard);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
@@ -36,40 +32,28 @@ export function LinkCardDialog({ contentId }: { contentId: string }) {
     enabled: open,
   });
 
-  const players = data?.players ?? [];
-
-  const link = async (cardId: string) => {
-    const res = await doLink({ data: { contentId, cardId } });
-    if (!res.success) {
-      toast.error(res.error ?? "Couldn't link that card");
-      return false;
-    }
-    toast.success("Card linked to this playlist");
-    setOpen(false);
-    return true;
-  };
+  const players = [...(data?.players ?? [])].sort(
+    (a, b) => Number(b.online) - Number(a.online),
+  );
 
   const linkViaPlayer = async (deviceId: string) => {
     setBusyId(deviceId);
     try {
-      const read = await readCard({ data: { deviceId } });
-      if (!read.success || !read.cardId) {
-        toast.error(read.error ?? "Put a card in that player, then try again");
+      toast.info("Reading the card in your player…");
+      const { cardId } = await readInsertedCard(deviceId);
+      if (!cardId) {
+        toast.error("No card detected — put a Make Your Own card in that player and try again");
         return;
       }
-      await link(read.cardId);
+      const res = await doLink({ data: { contentId, cardId } });
+      if (!res.success) {
+        toast.error(res.error ?? "Couldn't link that card");
+        return;
+      }
+      toast.success("Card linked to this playlist");
+      setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read the card");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const linkManual = async () => {
-    if (!manual.trim()) return toast.error("Enter a card code");
-    setBusyId("__manual__");
-    try {
-      await link(manual.trim());
     } finally {
       setBusyId(null);
     }
@@ -140,29 +124,6 @@ export function LinkCardDialog({ contentId }: { contentId: string }) {
               )}
             </Button>
           ))}
-
-          <div className="flex items-center gap-3 py-1">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or enter a code</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              placeholder="Card code"
-              value={manual}
-              onChange={(e) => setManual(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={() => void linkManual()} disabled={busyId !== null}>
-              {busyId === "__manual__" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Link2 className="size-4" />
-              )}
-              Link
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
