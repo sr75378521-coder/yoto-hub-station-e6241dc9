@@ -1,54 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { yotoGetJson, YotoNotConnectedError } from "@/lib/yoto/api.server";
+import { getValidAccessToken } from "@/lib/yoto/tokens.server";
 
-export interface MqttCredentials {
+export interface YotoMqttAuth {
   available: boolean;
   url?: string;
-  username?: string;
-  password?: string;
-  clientId?: string;
-  topicPrefix?: string;
+  token?: string;
   reason?: string;
 }
 
 /**
- * Best-effort fetch of MQTT credentials from Yoto.
- * The official endpoint is not publicly documented; we try a couple of
- * known paths and return `available: false` when none work so the client
- * gracefully falls back to REST polling.
+ * Yoto players are controlled over MQTT (AWS IoT), authenticated with the
+ * user's own Yoto access token as the MQTT password — see
+ * https://yoto.dev/players-mqtt/connecting-to-players/
+ * The REST /device-v2/{id}/status + /command endpoints require private
+ * scopes that public apps cannot get, so everything live goes through here.
  */
-export const getMqttCredentials = createServerFn({ method: "GET" })
+export const getYotoMqttAuth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<MqttCredentials> => {
-    const candidates = [
-      "/device-v2/mqtt/credentials",
-      "/device-v2/mqtt/client",
-      "/mqtt/credentials",
-    ];
-    for (const path of candidates) {
-      try {
-        const data = await yotoGetJson<Record<string, any>>(context.userId, path);
-        const url =
-          data.url ?? data.wssUrl ?? data.endpoint
-            ? (data.wssUrl as string) ?? (data.url as string) ?? (data.endpoint as string)
-            : undefined;
-        if (url) {
-          return {
-            available: true,
-            url,
-            username: data.username,
-            password: data.password ?? data.token,
-            clientId: data.clientId,
-            topicPrefix: data.topicPrefix ?? "device/",
-          };
-        }
-      } catch (e) {
-        if (e instanceof YotoNotConnectedError) {
-          return { available: false, reason: "not_connected" };
-        }
-        // try next candidate
-      }
-    }
-    return { available: false, reason: "unavailable" };
+  .handler(async ({ context }): Promise<YotoMqttAuth> => {
+    const token = await getValidAccessToken(context.userId);
+    if (!token) return { available: false, reason: "not_connected" };
+    return {
+      available: true,
+      url: "wss://aqrphjqbp3u2z-ats.iot.eu-west-2.amazonaws.com/mqtt",
+      token,
+    };
   });

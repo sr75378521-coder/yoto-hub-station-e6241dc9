@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import {
   Play,
   Pause,
@@ -9,12 +7,10 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
-  Shuffle,
-  Repeat,
-  Repeat1,
   Moon,
   Rewind,
   FastForward,
+  BatteryCharging,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,21 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import {
-  getPlayerStatus,
-  playerPause,
-  playerPlay,
-  playerStop,
-  playerNext,
-  playerPrevious,
-  playerSeek,
-  playerSetVolume,
-  playerMute,
-  playerShuffle,
-  playerRepeat,
-  playerSleepTimer,
-  type PlayerStatus,
-} from "@/lib/yoto/commands.functions";
+import { useYotoDevice } from "@/hooks/useYotoRealtime";
+import { yotoDevice } from "@/lib/yoto/mqtt-client";
 
 function fmt(sec: number | null | undefined) {
   if (sec == null || !Number.isFinite(sec)) return "--:--";
@@ -51,76 +34,60 @@ function fmt(sec: number | null | undefined) {
   return `${m}:${r.toString().padStart(2, "0")}`;
 }
 
+const bump = (key: string | null, delta: number) => {
+  const n = Number(key ?? "1");
+  const next = Math.max(1, (Number.isFinite(n) ? n : 1) + delta);
+  return next.toString().padStart(2, "0");
+};
+
 interface Props {
   deviceId: string;
   initialOnline: boolean;
 }
 
+/**
+ * All player control happens over MQTT (yoto.dev/players-mqtt) — the REST
+ * command endpoints need private scopes that public apps can't request.
+ */
 export function PlayerControls({ deviceId, initialOnline }: Props) {
-  const fetchStatus = useServerFn(getPlayerStatus);
-  const qc = useQueryClient();
-  const key = ["player-status", deviceId];
-
-  const query = useQuery({
-    queryKey: key,
-    queryFn: () => fetchStatus({ data: { deviceId } }),
-    refetchInterval: 5000,
-    enabled: initialOnline,
-  });
-
-  const status: PlayerStatus | null =
-    query.data && !("notConnected" in query.data) ? (query.data as PlayerStatus) : null;
-
-  const invalidate = () => qc.invalidateQueries({ queryKey: key });
-
-  const wrap = <T,>(fn: (arg: T) => Promise<unknown>, msg: string) =>
-    useMutation({
-      mutationFn: fn,
-      onError: (e) => toast.error(`${msg}: ${(e as Error).message}`),
-      onSuccess: () => setTimeout(invalidate, 400),
-    });
-
-  const play = wrap(useServerFn(playerPlay), "Play failed");
-  const pause = wrap(useServerFn(playerPause), "Pause failed");
-  const stop = wrap(useServerFn(playerStop), "Stop failed");
-  const next = wrap(useServerFn(playerNext), "Next failed");
-  const prev = wrap(useServerFn(playerPrevious), "Previous failed");
-  const seek = wrap(useServerFn(playerSeek), "Seek failed");
-  const setVol = wrap(useServerFn(playerSetVolume), "Volume failed");
-  const mute = wrap(useServerFn(playerMute), "Mute failed");
-  const shuf = wrap(useServerFn(playerShuffle), "Shuffle failed");
-  const rep = wrap(useServerFn(playerRepeat), "Repeat failed");
-  const sleep = wrap(useServerFn(playerSleepTimer), "Sleep timer failed");
-
-  // Local slider state so drag feels smooth
+  const { state } = useYotoDevice(deviceId, initialOnline);
   const [seekLocal, setSeekLocal] = useState<number | null>(null);
   const [volLocal, setVolLocal] = useState<number | null>(null);
+  const [lastVol, setLastVol] = useState(50);
 
-  const position = seekLocal ?? status?.positionSeconds ?? 0;
-  const duration = status?.durationSeconds ?? 0;
-  const volume = volLocal ?? status?.volume ?? 50;
-  const playing = status?.playing ?? false;
-  const muted = status?.muted ?? false;
-  const shuffle = status?.shuffle ?? false;
-  const repeat = status?.repeat ?? "off";
+  const position = seekLocal ?? state?.position ?? 0;
+  const duration = state?.trackLength ?? 0;
+  const volume = volLocal ?? state?.volume ?? 50;
+  const playing = state?.playbackStatus === "playing";
+  const muted = (state?.volume ?? 1) === 0;
+  const cardId = state?.cardId ?? null;
   const disabled = !initialOnline;
 
-  const RepeatIcon = repeat === "one" ? Repeat1 : Repeat;
-  const nextRepeat: Record<typeof repeat, "off" | "one" | "all"> = {
-    off: "all",
-    all: "one",
-    one: "off",
+  const run = (p: Promise<unknown>, msg: string) =>
+    void p.catch((e) => toast.error(`${msg}: ${e instanceof Error ? e.message : "failed"}`));
+
+  const seekTo = (seconds: number, trackDelta = 0) => {
+    if (!cardId) return toast.error("Nothing is playing on this player");
+    run(
+      yotoDevice.startCard(deviceId, {
+        cardId,
+        chapterKey: state?.chapterKey ?? "01",
+        trackKey: bump(state?.trackKey ?? null, trackDelta),
+        secondsIn: Math.max(0, Math.round(seconds)),
+      }),
+      "Playback",
+    );
   };
 
   return (
     <div className="space-y-3">
-      {(status?.trackTitle || status?.cardTitle) && (
+      {(state?.trackTitle || state?.chapterTitle) && (
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {status.trackTitle ?? status.cardTitle}
+            {state.trackTitle ?? state.chapterTitle}
           </p>
-          {status.trackTitle && status.cardTitle && (
-            <p className="truncate text-xs text-muted-foreground">{status.cardTitle}</p>
+          {state.trackTitle && state.chapterTitle && (
+            <p className="truncate text-xs text-muted-foreground">{state.chapterTitle}</p>
           )}
         </div>
       )}
@@ -134,12 +101,12 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           value={[Math.min(position, duration || position)]}
           max={Math.max(duration, position, 1)}
           step={1}
-          disabled={disabled || !duration}
+          disabled={disabled || !duration || !cardId}
           onValueChange={(v) => setSeekLocal(v[0] ?? 0)}
           onValueCommit={(v) => {
             const s = v[0] ?? 0;
             setSeekLocal(null);
-            seek.mutate({ data: { deviceId, positionSeconds: s } });
+            seekTo(s);
           }}
           className="flex-1"
         />
@@ -153,21 +120,17 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || prev.isPending}
-          onClick={() => prev.mutate({ data: { deviceId } })}
-          aria-label="Previous"
+          disabled={disabled || !cardId}
+          onClick={() => seekTo(0, -1)}
+          aria-label="Previous track"
         >
           <SkipBack className="size-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || seek.isPending}
-          onClick={() =>
-            seek.mutate({
-              data: { deviceId, positionSeconds: Math.max(0, Math.round(position) - 10) },
-            })
-          }
+          disabled={disabled || !cardId}
+          onClick={() => seekTo(Math.max(0, position - 10))}
           aria-label="Back 10 seconds"
         >
           <Rewind className="size-4" />
@@ -175,8 +138,8 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         {playing ? (
           <Button
             size="icon"
-            disabled={disabled || pause.isPending}
-            onClick={() => pause.mutate({ data: { deviceId } })}
+            disabled={disabled}
+            onClick={() => run(yotoDevice.pause(deviceId), "Pause")}
             aria-label="Pause"
           >
             <Pause className="size-4" />
@@ -184,8 +147,8 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         ) : (
           <Button
             size="icon"
-            disabled={disabled || play.isPending}
-            onClick={() => play.mutate({ data: { deviceId } })}
+            disabled={disabled}
+            onClick={() => run(yotoDevice.resume(deviceId), "Play")}
             aria-label="Play"
           >
             <Play className="size-4" />
@@ -194,15 +157,8 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || seek.isPending}
-          onClick={() =>
-            seek.mutate({
-              data: {
-                deviceId,
-                positionSeconds: Math.round(position) + 10,
-              },
-            })
-          }
+          disabled={disabled || !cardId}
+          onClick={() => seekTo(position + 10)}
           aria-label="Forward 10 seconds"
         >
           <FastForward className="size-4" />
@@ -210,8 +166,8 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || stop.isPending}
-          onClick={() => stop.mutate({ data: { deviceId } })}
+          disabled={disabled}
+          onClick={() => run(yotoDevice.stop(deviceId), "Stop")}
           aria-label="Stop"
         >
           <Square className="size-4" />
@@ -219,22 +175,28 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || next.isPending}
-          onClick={() => next.mutate({ data: { deviceId } })}
-          aria-label="Next"
+          disabled={disabled || !cardId}
+          onClick={() => seekTo(0, 1)}
+          aria-label="Next track"
         >
           <SkipForward className="size-4" />
         </Button>
       </div>
-
 
       {/* Volume + Mute */}
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled || mute.isPending}
-          onClick={() => mute.mutate({ data: { deviceId, mute: !muted } })}
+          disabled={disabled}
+          onClick={() => {
+            if (muted) {
+              run(yotoDevice.setVolume(deviceId, lastVol || 50), "Volume");
+            } else {
+              setLastVol(volume || 50);
+              run(yotoDevice.setVolume(deviceId, 0), "Volume");
+            }
+          }}
           aria-label={muted ? "Unmute" : "Mute"}
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -249,7 +211,7 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           onValueCommit={(v) => {
             const val = v[0] ?? 0;
             setVolLocal(null);
-            setVol.mutate({ data: { deviceId, volume: val } });
+            run(yotoDevice.setVolume(deviceId, val), "Volume");
           }}
           className="flex-1"
         />
@@ -258,56 +220,36 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         </span>
       </div>
 
-      {/* Modes */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            variant={shuffle ? "default" : "ghost"}
-            size="icon"
-            disabled={disabled || shuf.isPending}
-            onClick={() => shuf.mutate({ data: { deviceId, shuffle: !shuffle } })}
-            aria-label="Shuffle"
-          >
-            <Shuffle className="size-4" />
-          </Button>
-          <Button
-            variant={repeat !== "off" ? "default" : "ghost"}
-            size="icon"
-            disabled={disabled || rep.isPending}
-            onClick={() => rep.mutate({ data: { deviceId, repeat: nextRepeat[repeat] } })}
-            aria-label={`Repeat ${repeat}`}
-          >
-            <RepeatIcon className="size-4" />
-          </Button>
-        </div>
-
+      {/* Sleep timer + battery */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" disabled={disabled} className="gap-1.5">
               <Moon className="size-3.5" />
-              {status?.sleepMinutesRemaining
-                ? `${Math.round(status.sleepMinutesRemaining)}m`
+              {state?.sleepTimerActive && state.sleepTimerSeconds
+                ? `${Math.round(state.sleepTimerSeconds / 60)}m`
                 : "Sleep"}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="start">
             {[0, 15, 30, 45, 60, 90].map((m) => (
               <DropdownMenuItem
                 key={m}
-                onClick={() => sleep.mutate({ data: { deviceId, minutes: m } })}
+                onClick={() => run(yotoDevice.setSleepTimer(deviceId, m * 60), "Sleep timer")}
               >
                 {m === 0 ? "Off" : `${m} minutes`}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
 
-      {status?.batteryPercent != null && (
-        <Badge variant="secondary" className="text-[10px]">
-          Battery {Math.round(status.batteryPercent)}%
-        </Badge>
-      )}
+        {state?.batteryLevel != null && (
+          <Badge variant="secondary" className="gap-1 text-[10px]">
+            {state.charging && <BatteryCharging className="size-3" />}
+            Battery {Math.round(state.batteryLevel)}%
+          </Badge>
+        )}
+      </div>
     </div>
   );
 }

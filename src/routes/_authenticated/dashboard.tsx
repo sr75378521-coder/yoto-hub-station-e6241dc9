@@ -79,21 +79,8 @@ function DashboardPage() {
   const { status: realtimeStatus } = useYotoRealtime({
     enabled: data.connected && deviceIds.length > 0,
     deviceIds,
-    pollIntervalMs: 10_000,
-    onPoll: () => {
-      // Refresh device list + per-player status queries
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["player-status"] });
-    },
-    onDeviceEvent: (deviceId, payload) => {
-      // Push MQTT status into the per-player cache
-      queryClient.setQueryData(["player-status", deviceId], (prev: unknown) => ({
-        ...(prev && typeof prev === "object" ? prev : {}),
-        deviceId,
-        ...(payload && typeof payload === "object" ? payload : {}),
-      }));
-    },
   });
+
 
   return (
     <AppShell title="Players">
@@ -111,7 +98,7 @@ function DashboardPage() {
                   <RealtimeBadge status={realtimeStatus} />
                   {realtimeStatus === "mqtt"
                     ? "Streaming live updates over MQTT."
-                    : "Polling for updates every 10 seconds."}
+                    : "Connecting to your players…"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -153,10 +140,9 @@ function DashboardPage() {
   );
 }
 
-function RealtimeBadge({ status }: { status: "connecting" | "mqtt" | "polling" | "offline" }) {
+function RealtimeBadge({ status }: { status: "connecting" | "mqtt" | "offline" }) {
   const map = {
     mqtt: { label: "Live", variant: "default" as const, icon: RadioTower },
-    polling: { label: "Polling", variant: "secondary" as const, icon: Radio },
     connecting: { label: "Connecting", variant: "secondary" as const, icon: Radio },
     offline: { label: "Offline", variant: "outline" as const, icon: Radio },
   };
