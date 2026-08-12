@@ -79,21 +79,8 @@ function DashboardPage() {
   const { status: realtimeStatus } = useYotoRealtime({
     enabled: data.connected && deviceIds.length > 0,
     deviceIds,
-    pollIntervalMs: 10_000,
-    onPoll: () => {
-      // Refresh device list + per-player status queries
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["player-status"] });
-    },
-    onDeviceEvent: (deviceId, payload) => {
-      // Push MQTT status into the per-player cache
-      queryClient.setQueryData(["player-status", deviceId], (prev: unknown) => ({
-        ...(prev && typeof prev === "object" ? prev : {}),
-        deviceId,
-        ...(payload && typeof payload === "object" ? payload : {}),
-      }));
-    },
   });
+
 
   return (
     <AppShell title="Players">
