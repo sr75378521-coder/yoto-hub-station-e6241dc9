@@ -158,6 +158,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       yoto_connections: {
         Row: {
           access_token_ciphertext: string
@@ -229,6 +250,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_family_admin: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
@@ -239,6 +267,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "user"
       family_role: "admin" | "member"
     }
     CompositeTypes: {
@@ -367,6 +396,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       family_role: ["admin", "member"],
     },
   },
