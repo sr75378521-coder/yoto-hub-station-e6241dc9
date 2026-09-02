@@ -367,8 +367,12 @@ export const appendTracks = createServerFn({ method: "POST" })
   });
 
 /**
- * Link a physical Yoto card to a MYO playlist. Yoto has never published this
- * endpoint, so we try the known shapes in order and report what happened.
+ * Link a physical Yoto MYO card to a playlist.
+ *
+ * Yoto has no "link" endpoint — a physical MYO card is linked by writing the
+ * playlist's content onto that card's ID via createOrUpdateContent
+ * (`POST /content` with `cardId` set to the physical card's ID). The card ID
+ * comes from the player over MQTT (the NFC read).
  */
 export const linkPhysicalCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -379,22 +383,62 @@ export const linkPhysicalCard = createServerFn({ method: "POST" })
     return { contentId: o.contentId, cardId: o.cardId.trim() };
   })
   .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
-    const attempts: Array<{ path: string; body: Record<string, unknown> }> = [
-      { path: `/card/mine/${data.cardId}/link`, body: { contentId: data.contentId } },
-      { path: `/content/${data.contentId}/link`, body: { cardId: data.cardId } },
-      { path: `/card/link`, body: { cardId: data.cardId, contentId: data.contentId } },
-    ];
-    const errors: string[] = [];
-    for (const a of attempts) {
-      try {
-        await yotoPost(context.userId, a.path, a.body);
-        return { success: true };
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : String(e));
-      }
+    if (data.cardId === data.contentId) {
+      return { success: true };
     }
-    return {
-      success: false,
-      error: `Yoto rejected the link request. ${errors[0] ?? ""}`.trim(),
-    };
+    try {
+      // 1. Read the playlist we want on the card.
+      const srcRes = await yotoGetJson<Record<string, any>>(
+        context.userId,
+        `/content/${data.contentId}`,
+      );
+      const src = (srcRes?.card ?? srcRes) as Record<string, any>;
+      const meta = (src?.metadata ?? {}) as Record<string, any>;
+      const chapters = src?.content?.chapters ?? [];
+      if (!Array.isArray(chapters) || chapters.length === 0) {
+        return { success: false, error: "That playlist has no tracks to write to the card yet." };
+      }
+
+      // 2. Keep anything Yoto already stores on the physical card.
+      let cardMeta: Record<string, any> = {};
+      try {
+        const cur = await yotoGetJson<Record<string, any>>(
+          context.userId,
+          `/content/${data.cardId}`,
+        );
+        cardMeta = ((cur?.card ?? cur) as Record<string, any>)?.metadata ?? {};
+      } catch {
+        cardMeta = {};
+      }
+
+      // 3. Write the playlist onto the physical card ID.
+      await yotoPost(context.userId, "/content", {
+        cardId: data.cardId,
+        title: meta?.title ?? src?.title ?? "My playlist",
+        content: { chapters },
+        metadata: {
+          ...cardMeta,
+          ...meta,
+        },
+      });
+      return { success: true };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("404")) {
+        return {
+          success: false,
+          error:
+            "Yoto doesn't recognise that card on your account. Make sure it's a Make Your Own card added to this Yoto family.",
+        };
+      }
+      if (msg.includes("403") || msg.includes("401")) {
+        return {
+          success: false,
+          error:
+            "Yoto refused the write. Reconnect your Yoto account in Settings so the app has write access to your cards.",
+        };
+      }
+      return { success: false, error: `Couldn't write to the card. ${msg}`.trim() };
+    }
   });
+
