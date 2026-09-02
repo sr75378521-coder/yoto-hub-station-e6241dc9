@@ -1,4 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Wrench,
@@ -7,8 +9,10 @@ import {
   Settings,
   Radio,
   AudioWaveform,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { checkIsAdmin } from "@/lib/players.functions";
 
 const NAV = [
   { to: "/dashboard", label: "Players", icon: LayoutDashboard },
@@ -19,10 +23,18 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-
+const ADMIN_NAV = { to: "/admin", label: "Admin", icon: ShieldCheck };
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const checkAdmin = useServerFn(checkIsAdmin);
+  const { data: adminStatus } = useQuery({
+    queryKey: ["is-admin"],
+    queryFn: () => checkAdmin(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const items = adminStatus?.isAdmin ? [...NAV, ADMIN_NAV] : NAV;
+
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground">
