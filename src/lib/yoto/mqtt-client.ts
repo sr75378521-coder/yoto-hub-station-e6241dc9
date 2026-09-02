@@ -192,9 +192,28 @@ export function getDeviceState(deviceId: string): DeviceState {
   return entries.get(deviceId)?.state ?? EMPTY;
 }
 
+/** Resolve once the MQTT socket is actually connected (or time out). */
+async function waitConnected(client: MqttClient, ms = 8000): Promise<boolean> {
+  if (client.connected) return true;
+  return new Promise((resolve) => {
+    const done = (v: boolean) => {
+      clearTimeout(t);
+      client.off("connect", onConnect);
+      resolve(v);
+    };
+    const onConnect = () => done(true);
+    const t = setTimeout(() => done(client.connected), ms);
+    client.on("connect", onConnect);
+  });
+}
+
 async function publish(deviceId: string, suffix: string, payload: unknown = "") {
   const client = await connect(deviceId);
   if (!client) throw new Error("Yoto account not connected");
+  const ready = await waitConnected(client);
+  if (!ready) {
+    throw new Error("Couldn't reach that Yoto player — make sure it is on and online.");
+  }
   const body = typeof payload === "string" ? payload : JSON.stringify(payload);
   client.publish(`device/${deviceId}/command/${suffix}`, body, { qos: 1 });
 }
