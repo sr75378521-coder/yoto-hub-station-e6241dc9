@@ -235,25 +235,36 @@ export const yotoDevice = {
  */
 export async function readInsertedCard(
   deviceId: string,
-  timeoutMs = 12_000,
+  timeoutMs = 20_000,
 ): Promise<{ cardId: string | null; inserted: boolean }> {
   return new Promise((resolve) => {
     let done = false;
+    const retries: Array<ReturnType<typeof setTimeout>> = [];
     const finish = (v: { cardId: string | null; inserted: boolean }) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      for (const r of retries) clearTimeout(r);
       unsub();
       resolve(v);
     };
     const unsub = subscribeDevice(deviceId, (s) => {
       if (s.cardId) finish({ cardId: s.cardId, inserted: true });
     });
+
+    const poke = () => {
+      void yotoDevice.requestStatus(deviceId).catch(() => {});
+      void yotoDevice.requestEvents(deviceId).catch(() => {});
+    };
+    // The player may be asleep; re-ask a few times before giving up.
+    poke();
+    for (const ms of [2500, 5000, 9000, 14_000]) {
+      retries.push(setTimeout(poke, ms));
+    }
+
     const timer = setTimeout(() => {
       const s = getDeviceState(deviceId);
       finish({ cardId: s.cardId, inserted: s.cardInserted });
     }, timeoutMs);
-    void yotoDevice.requestStatus(deviceId).catch(() => finish({ cardId: null, inserted: false }));
-    void yotoDevice.requestEvents(deviceId).catch(() => {});
   });
 }
