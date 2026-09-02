@@ -433,3 +433,83 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
       }
     },
   );
+
+/* ---------------------------- Admin / roles ---------------------------- */
+
+export const checkIsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ isAdmin: boolean }> => {
+    const { data } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return { isAdmin: !!data };
+  });
+
+export const listProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({
+      context,
+    }): Promise<{ profiles: Array<{ id: string; email: string | null; is_admin: boolean }> }> => {
+      const { data: isAdminRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!isAdminRow) throw new Error("Forbidden");
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: usersRes, error } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      if (error) throw new Error(error.message);
+
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id, role")
+        .eq("role", "admin");
+      const adminIds = new Set((roles ?? []).map((r: { user_id: string }) => r.user_id));
+
+      return {
+        profiles: usersRes.users.map((u) => ({
+          id: u.id,
+          email: u.email ?? null,
+          is_admin: adminIds.has(u.id),
+        })),
+      };
+    },
+  );
+
+export const toggleAdminStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string; isAdmin: boolean }) => data)
+  .handler(async ({ context, data }): Promise<{ success: true }> => {
+    const { data: isAdminRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!isAdminRow) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.isAdmin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { success: true };
+  });
