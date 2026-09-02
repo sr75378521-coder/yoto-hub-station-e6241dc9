@@ -48,7 +48,7 @@ export function AppSidebar() {
         </div>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.map((item) => {
+        {items.map((item) => {
           const active = pathname.startsWith(item.to);
           const Icon = item.icon;
           const cls = cn(
