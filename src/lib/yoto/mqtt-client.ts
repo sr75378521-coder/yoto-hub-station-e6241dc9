@@ -192,9 +192,28 @@ export function getDeviceState(deviceId: string): DeviceState {
   return entries.get(deviceId)?.state ?? EMPTY;
 }
 
+/** Resolve once the MQTT socket is actually connected (or time out). */
+async function waitConnected(client: MqttClient, ms = 8000): Promise<boolean> {
+  if (client.connected) return true;
+  return new Promise((resolve) => {
+    const done = (v: boolean) => {
+      clearTimeout(t);
+      client.off("connect", onConnect);
+      resolve(v);
+    };
+    const onConnect = () => done(true);
+    const t = setTimeout(() => done(client.connected), ms);
+    client.on("connect", onConnect);
+  });
+}
+
 async function publish(deviceId: string, suffix: string, payload: unknown = "") {
   const client = await connect(deviceId);
   if (!client) throw new Error("Yoto account not connected");
+  const ready = await waitConnected(client);
+  if (!ready) {
+    throw new Error("Couldn't reach that Yoto player — make sure it is on and online.");
+  }
   const body = typeof payload === "string" ? payload : JSON.stringify(payload);
   client.publish(`device/${deviceId}/command/${suffix}`, body, { qos: 1 });
 }
@@ -235,25 +254,36 @@ export const yotoDevice = {
  */
 export async function readInsertedCard(
   deviceId: string,
-  timeoutMs = 12_000,
+  timeoutMs = 20_000,
 ): Promise<{ cardId: string | null; inserted: boolean }> {
   return new Promise((resolve) => {
     let done = false;
+    const retries: Array<ReturnType<typeof setTimeout>> = [];
     const finish = (v: { cardId: string | null; inserted: boolean }) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      for (const r of retries) clearTimeout(r);
       unsub();
       resolve(v);
     };
     const unsub = subscribeDevice(deviceId, (s) => {
       if (s.cardId) finish({ cardId: s.cardId, inserted: true });
     });
+
+    const poke = () => {
+      void yotoDevice.requestStatus(deviceId).catch(() => {});
+      void yotoDevice.requestEvents(deviceId).catch(() => {});
+    };
+    // The player may be asleep; re-ask a few times before giving up.
+    poke();
+    for (const ms of [2500, 5000, 9000, 14_000]) {
+      retries.push(setTimeout(poke, ms));
+    }
+
     const timer = setTimeout(() => {
       const s = getDeviceState(deviceId);
       finish({ cardId: s.cardId, inserted: s.cardInserted });
     }, timeoutMs);
-    void yotoDevice.requestStatus(deviceId).catch(() => finish({ cardId: null, inserted: false }));
-    void yotoDevice.requestEvents(deviceId).catch(() => {});
   });
 }

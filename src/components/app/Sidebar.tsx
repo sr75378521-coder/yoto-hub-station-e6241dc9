@@ -1,29 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  Wrench,
-  ListMusic,
-  Sparkles,
-  Settings,
-  Radio,
-  AudioWaveform,
-  ShieldCheck,
-} from "lucide-react";
+import { Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { checkIsAdmin } from "@/lib/players.functions";
-
-const NAV = [
-  { to: "/dashboard", label: "Players", icon: LayoutDashboard },
-  { to: "/tools", label: "Tools", icon: Wrench },
-  { to: "/audio", label: "Audio Playground", icon: AudioWaveform },
-  { to: "/playlists", label: "Playlists", icon: ListMusic },
-  { to: "/icons", label: "My Icons", icon: Sparkles },
-  { to: "/settings", label: "Settings", icon: Settings },
-];
-
-const ADMIN_NAV = { to: "/admin", label: "Admin", icon: ShieldCheck };
+import { ADMIN_NAV_ITEM, NAV_ITEMS, type NavItem } from "./nav-items";
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -33,8 +14,9 @@ export function AppSidebar() {
     queryFn: () => checkAdmin(),
     staleTime: 5 * 60 * 1000,
   });
-  const items = adminStatus?.isAdmin ? [...NAV, ADMIN_NAV] : NAV;
-
+  const items: NavItem[] = adminStatus?.isAdmin
+    ? [...NAV_ITEMS, ADMIN_NAV_ITEM]
+    : [...NAV_ITEMS];
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground">

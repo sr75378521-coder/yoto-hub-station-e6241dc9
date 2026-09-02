@@ -39,10 +39,14 @@ export function LinkCardDialog({ contentId }: { contentId: string }) {
   const linkViaPlayer = async (deviceId: string) => {
     setBusyId(deviceId);
     try {
-      toast.info("Reading the card in your player…");
-      const { cardId } = await readInsertedCard(deviceId);
+      toast.info("Reading the card in your player… keep it on the player");
+      const { cardId, inserted } = await readInsertedCard(deviceId);
       if (!cardId) {
-        toast.error("No card detected — put a Make Your Own card in that player and try again");
+        toast.error(
+          inserted
+            ? "A card is on the player but it hasn't reported its ID yet — press play once, then try again"
+            : "No card detected — place a Make Your Own card on that player and try again",
+        );
         return;
       }
       const res = await doLink({ data: { contentId, cardId } });
@@ -50,7 +54,7 @@ export function LinkCardDialog({ contentId }: { contentId: string }) {
         toast.error(res.error ?? "Couldn't link that card");
         return;
       }
-      toast.success("Card linked to this playlist");
+      toast.success("Card linked — this playlist now plays from that card");
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read the card");
@@ -58,6 +62,7 @@ export function LinkCardDialog({ contentId }: { contentId: string }) {
       setBusyId(null);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
