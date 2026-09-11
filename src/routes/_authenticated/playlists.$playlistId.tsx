@@ -9,7 +9,7 @@ import { getPlaylistDetails, getPlaylistTracks } from "@/lib/players.functions";
 import { getCardForEdit } from "@/lib/yoto/myo.functions";
 import { PlaylistEditor } from "@/components/app/PlaylistEditor";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
-import { LinkCardDialog } from "@/components/app/LinkCardDialog";
+
 import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
 
 
@@ -79,7 +79,7 @@ function PlaylistDetailPage() {
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/playlists" })}>
             <ArrowLeft className="size-4" /> Back
           </Button>
-          <LinkCardDialog contentId={cardId} />
+          
           <div className="ms-auto flex flex-wrap items-center gap-2">
             <Button
               size="sm"
