@@ -37,6 +37,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { uploadTrack } from "@/lib/yoto/myo.functions";
+import { PlaylistBackupTool, AudioInspectorTool } from "@/components/app/ExtraTools";
 
 export const Route = createFileRoute("/_authenticated/tools")({
   head: () => ({
@@ -74,6 +75,8 @@ function ToolsPage() {
           <div className="grid gap-6 xl:grid-cols-2">
             <AudioPlayerTool />
             <AudioFileManager />
+            <PlaylistBackupTool />
+            <AudioInspectorTool />
           </div>
           <PixelIconEditor />
         </div>

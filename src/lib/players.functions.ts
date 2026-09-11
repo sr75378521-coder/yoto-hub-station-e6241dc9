@@ -513,3 +513,111 @@ export const toggleAdminStatus = createServerFn({ method: "POST" })
     }
     return { success: true };
   });
+
+async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden");
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  admins: number;
+  connectedYoto: number;
+  newUsers7d: number;
+  activeUsers24h: number;
+}
+
+export const getAdminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminStats> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: usersRes } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const users = usersRes?.users ?? [];
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+    const { data: conns } = await supabaseAdmin.from("yoto_connections").select("user_id");
+    const now = Date.now();
+    return {
+      totalUsers: users.length,
+      admins: (roles ?? []).length,
+      connectedYoto: (conns ?? []).length,
+      newUsers7d: users.filter((u) => now - new Date(u.created_at).getTime() < 7 * 864e5).length,
+      activeUsers24h: users.filter(
+        (u) => u.last_sign_in_at && now - new Date(u.last_sign_in_at).getTime() < 864e5,
+      ).length,
+    };
+  });
+
+export interface AdminUserRow {
+  id: string;
+  email: string | null;
+  is_admin: boolean;
+  yoto_connected: boolean;
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
+export const listAdminUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ users: AdminUserRow[] }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: usersRes, error } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    if (error) throw new Error(error.message);
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    const { data: conns } = await supabaseAdmin.from("yoto_connections").select("user_id");
+    const adminIds = new Set((roles ?? []).map((r: { user_id: string }) => r.user_id));
+    const connIds = new Set((conns ?? []).map((r: { user_id: string }) => r.user_id));
+    return {
+      users: (usersRes?.users ?? []).map((u) => ({
+        id: u.id,
+        email: u.email ?? null,
+        is_admin: adminIds.has(u.id),
+        yoto_connected: connIds.has(u.id),
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at ?? null,
+      })),
+    };
+  });
+
+export const grantAdminByEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string }) => ({ email: String(d.email ?? "").trim().toLowerCase() }))
+  .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
+    await assertAdmin(context);
+    if (!data.email) return { success: false, error: "Enter an email address" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: usersRes } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const match = (usersRes?.users ?? []).find((u) => (u.email ?? "").toLowerCase() === data.email);
+    if (!match) return { success: false, error: "No account with that email has signed in yet" };
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: match.id, role: "admin" }, { onConflict: "user_id,role" });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  });
+
+export const adminDisconnectYoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("yoto_connections")
+      .delete()
+      .eq("user_id", data.userId);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  });
