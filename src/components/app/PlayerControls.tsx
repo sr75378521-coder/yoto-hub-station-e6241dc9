@@ -57,9 +57,10 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
 
   const position = seekLocal ?? state?.position ?? 0;
   const duration = state?.trackLength ?? 0;
-  const volume = volLocal ?? state?.volume ?? 50;
+  // Yoto players use a 0-16 volume scale
+  const volume = Math.round(volLocal ?? state?.volume ?? 8);
   const playing = state?.playbackStatus === "playing";
-  const muted = (state?.volume ?? 1) === 0;
+  const muted = volume === 0;
   const cardId = state?.cardId ?? null;
   const disabled = !initialOnline;
 
