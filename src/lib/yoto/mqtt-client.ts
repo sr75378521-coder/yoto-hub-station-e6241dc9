@@ -228,6 +228,23 @@ export const yotoDevice = {
   stop: (id: string) => publish(id, "card/stop", ""),
   reboot: (id: string) => publish(id, "reboot", ""),
   setAmbient: (id: string, r: number, g: number, b: number) => publish(id, "ambients/set", { r, g, b }),
+  ambientOff: (id: string) => publish(id, "ambients/set", { r: 0, g: 0, b: 0 }),
+  /** Player configuration (display brightness, volume limits, timers…). */
+  setConfig: (id: string, config: Record<string, unknown>) => publish(id, "set-config", config),
+  setDayBrightness: (id: string, level: number) =>
+    publish(id, "set-config", { displayDimBrightness: level, day: { displayBrightness: level } }),
+  setNightBrightness: (id: string, level: number) =>
+    publish(id, "set-config", { nightDisplayBrightness: level, night: { displayBrightness: level } }),
+  setMaxVolume: (id: string, day: number, night: number) =>
+    publish(id, "set-config", { maxVolumeLimit: day, day: { maxVolume: day }, night: { maxVolume: night } }),
+  setBluetooth: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { bluetoothEnabled: enabled ? 1 : 0 }),
+  setShutdownTimer: (id: string, minutes: number) =>
+    publish(id, "set-config", { shutdownTimeout: minutes * 60 }),
+  setRepeatAll: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { repeatAll: enabled ? 1 : 0 }),
+  setHeadphonesVolumeLimited: (id: string, limited: boolean) =>
+    publish(id, "set-config", { headphonesVolumeLimited: limited ? 1 : 0 }),
   previewIcon: (id: string, uri: string, timeout = 5) =>
     publish(id, "display/preview", { uri, timeout, animated: 0 }),
   startCard: (

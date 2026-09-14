@@ -621,3 +621,119 @@ export const adminDisconnectYoto = createServerFn({ method: "POST" })
     if (error) return { success: false, error: error.message };
     return { success: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Extra admin controls                                               */
+/* ------------------------------------------------------------------ */
+
+export const adminSetUserBanned = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; banned: boolean }) => d)
+  .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) {
+      return { success: false, error: "You can't suspend your own account" };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      ban_duration: data.banned ? "876000h" : "none",
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) {
+      return { success: false, error: "You can't delete your own account" };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("yoto_connections").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  });
+
+export const adminSendPasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string }) => ({ email: String(d.email ?? "").trim() }))
+  .handler(async ({ context, data }): Promise<{ success: boolean; link?: string; error?: string }> => {
+    await assertAdmin(context);
+    if (!data.email) return { success: false, error: "That person has no email address" };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email: data.email,
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true, link: link?.properties?.action_link ?? undefined };
+  });
+
+export const adminDisconnectAllYoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ success: boolean; removed: number; error?: string }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin.from("yoto_connections").select("id");
+    const { error } = await supabaseAdmin
+      .from("yoto_connections")
+      .delete()
+      .neq("user_id", "00000000-0000-0000-0000-000000000000");
+    if (error) return { success: false, removed: 0, error: error.message };
+    return { success: true, removed: (rows ?? []).length };
+  });
+
+export const adminPurgeStaleOAuthStates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ success: boolean; removed: number; error?: string }> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+    const { data: rows } = await supabaseAdmin
+      .from("yoto_oauth_states")
+      .select("state")
+      .lt("expires_at", nowIso);
+    const { error } = await supabaseAdmin
+      .from("yoto_oauth_states")
+      .delete()
+      .lt("expires_at", nowIso);
+    if (error) return { success: false, removed: 0, error: error.message };
+    return { success: true, removed: (rows ?? []).length };
+  });
+
+export interface AdminHealth {
+  connections: number;
+  expiredTokens: number;
+  pendingOAuthStates: number;
+  staleOAuthStates: number;
+  families: number;
+  familyMembers: number;
+  sharedPlaylists: number;
+}
+
+export const getAdminHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminHealth> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+    const count = async (table: string, apply?: (q: any) => any) => {
+      let q = supabaseAdmin.from(table).select("*", { count: "exact", head: true });
+      if (apply) q = apply(q);
+      const { count: c } = await q;
+      return c ?? 0;
+    };
+    return {
+      connections: await count("yoto_connections"),
+      expiredTokens: await count("yoto_connections", (q) => q.lt("expires_at", nowIso)),
+      pendingOAuthStates: await count("yoto_oauth_states", (q) => q.gte("expires_at", nowIso)),
+      staleOAuthStates: await count("yoto_oauth_states", (q) => q.lt("expires_at", nowIso)),
+      families: await count("families"),
+      familyMembers: await count("family_members"),
+      sharedPlaylists: await count("family_shared_playlists"),
+    };
+  });
