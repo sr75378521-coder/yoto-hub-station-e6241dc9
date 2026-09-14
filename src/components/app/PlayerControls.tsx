@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useYotoDevice } from "@/hooks/useYotoRealtime";
 import { yotoDevice } from "@/lib/yoto/mqtt-client";
+import { PlayerAdvanced } from "@/components/app/PlayerAdvanced";
 
 function fmt(sec: number | null | undefined) {
   if (sec == null || !Number.isFinite(sec)) return "--:--";
