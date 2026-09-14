@@ -53,7 +53,7 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
   const { state } = useYotoDevice(deviceId, initialOnline);
   const [seekLocal, setSeekLocal] = useState<number | null>(null);
   const [volLocal, setVolLocal] = useState<number | null>(null);
-  const [lastVol, setLastVol] = useState(50);
+  const [lastVol, setLastVol] = useState(8);
 
   const position = seekLocal ?? state?.position ?? 0;
   const duration = state?.trackLength ?? 0;
