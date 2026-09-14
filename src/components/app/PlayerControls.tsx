@@ -192,9 +192,9 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           disabled={disabled}
           onClick={() => {
             if (muted) {
-              run(yotoDevice.setVolume(deviceId, lastVol || 50), "Volume");
+              run(yotoDevice.setVolume(deviceId, lastVol || 8), "Volume");
             } else {
-              setLastVol(volume || 50);
+              setLastVol(volume || 8);
               run(yotoDevice.setVolume(deviceId, 0), "Volume");
             }
           }}
@@ -202,21 +202,46 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
         </Button>
-        <Slider
-          value={[volume]}
-          min={0}
-          max={100}
-          step={1}
-          disabled={disabled}
-          onValueChange={(v) => setVolLocal(v[0] ?? 0)}
-          onValueCommit={(v) => {
-            const val = v[0] ?? 0;
-            setVolLocal(null);
-            run(yotoDevice.setVolume(deviceId, val), "Volume");
-          }}
-          className="flex-1"
-        />
-        <span className="w-8 text-right text-[10px] tabular-nums text-muted-foreground">
+
+        {/* Yoto-style 0-16 volume bars */}
+        <div
+          className="flex flex-1 items-end gap-[3px]"
+          role="slider"
+          aria-valuemin={0}
+          aria-valuemax={16}
+          aria-valuenow={volume}
+          aria-label="Volume"
+        >
+          {Array.from({ length: 16 }, (_, i) => {
+            const level = i + 1;
+            const active = level <= volume;
+            const color =
+              level <= 5
+                ? "bg-lime-500 dark:bg-lime-400"
+                : level <= 10
+                  ? "bg-yellow-400 dark:bg-yellow-300"
+                  : "bg-red-500 dark:bg-red-400";
+            return (
+              <button
+                key={level}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  setVolLocal(null);
+                  run(yotoDevice.setVolume(deviceId, level), "Volume");
+                }}
+                className={cn(
+                  "h-6 w-2 rounded-sm transition-all duration-150",
+                  active ? color : "bg-muted/60 hover:bg-muted",
+                  disabled ? "cursor-not-allowed opacity-50" : "hover:scale-110",
+                )}
+                aria-label={`Volume ${level}`}
+              />
+            );
+          })}
+        </div>
+
+        <span className="w-5 text-right text-[10px] tabular-nums text-muted-foreground">
           {Math.round(volume)}
         </span>
       </div>
