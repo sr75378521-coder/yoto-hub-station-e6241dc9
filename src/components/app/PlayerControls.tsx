@@ -277,6 +277,8 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
           </Badge>
         )}
       </div>
+
+      <PlayerAdvanced deviceId={deviceId} disabled={disabled} />
     </div>
   );
 }
