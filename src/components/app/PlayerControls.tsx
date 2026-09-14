@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useYotoDevice } from "@/hooks/useYotoRealtime";
 import { yotoDevice } from "@/lib/yoto/mqtt-client";
 
