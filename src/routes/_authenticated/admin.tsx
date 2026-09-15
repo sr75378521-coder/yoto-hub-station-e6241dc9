@@ -16,8 +16,27 @@ import {
   grantAdminByEmail,
   adminDisconnectYoto,
   toggleAdminStatus,
+  adminSetUserBanned,
+  adminDeleteUser,
+  adminSendPasswordReset,
+  adminDisconnectAllYoto,
+  adminPurgeStaleOAuthStates,
+  getAdminHealth,
 } from "@/lib/players.functions";
-import { Loader2, Shield, ShieldAlert, User, Plug, Search, UserPlus } from "lucide-react";
+import {
+  Loader2,
+  Shield,
+  ShieldAlert,
+  User,
+  Plug,
+  Search,
+  UserPlus,
+  Ban,
+  Trash2,
+  KeyRound,
+  Eraser,
+  Activity,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -41,6 +60,12 @@ function AdminPage() {
   const grantByEmail = useServerFn(grantAdminByEmail);
   const disconnect = useServerFn(adminDisconnectYoto);
   const toggleAdmin = useServerFn(toggleAdminStatus);
+  const setBanned = useServerFn(adminSetUserBanned);
+  const deleteUser = useServerFn(adminDeleteUser);
+  const sendReset = useServerFn(adminSendPasswordReset);
+  const disconnectAll = useServerFn(adminDisconnectAllYoto);
+  const purgeStates = useServerFn(adminPurgeStaleOAuthStates);
+  const fetchHealth = useServerFn(getAdminHealth);
 
   const [query, setQuery] = useState("");
   const [email, setEmail] = useState("");
@@ -64,10 +89,69 @@ function AdminPage() {
     enabled,
   });
 
+  const { data: health } = useQuery({
+    queryKey: ["admin-health"],
+    queryFn: () => fetchHealth(),
+    enabled,
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-health"] });
   };
+
+  const failed = (e: unknown) => toast.error(e instanceof Error ? e.message : "Action failed");
+
+  const banMutation = useMutation({
+    mutationFn: (v: { userId: string; banned: boolean }) => setBanned({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't update account");
+      refresh();
+      toast.success("Account updated");
+    },
+    onError: failed,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (v: { userId: string }) => deleteUser({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't delete account");
+      refresh();
+      toast.success("Account deleted");
+    },
+    onError: failed,
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: (v: { email: string }) => sendReset({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success || !res.link) return toast.error(res.error ?? "Couldn't create reset link");
+      void navigator.clipboard?.writeText(res.link).catch(() => {});
+      toast.success("Password reset link copied");
+    },
+    onError: failed,
+  });
+
+  const disconnectAllMutation = useMutation({
+    mutationFn: () => disconnectAll(),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't disconnect accounts");
+      refresh();
+      toast.success(`Disconnected ${res.removed} Yoto account(s)`);
+    },
+    onError: failed,
+  });
+
+  const purgeMutation = useMutation({
+    mutationFn: () => purgeStates(),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't clean up");
+      refresh();
+      toast.success(`Cleared ${res.removed} stale sign-in attempt(s)`);
+    },
+    onError: failed,
+  });
 
   const toggleMutation = useMutation({
     mutationFn: (vars: { userId: string; isAdmin: boolean }) => toggleAdmin({ data: vars }),
@@ -140,6 +224,46 @@ function AdminPage() {
           <Stat label="New (7 days)" value={stats?.newUsers7d} />
           <Stat label="Active (24h)" value={stats?.activeUsers24h} />
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="size-4 text-primary" /> System health
+            </CardTitle>
+            <CardDescription>Connections, sign-in attempts and shared content.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              <Stat label="Yoto links" value={health?.connections} />
+              <Stat label="Expired tokens" value={health?.expiredTokens} />
+              <Stat label="Pending sign-ins" value={health?.pendingOAuthStates} />
+              <Stat label="Stale sign-ins" value={health?.staleOAuthStates} />
+              <Stat label="Families" value={health?.families} />
+              <Stat label="Family members" value={health?.familyMembers} />
+              <Stat label="Shared playlists" value={health?.sharedPlaylists} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => purgeMutation.mutate()}
+                disabled={purgeMutation.isPending}
+              >
+                <Eraser className="size-4" /> Clear stale sign-ins
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (confirm("Disconnect every Yoto account from this app?")) {
+                    disconnectAllMutation.mutate();
+                  }
+                }}
+                disabled={disconnectAllMutation.isPending}
+              >
+                <Plug className="size-4" /> Disconnect all Yoto accounts
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -225,10 +349,15 @@ function AdminPage() {
                               Yoto linked
                             </Badge>
                           )}
+                          {u.banned && (
+                            <Badge variant="destructive" className="text-[10px]">
+                              Suspended
+                            </Badge>
+                          )}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       {u.yoto_connected && (
                         <Button
                           size="sm"
@@ -239,6 +368,36 @@ function AdminPage() {
                           <Plug className="size-4" /> Disconnect Yoto
                         </Button>
                       )}
+                      {u.email && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => resetMutation.mutate({ email: u.email as string })}
+                          disabled={resetMutation.isPending}
+                        >
+                          <KeyRound className="size-4" /> Reset link
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => banMutation.mutate({ userId: u.id, banned: !u.banned })}
+                        disabled={banMutation.isPending}
+                      >
+                        <Ban className="size-4" /> {u.banned ? "Unsuspend" : "Suspend"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (confirm(`Permanently delete ${u.email ?? "this account"}?`)) {
+                            deleteMutation.mutate({ userId: u.id });
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="size-4" /> Delete
+                      </Button>
                       <div className="flex items-center gap-2">
                         <Shield
                           className={`size-4 ${u.is_admin ? "text-primary" : "text-muted-foreground"}`}
