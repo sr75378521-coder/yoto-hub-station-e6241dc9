@@ -34,7 +34,7 @@ import {
   Ban,
   Trash2,
   KeyRound,
-  Broom,
+  Eraser,
   Activity,
 } from "lucide-react";
 
