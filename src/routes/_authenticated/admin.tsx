@@ -89,10 +89,69 @@ function AdminPage() {
     enabled,
   });
 
+  const { data: health } = useQuery({
+    queryKey: ["admin-health"],
+    queryFn: () => fetchHealth(),
+    enabled,
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-health"] });
   };
+
+  const failed = (e: unknown) => toast.error(e instanceof Error ? e.message : "Action failed");
+
+  const banMutation = useMutation({
+    mutationFn: (v: { userId: string; banned: boolean }) => setBanned({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't update account");
+      refresh();
+      toast.success("Account updated");
+    },
+    onError: failed,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (v: { userId: string }) => deleteUser({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't delete account");
+      refresh();
+      toast.success("Account deleted");
+    },
+    onError: failed,
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: (v: { email: string }) => sendReset({ data: v }),
+    onSuccess: (res) => {
+      if (!res.success || !res.link) return toast.error(res.error ?? "Couldn't create reset link");
+      void navigator.clipboard?.writeText(res.link).catch(() => {});
+      toast.success("Password reset link copied");
+    },
+    onError: failed,
+  });
+
+  const disconnectAllMutation = useMutation({
+    mutationFn: () => disconnectAll(),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't disconnect accounts");
+      refresh();
+      toast.success(`Disconnected ${res.removed} Yoto account(s)`);
+    },
+    onError: failed,
+  });
+
+  const purgeMutation = useMutation({
+    mutationFn: () => purgeStates(),
+    onSuccess: (res) => {
+      if (!res.success) return toast.error(res.error ?? "Couldn't clean up");
+      refresh();
+      toast.success(`Cleared ${res.removed} stale sign-in attempt(s)`);
+    },
+    onError: failed,
+  });
 
   const toggleMutation = useMutation({
     mutationFn: (vars: { userId: string; isAdmin: boolean }) => toggleAdmin({ data: vars }),
