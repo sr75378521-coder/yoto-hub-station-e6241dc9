@@ -227,6 +227,46 @@ function AdminPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="size-4 text-primary" /> System health
+            </CardTitle>
+            <CardDescription>Connections, sign-in attempts and shared content.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              <Stat label="Yoto links" value={health?.connections} />
+              <Stat label="Expired tokens" value={health?.expiredTokens} />
+              <Stat label="Pending sign-ins" value={health?.pendingOAuthStates} />
+              <Stat label="Stale sign-ins" value={health?.staleOAuthStates} />
+              <Stat label="Families" value={health?.families} />
+              <Stat label="Family members" value={health?.familyMembers} />
+              <Stat label="Shared playlists" value={health?.sharedPlaylists} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => purgeMutation.mutate()}
+                disabled={purgeMutation.isPending}
+              >
+                <Eraser className="size-4" /> Clear stale sign-ins
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (confirm("Disconnect every Yoto account from this app?")) {
+                    disconnectAllMutation.mutate();
+                  }
+                }}
+                disabled={disconnectAllMutation.isPending}
+              >
+                <Plug className="size-4" /> Disconnect all Yoto accounts
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-base">Grant admin access by email</CardTitle>
             <CardDescription>
               The person must have signed in at least once before you can promote them.
