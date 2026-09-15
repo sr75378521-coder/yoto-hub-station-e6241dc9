@@ -726,8 +726,16 @@ export const getAdminHealth = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
+    const admin = supabaseAdmin as unknown as {
+      from: (t: string) => {
+        select: (
+          c: string,
+          o: { count: "exact"; head: true },
+        ) => Promise<{ count: number | null }> & Record<string, unknown>;
+      };
+    };
     const count = async (table: string, apply?: (q: any) => any) => {
-      let q = supabaseAdmin.from(table).select("*", { count: "exact", head: true });
+      let q: any = admin.from(table).select("*", { count: "exact", head: true });
       if (apply) q = apply(q);
       const { count: c } = await q;
       return c ?? 0;
