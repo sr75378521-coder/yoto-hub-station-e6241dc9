@@ -349,10 +349,15 @@ function AdminPage() {
                               Yoto linked
                             </Badge>
                           )}
+                          {u.banned && (
+                            <Badge variant="destructive" className="text-[10px]">
+                              Suspended
+                            </Badge>
+                          )}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       {u.yoto_connected && (
                         <Button
                           size="sm"
@@ -363,6 +368,36 @@ function AdminPage() {
                           <Plug className="size-4" /> Disconnect Yoto
                         </Button>
                       )}
+                      {u.email && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => resetMutation.mutate({ email: u.email as string })}
+                          disabled={resetMutation.isPending}
+                        >
+                          <KeyRound className="size-4" /> Reset link
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => banMutation.mutate({ userId: u.id, banned: !u.banned })}
+                        disabled={banMutation.isPending}
+                      >
+                        <Ban className="size-4" /> {u.banned ? "Unsuspend" : "Suspend"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (confirm(`Permanently delete ${u.email ?? "this account"}?`)) {
+                            deleteMutation.mutate({ userId: u.id });
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="size-4" /> Delete
+                      </Button>
                       <div className="flex items-center gap-2">
                         <Shield
                           className={`size-4 ${u.is_admin ? "text-primary" : "text-muted-foreground"}`}
