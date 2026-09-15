@@ -16,8 +16,27 @@ import {
   grantAdminByEmail,
   adminDisconnectYoto,
   toggleAdminStatus,
+  adminSetUserBanned,
+  adminDeleteUser,
+  adminSendPasswordReset,
+  adminDisconnectAllYoto,
+  adminPurgeStaleOAuthStates,
+  getAdminHealth,
 } from "@/lib/players.functions";
-import { Loader2, Shield, ShieldAlert, User, Plug, Search, UserPlus } from "lucide-react";
+import {
+  Loader2,
+  Shield,
+  ShieldAlert,
+  User,
+  Plug,
+  Search,
+  UserPlus,
+  Ban,
+  Trash2,
+  KeyRound,
+  Broom,
+  Activity,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
