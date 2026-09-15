@@ -60,6 +60,12 @@ function AdminPage() {
   const grantByEmail = useServerFn(grantAdminByEmail);
   const disconnect = useServerFn(adminDisconnectYoto);
   const toggleAdmin = useServerFn(toggleAdminStatus);
+  const setBanned = useServerFn(adminSetUserBanned);
+  const deleteUser = useServerFn(adminDeleteUser);
+  const sendReset = useServerFn(adminSendPasswordReset);
+  const disconnectAll = useServerFn(adminDisconnectAllYoto);
+  const purgeStates = useServerFn(adminPurgeStaleOAuthStates);
+  const fetchHealth = useServerFn(getAdminHealth);
 
   const [query, setQuery] = useState("");
   const [email, setEmail] = useState("");
