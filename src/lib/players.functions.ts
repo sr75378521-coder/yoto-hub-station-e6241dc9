@@ -560,6 +560,7 @@ export interface AdminUserRow {
   yoto_connected: boolean;
   created_at: string;
   last_sign_in_at: string | null;
+  banned: boolean;
 }
 
 export const listAdminUsers = createServerFn({ method: "GET" })
@@ -587,6 +588,10 @@ export const listAdminUsers = createServerFn({ method: "GET" })
         yoto_connected: connIds.has(u.id),
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at ?? null,
+        banned: Boolean(
+          (u as { banned_until?: string | null }).banned_until &&
+            new Date((u as { banned_until?: string | null }).banned_until as string) > new Date(),
+        ),
       })),
     };
   });
