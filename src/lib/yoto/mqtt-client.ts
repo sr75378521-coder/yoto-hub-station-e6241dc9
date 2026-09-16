@@ -24,6 +24,11 @@ export interface DeviceState {
   sleepTimerSeconds: number | null;
   batteryLevel: number | null;
   charging: boolean;
+  ambientRgb: [number, number, number] | null;
+  wifiStrength: number | null;
+  firmware: string | null;
+  /** Latest player configuration reported by the device. */
+  config: Record<string, any> | null;
 }
 
 const EMPTY: DeviceState = {
@@ -42,6 +47,10 @@ const EMPTY: DeviceState = {
   sleepTimerSeconds: null,
   batteryLevel: null,
   charging: false,
+  ambientRgb: null,
+  wifiStrength: null,
+  firmware: null,
+  config: null,
 };
 
 type Listener = (s: DeviceState) => void;
@@ -101,6 +110,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
     const topics = [
       `device/${deviceId}/data/events`,
       `device/${deviceId}/data/status`,
+      `device/${deviceId}/data/config`,
       `device/${deviceId}/response`,
     ];
 
@@ -109,6 +119,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
       client.subscribe(topics, () => {
         client.publish(`device/${deviceId}/command/events/request`, "{}", { qos: 1 });
         client.publish(`device/${deviceId}/command/status/request`, "");
+        client.publish(`device/${deviceId}/command/config/request`, "");
       });
       if (e.keepalive) clearInterval(e.keepalive);
       e.keepalive = setInterval(() => {
@@ -145,6 +156,11 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
         });
       } else if (topic.endsWith("/data/status")) {
         const s = (payload?.status ?? payload) as Record<string, any>;
+        const amb = Array.isArray(s.ambientLightColour)
+          ? (s.ambientLightColour as number[])
+          : Array.isArray(s.ambientLight)
+            ? (s.ambientLight as number[])
+            : null;
         patch(e, {
           batteryLevel: typeof s.batteryLevel === "number" ? s.batteryLevel : e.state.batteryLevel,
           charging: Boolean(s.charging),
@@ -152,7 +168,18 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           cardId:
             typeof s.activeCard === "string" && s.activeCard !== "none" ? s.activeCard : e.state.cardId,
           volume: typeof s.volume === "number" ? s.volume : e.state.volume,
+          wifiStrength: typeof s.wifiStrength === "number" ? s.wifiStrength : e.state.wifiStrength,
+          firmware: typeof s.fwVersion === "string" ? s.fwVersion : e.state.firmware,
+          ambientRgb:
+            amb && amb.length >= 3
+              ? [Number(amb[0]) || 0, Number(amb[1]) || 0, Number(amb[2]) || 0]
+              : e.state.ambientRgb,
         });
+      } else if (topic.endsWith("/data/config") || payload?.config) {
+        const cfg = (payload?.config ?? payload) as Record<string, any>;
+        if (cfg && typeof cfg === "object") {
+          patch(e, { config: { ...(e.state.config ?? {}), ...cfg } });
+        }
       }
     });
 
@@ -247,6 +274,71 @@ export const yotoDevice = {
     publish(id, "set-config", { headphonesVolumeLimited: limited ? 1 : 0 }),
   previewIcon: (id: string, uri: string, timeout = 5) =>
     publish(id, "display/preview", { uri, timeout, animated: 0 }),
+
+  /* ---------- extra controls ---------- */
+
+  /** Ask the player for its current configuration. */
+  requestConfig: (id: string) => publish(id, "config/request", ""),
+  /** Nudge the volume by a step, clamped to the 0–16 Yoto scale. */
+  volumeStep: (id: string, delta: number) => {
+    const current = Math.round(getDeviceState(id).volume ?? 8);
+    const next = Math.min(16, Math.max(0, current + delta));
+    return publish(id, "volume/set", { volume: next });
+  },
+  volumeUp: (id: string) => yotoDevice.volumeStep(id, 1),
+  volumeDown: (id: string) => yotoDevice.volumeStep(id, -1),
+  /** Night light from a #rrggbb hex value. */
+  setAmbientHex: (id: string, hex: string) => {
+    const h = hex.replace("#", "");
+    const n = parseInt(h.length === 3 ? h.replace(/./g, (c) => c + c) : h, 16);
+    return publish(id, "ambients/set", {
+      r: (n >> 16) & 255,
+      g: (n >> 8) & 255,
+      b: n & 255,
+    });
+  },
+  /** Cancel a running sleep timer. */
+  cancelSleepTimer: (id: string) => publish(id, "sleep-timer/set", { seconds: 0 }),
+  /** Jump to a chapter/track at an offset on the card that's already playing. */
+  seek: (
+    id: string,
+    opts: { cardId: string; chapterKey?: string; trackKey?: string; secondsIn?: number },
+  ) => yotoDevice.startCard(id, opts),
+  /** Shuffle the current card's tracks. */
+  setShuffle: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { shuffle: enabled ? 1 : 0 }),
+  /** Show/hide the clock on the display when idle. */
+  setClock: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { clockFace: enabled ? "digital" : "off" }),
+  /** 24-hour vs 12-hour clock. */
+  setClock24Hour: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { hourFormat: enabled ? "24" : "12" }),
+  /** When the player switches into day mode / night mode (HH:MM). */
+  setDayNightTimes: (id: string, dayStart: string, nightStart: string) =>
+    publish(id, "set-config", { dayTime: dayStart, nightTime: nightStart }),
+  /** Auto-off for the night light, in minutes (0 = stay on). */
+  setAmbientTimeout: (id: string, minutes: number) =>
+    publish(id, "set-config", { ambientColourTimeout: minutes * 60 }),
+  /** Pause playback automatically when headphones are unplugged. */
+  setPauseOnHeadphonesUnplug: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { pauseOnHeadphoneRemoval: enabled ? 1 : 0 }),
+  /** Alarms on/off without deleting them. */
+  setAlarmsEnabled: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { alarmsEnabled: enabled ? 1 : 0 }),
+  /** Play the short beep the player uses to confirm a button press. */
+  setButtonSounds: (id: string, enabled: boolean) =>
+    publish(id, "set-config", { buttonSounds: enabled ? 1 : 0 }),
+  /** Lock the physical buttons (parent lock). */
+  setButtonLock: (id: string, locked: boolean) =>
+    publish(id, "set-config", { buttonLock: locked ? 1 : 0 }),
+  /** Timezone offset in minutes from UTC. */
+  setTimezone: (id: string, offsetMinutes: number) =>
+    publish(id, "set-config", { timezoneOffset: offsetMinutes }),
+  /** Ask the player to check for a firmware update. */
+  checkForUpdate: (id: string) => publish(id, "ota/check", ""),
+  /** Show a short message on the player's pixel display. */
+  showText: (id: string, text: string, timeout = 5) =>
+    publish(id, "display/preview", { text, timeout, animated: 0 }),
   startCard: (
     id: string,
     opts: {
