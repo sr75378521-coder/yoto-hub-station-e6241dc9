@@ -24,6 +24,11 @@ export interface DeviceState {
   sleepTimerSeconds: number | null;
   batteryLevel: number | null;
   charging: boolean;
+  ambientRgb: [number, number, number] | null;
+  wifiStrength: number | null;
+  firmware: string | null;
+  /** Latest player configuration reported by the device. */
+  config: Record<string, any> | null;
 }
 
 const EMPTY: DeviceState = {
@@ -42,6 +47,10 @@ const EMPTY: DeviceState = {
   sleepTimerSeconds: null,
   batteryLevel: null,
   charging: false,
+  ambientRgb: null,
+  wifiStrength: null,
+  firmware: null,
+  config: null,
 };
 
 type Listener = (s: DeviceState) => void;
