@@ -156,6 +156,11 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
         });
       } else if (topic.endsWith("/data/status")) {
         const s = (payload?.status ?? payload) as Record<string, any>;
+        const amb = Array.isArray(s.ambientLightColour)
+          ? (s.ambientLightColour as number[])
+          : Array.isArray(s.ambientLight)
+            ? (s.ambientLight as number[])
+            : null;
         patch(e, {
           batteryLevel: typeof s.batteryLevel === "number" ? s.batteryLevel : e.state.batteryLevel,
           charging: Boolean(s.charging),
@@ -163,7 +168,18 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           cardId:
             typeof s.activeCard === "string" && s.activeCard !== "none" ? s.activeCard : e.state.cardId,
           volume: typeof s.volume === "number" ? s.volume : e.state.volume,
+          wifiStrength: typeof s.wifiStrength === "number" ? s.wifiStrength : e.state.wifiStrength,
+          firmware: typeof s.fwVersion === "string" ? s.fwVersion : e.state.firmware,
+          ambientRgb:
+            amb && amb.length >= 3
+              ? [Number(amb[0]) || 0, Number(amb[1]) || 0, Number(amb[2]) || 0]
+              : e.state.ambientRgb,
         });
+      } else if (topic.endsWith("/data/config") || payload?.config) {
+        const cfg = (payload?.config ?? payload) as Record<string, any>;
+        if (cfg && typeof cfg === "object") {
+          patch(e, { config: { ...(e.state.config ?? {}), ...cfg } });
+        }
       }
     });
 
