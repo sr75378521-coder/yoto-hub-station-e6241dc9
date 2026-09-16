@@ -110,6 +110,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
     const topics = [
       `device/${deviceId}/data/events`,
       `device/${deviceId}/data/status`,
+      `device/${deviceId}/data/config`,
       `device/${deviceId}/response`,
     ];
 
@@ -118,6 +119,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
       client.subscribe(topics, () => {
         client.publish(`device/${deviceId}/command/events/request`, "{}", { qos: 1 });
         client.publish(`device/${deviceId}/command/status/request`, "");
+        client.publish(`device/${deviceId}/command/config/request`, "");
       });
       if (e.keepalive) clearInterval(e.keepalive);
       e.keepalive = setInterval(() => {
