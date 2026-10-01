@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Disc3, Download, Loader2, Music, Pencil, Eye } from "lucide-react";
+import { ArrowLeft, Clock, Disc3, Download, Loader2, Music, Pencil, Eye, Rss } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import { getCardForEdit } from "@/lib/yoto/myo.functions";
 import { PlaylistEditor } from "@/components/app/PlaylistEditor";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
 
+import { downloadTracksAsZip, downloadPlaylistRss } from "@/lib/download";
+import { toast } from "sonner";
 import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
 
 
@@ -132,7 +135,7 @@ function PlaylistDetailPage() {
           </CardHeader>
         </Card>
 
-        <FilesCard playlistId={cardId} />
+        <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
 
         {mode === "edit" && <EditorSection cardId={cardId} />}
 
@@ -142,7 +145,7 @@ function PlaylistDetailPage() {
 }
 
 
-function FilesCard({ playlistId }: { playlistId: string }) {
+function FilesCard({ playlistId, title, cover, description }: { playlistId: string; title: string; cover?: string; description?: string }) {
   const fetchTracks = useServerFn(getPlaylistTracks);
   const { data, isLoading } = useQuery({
     queryKey: ["playlist-tracks", playlistId],
@@ -154,15 +157,16 @@ function FilesCard({ playlistId }: { playlistId: string }) {
   const dl = (url: string, name: string) =>
     `${url}${url.includes("?") ? "&" : "?"}dl=${encodeURIComponent(`${name}.mp3`)}`;
 
+  const [zipping, setZipping] = useState("");
   const downloadAll = async () => {
-    for (const [i, t] of tracks.entries()) {
-      const a = document.createElement("a");
-      a.href = dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`);
-      a.download = "";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      await new Promise((r) => setTimeout(r, 700));
+    setZipping("0/" + tracks.length);
+    try {
+      await downloadTracksAsZip(title, tracks.map((t) => ({ url: t.url!, title: t.title })), (d, n) => setZipping(`${d}/${n}`));
+      toast.success("ZIP downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "ZIP download failed");
+    } finally {
+      setZipping("");
     }
   };
 
@@ -171,9 +175,15 @@ function FilesCard({ playlistId }: { playlistId: string }) {
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
         {tracks.length > 0 && (
-          <Button size="sm" variant="outline" onClick={() => void downloadAll()}>
-            <Download className="size-4" /> Download all
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" disabled={!!zipping} onClick={() => void downloadAll()}>
+              {zipping ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {zipping ? `Zipping ${zipping}` : "Download all (ZIP)"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => downloadPlaylistRss(title, tracks.map((t) => ({ url: t.url!, title: t.title, duration: t.duration })), { cover, description })}>
+              <Rss className="size-4" /> RSS feed
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-1">
