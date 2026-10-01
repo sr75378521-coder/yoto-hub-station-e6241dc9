@@ -161,7 +161,7 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
   const downloadAll = async () => {
     setZipping("0/" + tracks.length);
     try {
-      await downloadTracksAsZip(title, tracks.map((t) => ({ url: t.url!, title: t.title })), (d, n) => setZipping(`${d}/${n}`));
+      await downloadTracksAsZip(title, tracks.map((t) => ({ url: t.url!, title: t.title })), (d: number, n: number) => setZipping(`${d}/${n}`));
       toast.success("ZIP downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "ZIP download failed");

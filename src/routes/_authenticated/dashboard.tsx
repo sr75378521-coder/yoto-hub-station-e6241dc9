@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   errorComponent: ({ error, reset }) => (
     <div className="p-8">
       <h2 className="text-lg font-semibold">Couldn't load players</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{(error as Error).message}</p>
       <Button onClick={reset} className="mt-4">
         Try again
       </Button>
