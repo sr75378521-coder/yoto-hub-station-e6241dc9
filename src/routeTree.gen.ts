@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
@@ -47,6 +48,11 @@ const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPodcastsRoute = AuthenticatedPodcastsRouteImport.update({
+  id: '/podcasts',
+  path: '/podcasts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/audio': typeof AuthenticatedAudioRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
+  '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/audio': typeof AuthenticatedAudioRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
+  '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
+  '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/audio'
     | '/dashboard'
     | '/icons'
+    | '/podcasts'
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/audio'
     | '/dashboard'
     | '/icons'
+    | '/podcasts'
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/_authenticated/audio'
     | '/_authenticated/dashboard'
     | '/_authenticated/icons'
+    | '/_authenticated/podcasts'
     | '/_authenticated/settings'
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/podcasts': {
+      id: '/_authenticated/podcasts'
+      path: '/podcasts'
+      fullPath: '/podcasts'
+      preLoaderRoute: typeof AuthenticatedPodcastsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/icons': {
@@ -329,6 +348,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
+  AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -340,6 +360,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
+  AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
