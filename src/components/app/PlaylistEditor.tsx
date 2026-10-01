@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { downloadTracksAsZip } from "@/lib/download";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -93,15 +94,12 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
       toast.error("No downloadable audio for this playlist yet");
       return;
     }
-    toast.success(`Downloading ${list.length} track${list.length === 1 ? "" : "s"}…`);
-    for (const [i, t] of list.entries()) {
-      const a = document.createElement("a");
-      a.href = downloadHref(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`);
-      a.download = "";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      await new Promise((r) => setTimeout(r, 700));
+    toast.info(`Zipping ${list.length} track${list.length === 1 ? "" : "s"}…`);
+    try {
+      await downloadTracksAsZip(title || "playlist", list.map((t) => ({ url: t.url!, title: t.title })));
+      toast.success("ZIP downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "ZIP download failed");
     }
   };
 

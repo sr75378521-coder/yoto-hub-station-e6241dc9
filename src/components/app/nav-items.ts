@@ -6,6 +6,7 @@ import {
   Settings,
   AudioWaveform,
   ShieldCheck,
+  Podcast,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -13,6 +14,7 @@ export const NAV_ITEMS = [
   { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/audio", label: "Audio Playground", icon: AudioWaveform },
   { to: "/playlists", label: "Playlists", icon: ListMusic },
+  { to: "/podcasts", label: "Podcasts", icon: Podcast },
   { to: "/icons", label: "My Icons", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
