@@ -78,7 +78,7 @@ function matchEpisode(ep: EpisodeResult, q: string): boolean {
   return t.split(/\s+/).every((w) => title.includes(w) || (/^\d+$/.test(w) && ep.episode === Number(w)));
 }
 
-export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport: (files: File[]) => void; disabled?: boolean | undefined; alwaysOpen?: boolean | undefined }) {
+export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (files: File[]) => void; disabled?: boolean | undefined; alwaysOpen?: boolean | undefined }) {
   const [openState, setOpen] = useState(false);
   const open = alwaysOpen || openState;
   const [filter, setFilter] = useState("");
@@ -260,7 +260,7 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport: (f
         setStates((s) => ({ ...s, [ep.guid]: { status: "downloading", progress: 0 } }));
         try {
           const blob = await fetchEpisode(ep);
-          if (mode === "queue") onImport([new File([blob], names[i]!, { type: blob.type || "audio/mpeg" })]);
+          if (mode === "queue") onImport?.([new File([blob], names[i]!, { type: blob.type || "audio/mpeg" })]);
           else {
             const entry = new ZipPassThrough(names[i]!);
             zipper.add(entry);
@@ -373,7 +373,7 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport: (f
                   onClick={() => openShow(p)}
                   className={cn(
                     "flex gap-3 rounded-xl border bg-background/40 p-3 text-left transition-all hover:border-primary/60",
-                    show?.id === p.id ? "border-primary shadow-glow" : "border-border",
+                    show?.id === p.id ? "border-primary" : "border-border",
                   )}
                 >
                   {p.artwork && <img src={p.artwork} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />}
@@ -413,7 +413,7 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport: (f
                     <Button size="sm" variant="destructive" onClick={() => (cancelRef.current = true)}>
                       <X className="h-3.5 w-3.5" /> Stop
                     </Button>
-                  ) : (
+                  ) : onImport && (
                     <Button size="sm" className="shadow-glow" disabled={!selected.size || disabled} onClick={() => importSelected("queue")}>
                       <Download className="h-3.5 w-3.5" /> Add {selected.size || ""} to queue
                     </Button>
