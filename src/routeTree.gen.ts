@@ -17,6 +17,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
@@ -63,6 +64,11 @@ const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConverterRoute = AuthenticatedConverterRouteImport.update({
+  id: '/converter',
+  path: '/converter',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audio': typeof AuthenticatedAudioRoute
+  '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/audio': typeof AuthenticatedAudioRoute
+  '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
+  '/_authenticated/converter': typeof AuthenticatedConverterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
   '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/audio'
+    | '/converter'
     | '/dashboard'
     | '/icons'
     | '/podcasts'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/audio'
+    | '/converter'
     | '/dashboard'
     | '/icons'
     | '/podcasts'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/audio'
+    | '/_authenticated/converter'
     | '/_authenticated/dashboard'
     | '/_authenticated/icons'
     | '/_authenticated/podcasts'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/converter': {
+      id: '/_authenticated/converter'
+      path: '/converter'
+      fullPath: '/converter'
+      preLoaderRoute: typeof AuthenticatedConverterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audio': {
       id: '/_authenticated/audio'
       path: '/audio'
@@ -346,6 +365,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
+  AuthenticatedConverterRoute: typeof AuthenticatedConverterRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
   AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
@@ -358,6 +378,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
+  AuthenticatedConverterRoute: AuthenticatedConverterRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
   AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
