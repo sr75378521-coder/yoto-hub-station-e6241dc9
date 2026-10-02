@@ -40,6 +40,14 @@ function PlaylistDetailPage() {
   const { playlistId } = useParams({ from: "/_authenticated/playlists/$playlistId" });
   const { mode } = useSearch({ from: "/_authenticated/playlists/$playlistId" });
   const navigate = useNavigate();
+
+  // Jump to the top of the page when entering edit mode so the editor is right there.
+  const prevMode = useRef(mode);
+  useEffect(() => {
+    if (mode === "edit" && prevMode.current !== "edit") window.scrollTo(0, 0);
+    prevMode.current = mode;
+  }, [mode]);
+
   const fetchDetails = useServerFn(getPlaylistDetails);
   const { data } = useSuspenseQuery(detailsQuery(fetchDetails as any, playlistId));
 
