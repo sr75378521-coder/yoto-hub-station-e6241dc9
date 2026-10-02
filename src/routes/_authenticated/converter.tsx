@@ -41,7 +41,7 @@ function ConverterPage() {
   }, []);
 
   const state = useSyncExternalStore(
-    (cb) => (engine ? engine.subscribe(cb) : () => {}),
+    (cb) => { if (!engine) return () => {}; const off = engine.subscribe(cb); return () => { off(); }; },
     () => (engine ? engine.getSnapshot() : EMPTY),
     () => EMPTY,
   ) as EngineState;
