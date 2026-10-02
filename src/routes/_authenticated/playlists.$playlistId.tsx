@@ -143,9 +143,14 @@ function PlaylistDetailPage() {
           </CardHeader>
         </Card>
 
-        <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
-
-        {mode === "edit" && <EditorSection cardId={cardId} />}
+        {mode === "edit" ? (
+          <>
+            <EditorSection cardId={cardId} />
+            <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+          </>
+        ) : (
+          <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+        )}
 
       </div>
     </AppShell>
