@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
@@ -40,6 +40,14 @@ function PlaylistDetailPage() {
   const { playlistId } = useParams({ from: "/_authenticated/playlists/$playlistId" });
   const { mode } = useSearch({ from: "/_authenticated/playlists/$playlistId" });
   const navigate = useNavigate();
+
+  // Jump to the top of the page when entering edit mode so the editor is right there.
+  const prevMode = useRef(mode);
+  useEffect(() => {
+    if (mode === "edit" && prevMode.current !== "edit") window.scrollTo(0, 0);
+    prevMode.current = mode;
+  }, [mode]);
+
   const fetchDetails = useServerFn(getPlaylistDetails);
   const { data } = useSuspenseQuery(detailsQuery(fetchDetails as any, playlistId));
 
@@ -135,9 +143,14 @@ function PlaylistDetailPage() {
           </CardHeader>
         </Card>
 
-        <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
-
-        {mode === "edit" && <EditorSection cardId={cardId} />}
+        {mode === "edit" ? (
+          <>
+            <EditorSection cardId={cardId} />
+            <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+          </>
+        ) : (
+          <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+        )}
 
       </div>
     </AppShell>
