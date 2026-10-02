@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Download, Play, Square, Trash2, Upload } from "lucide-react";
-import { Zip, zipSync } from "fflate";
+import { zipSync } from "fflate";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { FormatPanel } from "@/components/converter/FormatPanel";
@@ -11,7 +11,6 @@ import { downloadBlob } from "@/lib/download";
 import { DEFAULT_SPEC, type OutputSpec } from "@/lib/formats";
 import type { EngineState } from "@/lib/converter-engine";
 
-void Zip;
 
 export const Route = createFileRoute("/_authenticated/converter")({
   head: () => ({
@@ -42,8 +41,8 @@ function ConverterPage() {
   }, []);
 
   const state = useSyncExternalStore(
-    (cb) => (engine ? (engine as any).subscribe(cb) : () => {}),
-    () => (engine ? (engine as any).getState() : EMPTY),
+    (cb) => (engine ? engine.subscribe(cb) : () => {}),
+    () => (engine ? engine.getSnapshot() : EMPTY),
     () => EMPTY,
   ) as EngineState;
 
