@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { createPlaylist } from "@/lib/yoto/myo.functions";
 import { getPlaylistsData, type PlaylistData, type PlaylistSummary } from "@/lib/players.functions";
 import { Music, Plus, RefreshCw, Search, Clock, Disc3, Eye, Pencil } from "lucide-react";
 
@@ -275,15 +276,28 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
 function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const create = useServerFn(createPlaylist);
+  const navigate = useNavigate();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
       toast.error("Please enter a playlist name");
       return;
     }
-    setName("");
-    setIsOpen(false);
-    onCreated();
+    setBusy(true);
+    try {
+      const res = await create({ data: { title: name.trim() } });
+      if (!res.success || !res.cardId) throw new Error(res.error || "Couldn't create playlist");
+      setName("");
+      setIsOpen(false);
+      onCreated();
+      navigate({ to: "/playlists/$playlistId", params: { playlistId: res.cardId }, search: { mode: "edit" } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't create playlist");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -317,7 +331,7 @@ function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate}>Create</Button>
+            <Button onClick={handleCreate} disabled={busy}>{busy ? "Creating..." : "Create"}</Button>
           </div>
         </div>
       </DialogContent>
