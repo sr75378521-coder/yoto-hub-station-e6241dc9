@@ -167,6 +167,7 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
   });
 
   const tracks = (data?.tracks ?? []).filter((t) => t.url);
+  const canDownload = !!data?.canDownload;
   const dl = (url: string, name: string) =>
     `${url}${url.includes("?") ? "&" : "?"}dl=${encodeURIComponent(`${name}.mp3`)}`;
 
@@ -186,8 +187,13 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
-        {tracks.length > 0 && (
+        <div>
+          <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
+          {!isLoading && !canDownload && tracks.length > 0 && (
+            <p className="text-xs text-muted-foreground">Only admins can download Yoto-made playlists.</p>
+          )}
+        </div>
+        {tracks.length > 0 && canDownload && (
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" disabled={!!zipping} onClick={() => void downloadAll()}>
               {zipping ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
@@ -221,11 +227,11 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
                   ? `${Math.floor(t.duration / 60)}:${String(Math.floor(t.duration % 60)).padStart(2, "0")}`
                   : ""}
               </span>
-              <Button size="icon" variant="ghost" className="size-8" asChild>
+              {canDownload && <Button size="icon" variant="ghost" className="size-8" asChild>
                 <a href={dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`)} download>
                   <Download className="size-4" />
                 </a>
-              </Button>
+              </Button>}
             </div>
           ))
         )}

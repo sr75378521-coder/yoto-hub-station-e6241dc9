@@ -207,3 +207,13 @@
   image-rendering: pixelated;
 }
 
+
+@utility studio-canvas-grid {
+  background-color: var(--color-background);
+  background-image: radial-gradient(color-mix(in oklab, var(--color-foreground) 18%, transparent) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+@utility card-shadow {
+  box-shadow: 0 6px 20px -8px color-mix(in oklab, var(--color-foreground) 25%, transparent);
+}

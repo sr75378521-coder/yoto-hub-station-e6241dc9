@@ -13,12 +13,14 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
+import { Route as AuthenticatedSparkStudioRouteImport } from './routes/_authenticated/spark-studio'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
+import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
 import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
@@ -46,6 +48,12 @@ const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
   path: '/tools',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSparkStudioRoute =
+  AuthenticatedSparkStudioRouteImport.update({
+    id: '/spark-studio',
+    path: '/spark-studio',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -74,6 +82,11 @@ const AuthenticatedConverterRoute = AuthenticatedConverterRouteImport.update({
 const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
   id: '/audio',
   path: '/audio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAlarmsRoute = AuthenticatedAlarmsRouteImport.update({
+  id: '/alarms',
+  path: '/alarms',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -118,12 +131,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -136,12 +151,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -156,12 +173,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/alarms': typeof AuthenticatedAlarmsRoute
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
   '/_authenticated/converter': typeof AuthenticatedConverterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
   '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -176,12 +195,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alarms'
     | '/audio'
     | '/converter'
     | '/dashboard'
     | '/icons'
     | '/podcasts'
     | '/settings'
+    | '/spark-studio'
     | '/tools'
     | '/playlists/$playlistId'
     | '/api/public/podcast'
@@ -194,12 +215,14 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alarms'
     | '/audio'
     | '/converter'
     | '/dashboard'
     | '/icons'
     | '/podcasts'
     | '/settings'
+    | '/spark-studio'
     | '/tools'
     | '/playlists/$playlistId'
     | '/api/public/podcast'
@@ -213,12 +236,14 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/alarms'
     | '/_authenticated/audio'
     | '/_authenticated/converter'
     | '/_authenticated/dashboard'
     | '/_authenticated/icons'
     | '/_authenticated/podcasts'
     | '/_authenticated/settings'
+    | '/_authenticated/spark-studio'
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
     | '/api/public/podcast'
@@ -268,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedToolsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/spark-studio': {
+      id: '/_authenticated/spark-studio'
+      path: '/spark-studio'
+      fullPath: '/spark-studio'
+      preLoaderRoute: typeof AuthenticatedSparkStudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -308,6 +340,13 @@ declare module '@tanstack/react-router' {
       path: '/audio'
       fullPath: '/audio'
       preLoaderRoute: typeof AuthenticatedAudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/alarms': {
+      id: '/_authenticated/alarms'
+      path: '/alarms'
+      fullPath: '/alarms'
+      preLoaderRoute: typeof AuthenticatedAlarmsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -364,12 +403,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAlarmsRoute: typeof AuthenticatedAlarmsRoute
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
   AuthenticatedConverterRoute: typeof AuthenticatedConverterRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
   AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSparkStudioRoute: typeof AuthenticatedSparkStudioRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
   AuthenticatedPlaylistsIndexRoute: typeof AuthenticatedPlaylistsIndexRoute
@@ -377,12 +418,14 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAlarmsRoute: AuthenticatedAlarmsRoute,
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
   AuthenticatedConverterRoute: AuthenticatedConverterRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
   AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSparkStudioRoute: AuthenticatedSparkStudioRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
   AuthenticatedPlaylistsIndexRoute: AuthenticatedPlaylistsIndexRoute,
