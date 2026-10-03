@@ -93,8 +93,8 @@ function CreatePage() {
 
   return (
     <AppShell title="Spark Studio">
-    <div className="-m-4 md:-m-6 bg-background">
-      <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-3 border-b bg-card/95 px-4 py-3 backdrop-blur md:px-6">
+    <div className="-mx-4 -my-6 md:-mx-8 md:-my-8 bg-background">
+      <header className="sticky top-14 z-[5] flex min-h-16 flex-wrap items-center gap-3 border-b bg-card/95 px-4 py-3 backdrop-blur md:px-6">
         <span className="mr-2 font-display text-xl font-extrabold text-primary">Spark Studio</span>
         <Select value={selectedProjectId ?? ""} onValueChange={selectProject}>
           <SelectTrigger className="h-10 w-[220px] bg-background" aria-label="Choose playlist">
