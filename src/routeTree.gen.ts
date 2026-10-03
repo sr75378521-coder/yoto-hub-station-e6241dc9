@@ -20,6 +20,7 @@ import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
+import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
 import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
@@ -83,6 +84,11 @@ const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
   path: '/audio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAlarmsRoute = AuthenticatedAlarmsRouteImport.update({
+  id: '/alarms',
+  path: '/alarms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/alarms': typeof AuthenticatedAlarmsRoute
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
   '/_authenticated/converter': typeof AuthenticatedConverterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alarms'
     | '/audio'
     | '/converter'
     | '/dashboard'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/alarms'
     | '/audio'
     | '/converter'
     | '/dashboard'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/alarms'
     | '/_authenticated/audio'
     | '/_authenticated/converter'
     | '/_authenticated/dashboard'
@@ -330,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAudioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/alarms': {
+      id: '/_authenticated/alarms'
+      path: '/alarms'
+      fullPath: '/alarms'
+      preLoaderRoute: typeof AuthenticatedAlarmsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -384,6 +403,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAlarmsRoute: typeof AuthenticatedAlarmsRoute
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
   AuthenticatedConverterRoute: typeof AuthenticatedConverterRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -398,6 +418,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAlarmsRoute: AuthenticatedAlarmsRoute,
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
   AuthenticatedConverterRoute: AuthenticatedConverterRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
