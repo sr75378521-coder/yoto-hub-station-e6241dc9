@@ -392,8 +392,18 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
     async ({
       context,
       data,
-    }): Promise<{ title: string; artwork?: string; tracks: WebTrack[]; error?: string }> => {
+    }): Promise<{ title: string; artwork?: string; tracks: WebTrack[]; canDownload: boolean; error?: string }> => {
+      let canDownload = false;
       try {
+        const [roleRes, mineRes] = await Promise.allSettled([
+          context.supabase.from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle(),
+          yotoGetJson<{ cards?: { cardId: string }[] }>(context.userId, "/content/mine"),
+        ]);
+        const isAdmin = roleRes.status === "fulfilled" && !!roleRes.value.data;
+        const isMine =
+          mineRes.status === "fulfilled" &&
+          (mineRes.value.cards ?? []).some((c) => c.cardId === data.playlistId);
+        canDownload = isAdmin || isMine;
         const res = await resolveCardRaw(context.userId, data.playlistId);
         const card = (res?.card ?? res) as Record<string, any>;
         const meta = card?.metadata ?? {};
@@ -422,12 +432,13 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
             });
           });
         });
-        return { title: meta?.title ?? card?.title ?? "Playlist", artwork: cover, tracks };
+        return { title: meta?.title ?? card?.title ?? "Playlist", artwork: cover, tracks, canDownload };
 
       } catch (e) {
         return {
           title: "Playlist",
           tracks: [],
+          canDownload,
           error: e instanceof Error ? e.message : "Unknown error",
         };
       }
