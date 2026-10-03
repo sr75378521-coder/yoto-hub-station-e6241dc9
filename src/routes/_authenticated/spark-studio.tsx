@@ -14,7 +14,7 @@ import { useStudioRuntime } from "@/hooks/useStudioRuntime";
 import { getYotoAuthUrl } from "@/lib/yoto.functions";
 import { createCodeChallenge, createCodeVerifier, YOTO_VERIFIER_KEY } from "@/lib/pkce";
 
-export const Route = createFileRoute("/_authenticated/create")({
+export const Route = createFileRoute("/_authenticated/spark-studio")({
   head: () => ({
     meta: [
       { title: "Create · Spark Studio" },

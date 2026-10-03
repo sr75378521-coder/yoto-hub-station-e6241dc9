@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
+import { Route as AuthenticatedSparkStudioRouteImport } from './routes/_authenticated/spark-studio'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
@@ -46,6 +47,12 @@ const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
   path: '/tools',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSparkStudioRoute =
+  AuthenticatedSparkStudioRouteImport.update({
+    id: '/spark-studio',
+    path: '/spark-studio',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -124,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -142,6 +150,7 @@ export interface FileRoutesByTo {
   '/icons': typeof AuthenticatedIconsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
   '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/spark-studio': typeof AuthenticatedSparkStudioRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/icons'
     | '/podcasts'
     | '/settings'
+    | '/spark-studio'
     | '/tools'
     | '/playlists/$playlistId'
     | '/api/public/podcast'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/icons'
     | '/podcasts'
     | '/settings'
+    | '/spark-studio'
     | '/tools'
     | '/playlists/$playlistId'
     | '/api/public/podcast'
@@ -219,6 +231,7 @@ export interface FileRouteTypes {
     | '/_authenticated/icons'
     | '/_authenticated/podcasts'
     | '/_authenticated/settings'
+    | '/_authenticated/spark-studio'
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
     | '/api/public/podcast'
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools'
       preLoaderRoute: typeof AuthenticatedToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/spark-studio': {
+      id: '/_authenticated/spark-studio'
+      path: '/spark-studio'
+      fullPath: '/spark-studio'
+      preLoaderRoute: typeof AuthenticatedSparkStudioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -370,6 +390,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
   AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSparkStudioRoute: typeof AuthenticatedSparkStudioRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
   AuthenticatedPlaylistsIndexRoute: typeof AuthenticatedPlaylistsIndexRoute
@@ -383,6 +404,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
   AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSparkStudioRoute: AuthenticatedSparkStudioRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
   AuthenticatedPlaylistsIndexRoute: AuthenticatedPlaylistsIndexRoute,
