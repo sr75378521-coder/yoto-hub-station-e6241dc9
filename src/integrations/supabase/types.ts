@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkpoints: {
+        Row: {
+          audio_duration: number | null
+          audio_name: string | null
+          audio_path: string | null
+          audio_size: number | null
+          auto_advance: boolean
+          created_at: string
+          icon: string | null
+          id: string
+          is_start: boolean
+          left_action: string
+          left_target: string | null
+          loop_audio: boolean
+          order_index: number
+          pos_x: number
+          pos_y: number
+          project_id: string
+          right_action: string
+          right_target: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          volume: number
+        }
+        Insert: {
+          audio_duration?: number | null
+          audio_name?: string | null
+          audio_path?: string | null
+          audio_size?: number | null
+          auto_advance?: boolean
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_start?: boolean
+          left_action?: string
+          left_target?: string | null
+          loop_audio?: boolean
+          order_index?: number
+          pos_x?: number
+          pos_y?: number
+          project_id: string
+          right_action?: string
+          right_target?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          volume?: number
+        }
+        Update: {
+          audio_duration?: number | null
+          audio_name?: string | null
+          audio_path?: string | null
+          audio_size?: number | null
+          auto_advance?: boolean
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_start?: boolean
+          left_action?: string
+          left_target?: string | null
+          loop_audio?: boolean
+          order_index?: number
+          pos_x?: number
+          pos_y?: number
+          project_id?: string
+          right_action?: string
+          right_target?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoints_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "studio_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       families: {
         Row: {
           created_at: string
@@ -157,6 +240,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_alarms: {
+        Row: {
+          created_at: string
+          days: number[]
+          device_id: string
+          enabled: boolean
+          id: string
+          label: string
+          sound_card_id: string | null
+          sound_title: string | null
+          sound_type: string
+          time: string
+          updated_at: string
+          user_id: string
+          volume: number
+        }
+        Insert: {
+          created_at?: string
+          days?: number[]
+          device_id: string
+          enabled?: boolean
+          id?: string
+          label?: string
+          sound_card_id?: string | null
+          sound_title?: string | null
+          sound_type?: string
+          time?: string
+          updated_at?: string
+          user_id: string
+          volume?: number
+        }
+        Update: {
+          created_at?: string
+          days?: number[]
+          device_id?: string
+          enabled?: boolean
+          id?: string
+          label?: string
+          sound_card_id?: string | null
+          sound_title?: string | null
+          sound_type?: string
+          time?: string
+          updated_at?: string
+          user_id?: string
+          volume?: number
+        }
+        Relationships: []
+      }
+      studio_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
