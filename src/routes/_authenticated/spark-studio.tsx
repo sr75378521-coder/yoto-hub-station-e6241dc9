@@ -1,6 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, LogOut, ListMusic, Copy, Trash2, Play, Square, ChevronLeft, ChevronRight, Link2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Plus, ListMusic, Copy, Trash2, Play, Square, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,21 +7,19 @@ import { CheckpointCard } from "@/components/studio/CheckpointCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProject, type Checkpoint } from "@/hooks/useStudioProject";
 import { useStudioRuntime } from "@/hooks/useStudioRuntime";
-import { getYotoAuthUrl } from "@/lib/yoto.functions";
-import { createCodeChallenge, createCodeVerifier, YOTO_VERIFIER_KEY } from "@/lib/pkce";
+import { AppShell } from "@/components/app/AppShell";
 
 export const Route = createFileRoute("/_authenticated/spark-studio")({
   head: () => ({
     meta: [
-      { title: "Create · Spark Studio" },
+      { title: "Spark Studio · Yoto Control Center" },
       {
         name: "description",
         content: "Build interactive Yoto adventures on an infinite canvas of audio checkpoints.",
       },
-      { property: "og:title", content: "Create · Spark Studio" },
+      { property: "og:title", content: "Spark Studio · Yoto Control Center" },
       {
         property: "og:description",
         content: "Build interactive Yoto adventures on an infinite canvas of audio checkpoints.",
@@ -35,8 +32,6 @@ export const Route = createFileRoute("/_authenticated/spark-studio")({
 });
 
 function CreatePage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const {
     projects,
     project,
@@ -58,16 +53,6 @@ function CreatePage() {
 
   const cards = checkpoints.data ?? [];
   const runtime = useStudioRuntime(cards);
-  const profile = useQuery({
-    queryKey: ["studio", "profile"],
-    queryFn: async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth.user) throw new Error("Sign in required");
-      const { data, error } = await supabase.from("profiles").select("display_name,yoto_sub").eq("id", auth.user.id).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
 
   function posOf(card: Checkpoint) {
     return localPos[card.id] ?? { x: card.pos_x, y: card.pos_y };
@@ -93,26 +78,6 @@ function CreatePage() {
     setDrag(null);
   }
 
-  async function signOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
-
-  async function connectYoto() {
-    try {
-      const verifier = createCodeVerifier();
-      const challenge = await createCodeChallenge(verifier);
-      sessionStorage.setItem(YOTO_VERIFIER_KEY, verifier);
-      const redirectUri = `${window.location.origin}/auth/yoto/callback`;
-      const result = await getYotoAuthUrl({ data: { redirectUri, codeChallenge: challenge } });
-      if (!result.configured) throw new Error("Yoto connection is not configured.");
-      window.location.href = result.url;
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not connect Yoto.");
-    }
-  }
 
   function destination(card: Checkpoint, side: "left" | "right") {
     const action = side === "left" ? card.left_action : card.right_action;
@@ -127,7 +92,8 @@ function CreatePage() {
   const connections = cards.flatMap((card) => (["left", "right"] as const).map((side) => ({ card, side, to: destination(card, side) })).filter((item) => item.to));
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppShell title="Spark Studio">
+    <div className="-m-4 md:-m-6 bg-background">
       <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-3 border-b bg-card/95 px-4 py-3 backdrop-blur md:px-6">
         <span className="mr-2 font-display text-xl font-extrabold text-primary">Spark Studio</span>
         <Select value={selectedProjectId ?? ""} onValueChange={selectProject}>
@@ -166,14 +132,8 @@ function CreatePage() {
           {cards.length} checkpoint{cards.length === 1 ? "" : "s"} · saved automatically
         </span>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant={profile.data?.yoto_sub ? "outline" : "secondary"} onClick={connectYoto}>
-            <Link2 className="size-4" /> {profile.data?.yoto_sub ? "Yoto connected" : "Connect Yoto"}
-          </Button>
           <Button onClick={() => addCheckpoint.mutate()} disabled={!selectedProjectId}>
             <Plus className="size-4" /> Add checkpoint
-          </Button>
-          <Button variant="ghost" size="icon" onClick={signOut} aria-label="Sign out">
-            <LogOut className="size-4" />
           </Button>
         </div>
       </header>
@@ -267,5 +227,6 @@ function CreatePage() {
         </div>
       </div>
     </div>
+    </AppShell>
   );
 }
