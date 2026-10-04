@@ -1,9 +1,11 @@
-## Active tasks
-- [x] Add mobile hamburger slide-out navigation for all tabs
-- [x] Add database-backed admin roles and make the requesting user an admin
-- [x] Expanded admin panel: stats, search, grant by email, disconnect Yoto
-- [x] Removed the card-link feature (unsupported by Yoto)
-- [ ] Restrict all playlist/file downloads to admins
-- [x] Admin panel: health stats, suspend/delete/reset-link, bulk cleanup
-- [x] Extra player controls (night light, brightness, volume limits, toggles, restart)
-- [x] Fix preview typecheck/build errors
+# Roadmap
+
+- [x] Feedback tab (page + save to database + email hook)
+- [ ] Create feedback table (migration pending)
+- [ ] Add RESEND_API_KEY so feedback emails reach sr75378521@gmail.com
+- [ ] Typecheck + build pass for new tabs (alarms, spark-studio, feedback)
+- [ ] Browser-verify /alarms and /spark-studio
+- [ ] Test alarms on a real online player (alarm format is guessed)
+- [ ] Fix 2 security warnings on older admin features
+- [ ] Enforce admin-only downloads at the proxy level (currently buttons only)
+- [ ] Verify downloads with a real playlist/account
