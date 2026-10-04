@@ -190,7 +190,7 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
         <div>
           <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
           {!isLoading && !canDownload && tracks.length > 0 && (
-            <p className="text-xs text-muted-foreground">Only admins can download Yoto-made playlists.</p>
+            <p className="text-xs text-muted-foreground">Sorry you can't download yoto made playlists.</p>
           )}
         </div>
         {tracks.length > 0 && canDownload && (
