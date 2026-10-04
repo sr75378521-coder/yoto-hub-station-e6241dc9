@@ -10,6 +10,7 @@ import {
   Repeat,
   AlarmClock,
   Wand2,
+  MessageSquareHeart,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -22,6 +23,7 @@ export const NAV_ITEMS = [
   { to: "/alarms", label: "Alarms", icon: AlarmClock },
   { to: "/spark-studio", label: "Spark Studio", icon: Wand2 },
   { to: "/icons", label: "My Icons", icon: Sparkles },
+  { to: "/feedback", label: "Feedback", icon: MessageSquareHeart },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
