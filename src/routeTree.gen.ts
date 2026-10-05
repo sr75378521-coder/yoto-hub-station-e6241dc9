@@ -20,6 +20,7 @@ import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
+import { Route as AuthenticatedBedtimeRouteImport } from './routes/_authenticated/bedtime'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
 import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -85,6 +86,11 @@ const AuthenticatedConverterRoute = AuthenticatedConverterRouteImport.update({
   path: '/converter',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBedtimeRoute = AuthenticatedBedtimeRouteImport.update({
+  id: '/bedtime',
+  path: '/bedtime',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
   id: '/audio',
   path: '/audio',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
+  '/bedtime': typeof AuthenticatedBedtimeRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
+  '/bedtime': typeof AuthenticatedBedtimeRoute
   '/converter': typeof AuthenticatedConverterRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarms': typeof AuthenticatedAlarmsRoute
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
+  '/_authenticated/bedtime': typeof AuthenticatedBedtimeRoute
   '/_authenticated/converter': typeof AuthenticatedConverterRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alarms'
     | '/audio'
+    | '/bedtime'
     | '/converter'
     | '/dashboard'
     | '/feedback'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alarms'
     | '/audio'
+    | '/bedtime'
     | '/converter'
     | '/dashboard'
     | '/feedback'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/alarms'
     | '/_authenticated/audio'
+    | '/_authenticated/bedtime'
     | '/_authenticated/converter'
     | '/_authenticated/dashboard'
     | '/_authenticated/feedback'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConverterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bedtime': {
+      id: '/_authenticated/bedtime'
+      path: '/bedtime'
+      fullPath: '/bedtime'
+      preLoaderRoute: typeof AuthenticatedBedtimeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audio': {
       id: '/_authenticated/audio'
       path: '/audio'
@@ -424,6 +443,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmsRoute: typeof AuthenticatedAlarmsRoute
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
+  AuthenticatedBedtimeRoute: typeof AuthenticatedBedtimeRoute
   AuthenticatedConverterRoute: typeof AuthenticatedConverterRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
@@ -440,6 +460,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAlarmsRoute: AuthenticatedAlarmsRoute,
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
+  AuthenticatedBedtimeRoute: AuthenticatedBedtimeRoute,
   AuthenticatedConverterRoute: AuthenticatedConverterRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
