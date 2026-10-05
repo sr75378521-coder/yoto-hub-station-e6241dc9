@@ -279,6 +279,24 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
         )}
       </div>
 
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        <Button variant="outline" size="sm" disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.chapterStep(deviceId, -1), "Chapter")}>Prev chapter</Button>
+        <Button variant="outline" size="sm" disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.restartTrack(deviceId), "Restart")}>Restart track</Button>
+        <Button variant="outline" size="sm" disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.chapterStep(deviceId, 1), "Chapter")}>Next chapter</Button>
+        <Button variant="outline" size="sm" disabled={disabled || !playing}
+          onClick={() => {
+            toast.info("Fading out over 30 seconds…");
+            run(yotoDevice.fadeOutAndStop(deviceId, 30), "Fade out");
+          }}>Fade out</Button>
+        <Button variant="outline" size="sm" disabled={disabled}
+          onClick={() => run(yotoDevice.bluetoothPairMode(deviceId), "Bluetooth pairing")}>BT pair</Button>
+        <Button variant="outline" size="sm" disabled={disabled}
+          onClick={() => run(yotoDevice.bluetoothDisconnect(deviceId), "Bluetooth")}>BT disconnect</Button>
+      </div>
+
       <PlayerAdvanced deviceId={deviceId} disabled={disabled} />
     </div>
   );
