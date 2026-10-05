@@ -11,6 +11,7 @@ import {
   AlarmClock,
   Wand2,
   MessageSquareHeart,
+  Moon,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -21,6 +22,7 @@ export const NAV_ITEMS = [
   { to: "/podcasts", label: "Podcasts", icon: Podcast },
   { to: "/converter", label: "Converter", icon: Repeat },
   { to: "/alarms", label: "Alarms", icon: AlarmClock },
+  { to: "/bedtime", label: "Bedtime", icon: Moon },
   { to: "/spark-studio", label: "Spark Studio", icon: Wand2 },
   { to: "/icons", label: "My Icons", icon: Sparkles },
   { to: "/feedback", label: "Feedback", icon: MessageSquareHeart },
