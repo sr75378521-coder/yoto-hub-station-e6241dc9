@@ -149,7 +149,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           position: typeof ev.position === "number" ? ev.position : e.state.position,
           trackLength: typeof ev.trackLength === "number" ? ev.trackLength : e.state.trackLength,
           playbackStatus: ev.playbackStatus ?? e.state.playbackStatus,
-          volume: typeof ev.volume === "number" ? ev.volume : e.state.volume,
+          volume: typeof ev.volume === "number" ? toLevel(ev.volume) : e.state.volume,
           sleepTimerActive: Boolean(ev.sleepTimerActive),
           sleepTimerSeconds:
             typeof ev.sleepTimerSeconds === "number" ? ev.sleepTimerSeconds : e.state.sleepTimerSeconds,
@@ -167,7 +167,7 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           cardInserted: Boolean(s.cardInserted),
           cardId:
             typeof s.activeCard === "string" && s.activeCard !== "none" ? s.activeCard : e.state.cardId,
-          volume: typeof s.volume === "number" ? s.volume : e.state.volume,
+          volume: typeof s.volume === "number" ? toLevel(s.volume) : e.state.volume,
           wifiStrength: typeof s.wifiStrength === "number" ? s.wifiStrength : e.state.wifiStrength,
           firmware: typeof s.fwVersion === "string" ? s.fwVersion : e.state.firmware,
           ambientRgb:
@@ -245,10 +245,24 @@ async function publish(deviceId: string, suffix: string, payload: unknown = "") 
   client.publish(`device/${deviceId}/command/${suffix}`, body, { qos: 1 });
 }
 
+/** Yoto shows volume as 0–16 steps; reports above 16 are percentages. */
+function toLevel(v: number) {
+  return v > 16 ? Math.round((v / 100) * 16) : v;
+}
+
+/** volume/set takes 0–100 per yoto.dev, so map the 0–16 level and update the UI right away. */
+async function setVolumeLevel(id: string, level: number) {
+  const l = Math.min(16, Math.max(0, Math.round(level)));
+  await publish(id, "volume/set", { volume: Math.round((l / 16) * 100) });
+  const e = entryFor(id);
+  patch(e, { volume: l });
+  setTimeout(() => void publish(id, "events/request", "{}").catch(() => {}), 800);
+}
+
 export const yotoDevice = {
   requestStatus: (id: string) => publish(id, "status/request", ""),
   requestEvents: (id: string) => publish(id, "events/request", "{}"),
-  setVolume: (id: string, volume: number) => publish(id, "volume/set", { volume }),
+  setVolume: (id: string, volume: number) => setVolumeLevel(id, volume),
   setSleepTimer: (id: string, seconds: number) => publish(id, "sleep-timer/set", { seconds }),
   pause: (id: string) => publish(id, "card/pause", ""),
   resume: (id: string) => publish(id, "card/resume", ""),
@@ -306,11 +320,11 @@ export const yotoDevice = {
     const steps = Math.max(1, start);
     const delay = (seconds * 1000) / steps;
     for (let v = start - 1; v >= 0; v--) {
-      await publish(id, "volume/set", { volume: v });
+      await setVolumeLevel(id, v);
       await new Promise((r) => setTimeout(r, delay));
     }
     await publish(id, "card/stop", "");
-    await publish(id, "volume/set", { volume: start });
+    await setVolumeLevel(id, start);
   },
   setShutdownTimer: (id: string, minutes: number) =>
     publish(id, "set-config", { shutdownTimeout: minutes * 60 }),
@@ -329,7 +343,7 @@ export const yotoDevice = {
   volumeStep: (id: string, delta: number) => {
     const current = Math.round(getDeviceState(id).volume ?? 8);
     const next = Math.min(16, Math.max(0, current + delta));
-    return publish(id, "volume/set", { volume: next });
+    return setVolumeLevel(id, next);
   },
   volumeUp: (id: string) => yotoDevice.volumeStep(id, 1),
   volumeDown: (id: string) => yotoDevice.volumeStep(id, -1),
