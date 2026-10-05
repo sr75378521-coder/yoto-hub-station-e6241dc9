@@ -9,44 +9,84 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
-import { Route as AuthenticatedSparkStudioRouteImport } from './routes/_authenticated/spark-studio'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
-import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
-import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
-import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
-import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
+import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
+import { Route as AuthenticatedConverterRouteImport } from './routes/_authenticated/converter'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
+import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
+import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSparkStudioRouteImport } from './routes/_authenticated/spark-studio'
+import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
-import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
-import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
-import { Route as ApiYotoAudioRouteImport } from './routes/api/yoto/audio'
-import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
+import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
+import { Route as ApiYotoAudioRouteImport } from './routes/api/yoto/audio'
+import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
+import { Route as ApiYotoCallbackRouteImport } from './routes/api/yoto/callback'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
-  id: '/tools',
-  path: '/tools',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAlarmsRoute = AuthenticatedAlarmsRouteImport.update({
+  id: '/alarms',
+  path: '/alarms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
+  id: '/audio',
+  path: '/audio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConverterRoute = AuthenticatedConverterRouteImport.update({
+  id: '/converter',
+  path: '/converter',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
+  id: '/icons',
+  path: '/icons',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPodcastsRoute = AuthenticatedPodcastsRouteImport.update({
+  id: '/podcasts',
+  path: '/podcasts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSparkStudioRoute =
@@ -55,49 +95,9 @@ const AuthenticatedSparkStudioRoute =
     path: '/spark-studio',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPodcastsRoute = AuthenticatedPodcastsRouteImport.update({
-  id: '/podcasts',
-  path: '/podcasts',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
-  id: '/icons',
-  path: '/icons',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedConverterRoute = AuthenticatedConverterRouteImport.update({
-  id: '/converter',
-  path: '/converter',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAudioRoute = AuthenticatedAudioRouteImport.update({
-  id: '/audio',
-  path: '/audio',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAlarmsRoute = AuthenticatedAlarmsRouteImport.update({
-  id: '/alarms',
-  path: '/alarms',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlaylistsIndexRoute =
@@ -106,14 +106,15 @@ const AuthenticatedPlaylistsIndexRoute =
     path: '/playlists/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiYotoCallbackRoute = ApiYotoCallbackRouteImport.update({
-  id: '/api/yoto/callback',
-  path: '/api/yoto/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiYotoAuthorizeRoute = ApiYotoAuthorizeRouteImport.update({
-  id: '/api/yoto/authorize',
-  path: '/api/yoto/authorize',
+const AuthenticatedPlaylistsPlaylistIdRoute =
+  AuthenticatedPlaylistsPlaylistIdRouteImport.update({
+    id: '/playlists/$playlistId',
+    path: '/playlists/$playlistId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
+  id: '/api/public/podcast',
+  path: '/api/public/podcast',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiYotoAudioRoute = ApiYotoAudioRouteImport.update({
@@ -121,17 +122,16 @@ const ApiYotoAudioRoute = ApiYotoAudioRouteImport.update({
   path: '/api/yoto/audio',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
-  id: '/api/public/podcast',
-  path: '/api/public/podcast',
+const ApiYotoAuthorizeRoute = ApiYotoAuthorizeRouteImport.update({
+  id: '/api/yoto/authorize',
+  path: '/api/yoto/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPlaylistsPlaylistIdRoute =
-  AuthenticatedPlaylistsPlaylistIdRouteImport.update({
-    id: '/playlists/$playlistId',
-    path: '/playlists/$playlistId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const ApiYotoCallbackRoute = ApiYotoCallbackRouteImport.update({
+  id: '/api/yoto/callback',
+  path: '/api/yoto/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -277,11 +277,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -291,74 +291,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tools': {
-      id: '/_authenticated/tools'
-      path: '/tools'
-      fullPath: '/tools'
-      preLoaderRoute: typeof AuthenticatedToolsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/spark-studio': {
-      id: '/_authenticated/spark-studio'
-      path: '/spark-studio'
-      fullPath: '/spark-studio'
-      preLoaderRoute: typeof AuthenticatedSparkStudioRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/podcasts': {
-      id: '/_authenticated/podcasts'
-      path: '/podcasts'
-      fullPath: '/podcasts'
-      preLoaderRoute: typeof AuthenticatedPodcastsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/icons': {
-      id: '/_authenticated/icons'
-      path: '/icons'
-      fullPath: '/icons'
-      preLoaderRoute: typeof AuthenticatedIconsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/feedback': {
-      id: '/_authenticated/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/converter': {
-      id: '/_authenticated/converter'
-      path: '/converter'
-      fullPath: '/converter'
-      preLoaderRoute: typeof AuthenticatedConverterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/audio': {
-      id: '/_authenticated/audio'
-      path: '/audio'
-      fullPath: '/audio'
-      preLoaderRoute: typeof AuthenticatedAudioRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/alarms': {
@@ -368,11 +312,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlarmsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/audio': {
+      id: '/_authenticated/audio'
+      path: '/audio'
+      fullPath: '/audio'
+      preLoaderRoute: typeof AuthenticatedAudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/converter': {
+      id: '/_authenticated/converter'
+      path: '/converter'
+      fullPath: '/converter'
+      preLoaderRoute: typeof AuthenticatedConverterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/icons': {
+      id: '/_authenticated/icons'
+      path: '/icons'
+      fullPath: '/icons'
+      preLoaderRoute: typeof AuthenticatedIconsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/podcasts': {
+      id: '/_authenticated/podcasts'
+      path: '/podcasts'
+      fullPath: '/podcasts'
+      preLoaderRoute: typeof AuthenticatedPodcastsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/spark-studio': {
+      id: '/_authenticated/spark-studio'
+      path: '/spark-studio'
+      fullPath: '/spark-studio'
+      preLoaderRoute: typeof AuthenticatedSparkStudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tools': {
+      id: '/_authenticated/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AuthenticatedToolsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/playlists/': {
@@ -382,18 +382,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlaylistsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/yoto/callback': {
-      id: '/api/yoto/callback'
-      path: '/api/yoto/callback'
-      fullPath: '/api/yoto/callback'
-      preLoaderRoute: typeof ApiYotoCallbackRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/playlists/$playlistId': {
+      id: '/_authenticated/playlists/$playlistId'
+      path: '/playlists/$playlistId'
+      fullPath: '/playlists/$playlistId'
+      preLoaderRoute: typeof AuthenticatedPlaylistsPlaylistIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/yoto/authorize': {
-      id: '/api/yoto/authorize'
-      path: '/api/yoto/authorize'
-      fullPath: '/api/yoto/authorize'
-      preLoaderRoute: typeof ApiYotoAuthorizeRouteImport
+    '/api/public/podcast': {
+      id: '/api/public/podcast'
+      path: '/api/public/podcast'
+      fullPath: '/api/public/podcast'
+      preLoaderRoute: typeof ApiPublicPodcastRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/yoto/audio': {
@@ -403,19 +403,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiYotoAudioRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/podcast': {
-      id: '/api/public/podcast'
-      path: '/api/public/podcast'
-      fullPath: '/api/public/podcast'
-      preLoaderRoute: typeof ApiPublicPodcastRouteImport
+    '/api/yoto/authorize': {
+      id: '/api/yoto/authorize'
+      path: '/api/yoto/authorize'
+      fullPath: '/api/yoto/authorize'
+      preLoaderRoute: typeof ApiYotoAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/playlists/$playlistId': {
-      id: '/_authenticated/playlists/$playlistId'
-      path: '/playlists/$playlistId'
-      fullPath: '/playlists/$playlistId'
-      preLoaderRoute: typeof AuthenticatedPlaylistsPlaylistIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/api/yoto/callback': {
+      id: '/api/yoto/callback'
+      path: '/api/yoto/callback'
+      fullPath: '/api/yoto/callback'
+      preLoaderRoute: typeof ApiYotoCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
