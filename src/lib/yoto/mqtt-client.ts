@@ -264,8 +264,54 @@ export const yotoDevice = {
     publish(id, "set-config", { nightDisplayBrightness: level, night: { displayBrightness: level } }),
   setMaxVolume: (id: string, day: number, night: number) =>
     publish(id, "set-config", { maxVolumeLimit: day, day: { maxVolume: day }, night: { maxVolume: night } }),
+  /** Documented Yoto topics: command/bluetooth/on and command/bluetooth/off. */
   setBluetooth: (id: string, enabled: boolean) =>
-    publish(id, "set-config", { bluetoothEnabled: enabled ? 1 : 0 }),
+    enabled
+      ? publish(id, "bluetooth/on", { action: "on", mode: "a2dp" })
+      : publish(id, "bluetooth/off", ""),
+  bluetoothPairMode: (id: string) => publish(id, "bluetooth/on", { action: "pair", mode: "a2dp" }),
+  bluetoothDisconnect: (id: string) => publish(id, "bluetooth/disconnect", ""),
+  bluetoothForgetDevices: (id: string) => publish(id, "bluetooth/delete-bonds", ""),
+  bluetoothState: (id: string) => publish(id, "bluetooth/state", ""),
+  /** Toggle play/pause based on the latest reported state. */
+  togglePlay: (id: string) =>
+    getDeviceState(id).playbackStatus === "playing"
+      ? publish(id, "card/pause", "")
+      : publish(id, "card/resume", ""),
+  /** Jump to a chapter on the current card. */
+  chapterStep: (id: string, delta: number) => {
+    const s = getDeviceState(id);
+    if (!s.cardId) return Promise.reject(new Error("Nothing is playing"));
+    const n = Math.max(1, Number(s.chapterKey ?? "1") + delta);
+    return yotoDevice.startCard(id, {
+      cardId: s.cardId,
+      chapterKey: n.toString().padStart(2, "0"),
+      trackKey: "01",
+    });
+  },
+  /** Restart the current track from the beginning. */
+  restartTrack: (id: string) => {
+    const s = getDeviceState(id);
+    if (!s.cardId) return Promise.reject(new Error("Nothing is playing"));
+    return yotoDevice.startCard(id, {
+      cardId: s.cardId,
+      chapterKey: s.chapterKey ?? "01",
+      trackKey: s.trackKey ?? "01",
+      secondsIn: 0,
+    });
+  },
+  /** Gently lower volume step by step, then stop playback. */
+  fadeOutAndStop: async (id: string, seconds = 30) => {
+    const start = Math.round(getDeviceState(id).volume ?? 8);
+    const steps = Math.max(1, start);
+    const delay = (seconds * 1000) / steps;
+    for (let v = start - 1; v >= 0; v--) {
+      await publish(id, "volume/set", { volume: v });
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    await publish(id, "card/stop", "");
+    await publish(id, "volume/set", { volume: start });
+  },
   setShutdownTimer: (id: string, minutes: number) =>
     publish(id, "set-config", { shutdownTimeout: minutes * 60 }),
   setRepeatAll: (id: string, enabled: boolean) =>
