@@ -21,9 +21,11 @@ export type Database = {
           audio_path: string | null
           audio_size: number | null
           auto_advance: boolean
+          auto_target: string | null
           created_at: string
           icon: string | null
           id: string
+          is_checkpoint: boolean
           is_start: boolean
           left_action: string
           left_target: string | null
@@ -38,6 +40,8 @@ export type Database = {
           updated_at: string
           user_id: string
           volume: number
+          waypoints: Json
+          yoto_track: Json | null
         }
         Insert: {
           audio_duration?: number | null
@@ -45,9 +49,11 @@ export type Database = {
           audio_path?: string | null
           audio_size?: number | null
           auto_advance?: boolean
+          auto_target?: string | null
           created_at?: string
           icon?: string | null
           id?: string
+          is_checkpoint?: boolean
           is_start?: boolean
           left_action?: string
           left_target?: string | null
@@ -62,6 +68,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           volume?: number
+          waypoints?: Json
+          yoto_track?: Json | null
         }
         Update: {
           audio_duration?: number | null
@@ -69,9 +77,11 @@ export type Database = {
           audio_path?: string | null
           audio_size?: number | null
           auto_advance?: boolean
+          auto_target?: string | null
           created_at?: string
           icon?: string | null
           id?: string
+          is_checkpoint?: boolean
           is_start?: boolean
           left_action?: string
           left_target?: string | null
@@ -86,6 +96,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           volume?: number
+          waypoints?: Json
+          yoto_track?: Json | null
         }
         Relationships: [
           {
@@ -327,6 +339,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          yoto_card_id: string | null
         }
         Insert: {
           created_at?: string
@@ -335,6 +348,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id: string
+          yoto_card_id?: string | null
         }
         Update: {
           created_at?: string
@@ -343,6 +357,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          yoto_card_id?: string | null
         }
         Relationships: []
       }
