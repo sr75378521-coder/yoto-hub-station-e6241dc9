@@ -216,3 +216,48 @@ export async function getAudioUrl(path: string) {
   if (error) throw error;
   return data.signedUrl;
 }
+
+/** Create one box per audio file, stacked top-to-bottom and chained with auto-advance arrows. */
+export async function addAudioBoxes(
+  projectId: string,
+  files: File[],
+  existing: Checkpoint[],
+  durationOf: (file: File) => Promise<number | null>,
+) {
+  const userId = await requireUserId();
+  const maxY = existing.reduce((m, c) => Math.max(m, c.pos_y), -200);
+  const sorted = [...existing].sort((a, b) => b.pos_y - a.pos_y);
+  let prev: Checkpoint | undefined = sorted[0];
+  const baseX = prev?.pos_x ?? 400;
+  for (const [i, file] of files.entries()) {
+    const created = await supabase
+      .from("checkpoints")
+      .insert({
+        project_id: projectId,
+        user_id: userId,
+        order_index: existing.length + i,
+        title: file.name.replace(/\.[^.]+$/, "").slice(0, 80),
+        is_start: existing.length === 0 && i === 0,
+        icon: "🎧",
+        pos_x: baseX,
+        pos_y: maxY + 200 * (i + 1),
+        auto_advance: false,
+        left_action: "none",
+        right_action: "none",
+      })
+      .select("*")
+      .single();
+    if (created.error) throw created.error;
+    const path = await uploadCheckpointAudio(file, created.data.id);
+    const duration = await durationOf(file);
+    const upd = await supabase
+      .from("checkpoints")
+      .update({ audio_path: path, audio_name: file.name, audio_size: file.size, audio_duration: duration })
+      .eq("id", created.data.id);
+    if (upd.error) throw upd.error;
+    if (prev && !prev.auto_target) {
+      await supabase.from("checkpoints").update({ auto_advance: true, auto_target: created.data.id }).eq("id", prev.id);
+    }
+    prev = created.data;
+  }
+}

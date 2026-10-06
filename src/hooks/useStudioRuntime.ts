@@ -58,7 +58,9 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
         const current = checkpointsRef.current.find((item) => item.id === activeIdRef.current);
         if (!current?.auto_advance) return;
         const index = checkpointsRef.current.findIndex((item) => item.id === current.id);
-        const next = checkpointsRef.current[index + 1];
+        const next = current.auto_target
+          ? checkpointsRef.current.find((item) => item.id === current.auto_target)
+          : checkpointsRef.current[index + 1];
         if (next) void playCheckpoint(next);
       });
       audioRef.current = audio;
