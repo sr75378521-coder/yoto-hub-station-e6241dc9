@@ -26,6 +26,7 @@ import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
 import { Route as AuthenticatedSparkStudioIndexRouteImport } from './routes/_authenticated/spark-studio.index'
+import { Route as AuthenticatedSparkStudioProjectIdRouteImport } from './routes/_authenticated/spark-studio.$projectId'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiYotoAudioRouteImport } from './routes/api/yoto/audio'
 import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
@@ -118,6 +119,12 @@ const AuthenticatedSparkStudioIndexRoute =
     path: '/spark-studio/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSparkStudioProjectIdRoute =
+  AuthenticatedSparkStudioProjectIdRouteImport.update({
+    id: '/spark-studio/$projectId',
+    path: '/spark-studio/$projectId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
   id: '/api/public/podcast',
   path: '/api/public/podcast',
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -176,6 +184,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -200,6 +209,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
+  '/_authenticated/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
+    | '/spark-studio/$projectId'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
+    | '/spark-studio/$projectId'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
+    | '/_authenticated/spark-studio/$projectId'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSparkStudioIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/spark-studio/$projectId': {
+      id: '/_authenticated/spark-studio/$projectId'
+      path: '/spark-studio/$projectId'
+      fullPath: '/spark-studio/$projectId'
+      preLoaderRoute: typeof AuthenticatedSparkStudioProjectIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/podcast': {
       id: '/api/public/podcast'
       path: '/api/public/podcast'
@@ -452,6 +472,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
+  AuthenticatedSparkStudioProjectIdRoute: typeof AuthenticatedSparkStudioProjectIdRoute
   AuthenticatedPlaylistsIndexRoute: typeof AuthenticatedPlaylistsIndexRoute
   AuthenticatedSparkStudioIndexRoute: typeof AuthenticatedSparkStudioIndexRoute
 }
@@ -469,6 +490,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
+  AuthenticatedSparkStudioProjectIdRoute:
+    AuthenticatedSparkStudioProjectIdRoute,
   AuthenticatedPlaylistsIndexRoute: AuthenticatedPlaylistsIndexRoute,
   AuthenticatedSparkStudioIndexRoute: AuthenticatedSparkStudioIndexRoute,
 }
