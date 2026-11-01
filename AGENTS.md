@@ -11,3 +11,4 @@
 
 - Spark Studio uses the Control Center session and owner-scoped project/audio storage; Yoto publishing uses authenticated server functions so each project saves to its owner's linked account.
 - Keep Yoto credentials encrypted and server-only; account migration uses Cloud's supported database export, never custom password or token dumps.
+- Spark Studio's wait-for-button mode uses the persisted auto-advance and loop flags, shared through studio-flow helpers; do not introduce a competing playback-mode field.
