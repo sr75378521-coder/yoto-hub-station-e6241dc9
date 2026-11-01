@@ -85,7 +85,10 @@ function StudioEditor() {
     async (id: string, p: Partial<Checkpoint>) => {
       qc.setQueryData<Checkpoint[]>(key, (cur) => (cur ?? []).map((c) => (c.id === id ? { ...c, ...p } : c)));
       const { error } = await supabase.from("checkpoints").update(p).eq("id", id);
-      if (error) toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        await qc.invalidateQueries({ queryKey: key });
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projectId],
@@ -110,7 +113,9 @@ function StudioEditor() {
   >(null);
 
   const toCanvas = (e: { clientX: number; clientY: number }): Pt => {
-    const r = innerRef.current!.getBoundingClientRect();
+    const element = innerRef.current;
+    if (!element) return { x: 0, y: 0 };
+    const r = element.getBoundingClientRect();
     return { x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom };
   };
   const posOf = (c: Checkpoint): Pt => localPos[c.id] ?? { x: c.pos_x, y: c.pos_y };
@@ -304,7 +309,10 @@ function StudioEditor() {
 
   async function rename(title: string) {
     qc.setQueryData<StudioProject>(["studio", "project", projectId], (p) => (p ? { ...p, title } : p));
-    await supabase.from("studio_projects").update({ title }).eq("id", projectId);
+    const { error } = await supabase.from("studio_projects").update({ title }).eq("id", projectId);
+    if (error) toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["studio", "project", projectId] });
+    await qc.invalidateQueries({ queryKey: ["studio", "projects"] });
   }
 
   // ---------- edges ----------
@@ -340,8 +348,13 @@ function StudioEditor() {
             <Link to="/spark-studio"><ArrowLeft className="size-5" /></Link>
           </Button>
           <Input
-            value={project.data?.title ?? ""}
-            onChange={(e) => void rename(e.target.value)}
+            key={project.data?.id ?? "loading"}
+            defaultValue={project.data?.title ?? ""}
+            onBlur={(e) => {
+              const title = e.target.value.trim();
+              if (title) void rename(title);
+              else e.target.value = project.data?.title ?? "";
+            }}
             className="h-10 max-w-64 bg-background font-semibold"
             aria-label="Playlist name"
           />
