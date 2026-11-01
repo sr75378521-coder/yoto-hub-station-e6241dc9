@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Continue Spark Studio: verify creation, uploads, arrows, persistence and Yoto publishing
+- [ ] Account migration to duplicate: requires user-run Cloud export and destination identification; no readable passwords or credential files
+
 - [x] Feedback tab (page + save to database + email hook)
 - [ ] Create feedback table (migration pending)
 - [ ] Add RESEND_API_KEY so feedback emails reach sr75378521@gmail.com
