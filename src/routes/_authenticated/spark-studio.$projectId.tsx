@@ -19,6 +19,7 @@ import { addAudioBoxes, type Checkpoint, type StudioProject } from "@/hooks/useS
 import { useStudioRuntime } from "@/hooks/useStudioRuntime";
 import { publishStudioProject, uploadStudioCheckpoint } from "@/lib/yoto/studio.functions";
 import { cn } from "@/lib/utils";
+import { setWaitForButton, waitsForButton } from "@/lib/studio-flow";
 
 export const Route = createFileRoute("/_authenticated/spark-studio/$projectId")({
   head: () => ({
@@ -401,6 +402,7 @@ function StudioEditor() {
               void patch(single.id, { is_start: v });
             }} /></label>
             <label className="flex items-center justify-between text-sm">Loop this audio <Switch checked={single.loop_audio} onCheckedChange={(v) => void patch(single.id, { loop_audio: v })} /></label>
+            <label className="flex items-center justify-between gap-3 text-sm">Wait for a button after audio <Switch aria-label="Wait for a button after audio" checked={waitsForButton(single)} onCheckedChange={(v) => void patch(single.id, setWaitForButton(v))} /></label>
             <label className="flex items-center justify-between text-sm">Checkpoint <Switch checked={single.is_checkpoint} onCheckedChange={(v) => void patch(single.id, { is_checkpoint: v })} /></label>
           </aside>
         )}
@@ -412,6 +414,7 @@ function StudioEditor() {
           </Button>
           <Button size="icon" variant="ghost" onClick={runtime.stop} aria-label="Stop test"><Square className="size-4" /></Button>
           <Button size="sm" variant="ghost" onClick={() => runtime.performAction("right")}>Right</Button>
+          {runtime.waiting && <span role="status" className="px-2 text-xs font-semibold text-primary">Waiting for a button</span>}
           <span className="mx-1 h-6 w-px bg-border" />
           <Button size="icon" variant="ghost" onClick={() => setZoom((v) => Math.max(0.4, +(v - 0.1).toFixed(1)))} aria-label="Zoom out"><ZoomOut className="size-4" /></Button>
           <span className="w-11 text-center text-xs font-bold">{Math.round(zoom * 100)}%</span>

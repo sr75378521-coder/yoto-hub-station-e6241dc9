@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add and verify Spark Studio per-track wait-until-button control
+
 - [x] Verify Spark Studio creation, uploads, saved arrows, reload and Yoto publishing with a temporary verification playlist
 - [ ] Account migration to duplicate: blocked on user-run Cloud export and destination project access; no readable passwords or credential files
 - [x] Confirm Cloud projects cannot directly share their built-in database/auth
