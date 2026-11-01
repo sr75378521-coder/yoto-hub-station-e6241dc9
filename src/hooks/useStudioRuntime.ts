@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getAudioUrl, type Checkpoint } from "@/hooks/useStudioProject";
+import { waitsForButton } from "@/lib/studio-flow";
 
 type Side = "left" | "right";
 
@@ -17,12 +18,14 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [waiting, setWaiting] = useState(false);
 
   useEffect(() => {
     checkpointsRef.current = checkpoints;
   }, [checkpoints]);
 
   const stop = useCallback(() => {
+    setWaiting(false);
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
@@ -33,6 +36,7 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
   }, []);
 
   const playCheckpoint = useCallback(async (checkpoint: Checkpoint) => {
+    setWaiting(false);
     activeIdRef.current = checkpoint.id;
     setActiveId(checkpoint.id);
     audioRef.current?.pause();
@@ -51,11 +55,15 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
       audio.loop = checkpoint.loop_audio;
       audio.addEventListener("timeupdate", () => setPosition(audio.currentTime));
       audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
-      audio.addEventListener("play", () => setPlaying(true));
+      audio.addEventListener("play", () => { setPlaying(true); setWaiting(false); });
       audio.addEventListener("pause", () => setPlaying(false));
       audio.addEventListener("ended", () => {
         setPlaying(false);
         const current = checkpointsRef.current.find((item) => item.id === activeIdRef.current);
+        if (current && waitsForButton(current)) {
+          setWaiting(true);
+          return;
+        }
         if (!current?.auto_advance) return;
         const index = checkpointsRef.current.findIndex((item) => item.id === current.id);
         const next = current.auto_target
@@ -134,6 +142,7 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
     activeId,
     active: checkpoints.find((item) => item.id === activeId) ?? null,
     playing,
+    waiting,
     position,
     duration,
     start,
