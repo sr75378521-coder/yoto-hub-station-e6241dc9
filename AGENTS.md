@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Spark Studio uses the Control Center session and owner-scoped project/audio storage; Yoto publishing uses authenticated server functions so each project saves to its owner's linked account.
+- Keep Yoto credentials encrypted and server-only; account migration uses Cloud's supported database export, never custom password or token dumps.
