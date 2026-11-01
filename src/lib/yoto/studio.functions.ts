@@ -25,6 +25,7 @@ export const uploadStudioCheckpoint = createServerFn({ method: "POST" })
         .from("checkpoints")
         .select("id, audio_path, audio_name, yoto_track")
         .eq("id", data.checkpointId)
+        .eq("user_id", context.userId)
         .single();
       if (error || !cp) throw new Error("Box not found");
       if (cp.yoto_track) return { success: true };
@@ -68,6 +69,7 @@ export const publishStudioProject = createServerFn({ method: "POST" })
         .from("studio_projects")
         .select("*")
         .eq("id", data.projectId)
+        .eq("user_id", context.userId)
         .single();
       if (pErr || !project) throw new Error("Playlist not found");
       const { data: rows, error } = await context.supabase
@@ -137,8 +139,10 @@ export const publishStudioProject = createServerFn({ method: "POST" })
         },
       });
       const cardId: string | undefined = res?.cardId ?? res?.card?.cardId ?? project.yoto_card_id ?? undefined;
+      if (!cardId) throw new Error("Yoto did not return a playlist ID. The save could not be confirmed.");
       if (cardId && cardId !== project.yoto_card_id) {
-        await context.supabase.from("studio_projects").update({ yoto_card_id: cardId }).eq("id", project.id);
+        const { error: saveError } = await context.supabase.from("studio_projects").update({ yoto_card_id: cardId }).eq("id", project.id);
+        if (saveError) throw new Error("Saved to Yoto, but couldn't record the playlist ID. Please reload before trying again.");
       }
       return { success: true, cardId };
     } catch (e) {
