@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add players without the Yoto app: blocked because Yoto documents app-only initial setup and no public player-pairing/Wi-Fi provisioning API; existing account player listing verified signed-in
+
 - [ ] Add and verify Spark Studio per-track wait-until-button control
 
 - [x] Verify Spark Studio creation, uploads, saved arrows, reload and Yoto publishing with a temporary verification playlist
