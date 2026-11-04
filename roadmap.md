@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add player setup from Players, using Yoto's supported browser/account pairing flow; verify UI and document any app-only limitation
+
 - [ ] Add and verify Spark Studio per-track wait-until-button control
 
 - [x] Verify Spark Studio creation, uploads, saved arrows, reload and Yoto publishing with a temporary verification playlist
