@@ -12,6 +12,8 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.109",
+    "@ai-sdk/openai-compatible": "^3.0.85",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^5.2.2",
@@ -48,12 +50,15 @@
     "@tanstack/react-router": "1.170.41",
     "@tanstack/react-start": "1.168.60",
     "@tanstack/router-plugin": "1.168.42",
+    "ai": "^7.0.163",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "eventsource-parser": "^4.1.3",
     "fflate": "^0.8.3",
+    "gifenc": "^1.0.3",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
     "mqtt": "^5.15.2",
@@ -84,10 +89,12 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "jsdom": "^30.1.3",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^5.1.0"
   }
 }
