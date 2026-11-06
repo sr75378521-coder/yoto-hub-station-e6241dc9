@@ -12,13 +12,19 @@ import {
   Wand2,
   MessageSquareHeart,
   Moon,
+  Bot,
+  Crown,
+  Globe,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Players", icon: LayoutDashboard },
+  { to: "/ai-yoto", label: "AI Yoto", icon: Bot },
+  { to: "/membership", label: "Membership", icon: Crown },
   { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/audio", label: "Audio Playground", icon: AudioWaveform },
   { to: "/playlists", label: "Playlists", icon: ListMusic },
+  { to: "/public-playlists", label: "Public Playlists", icon: Globe },
   { to: "/podcasts", label: "Podcasts", icon: Podcast },
   { to: "/converter", label: "Converter", icon: Repeat },
   { to: "/alarms", label: "Alarms", icon: AlarmClock },
