@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAiYotoRouteImport } from './routes/_authenticated/ai-yoto'
 import { Route as AuthenticatedAlarmsRouteImport } from './routes/_authenticated/alarms'
 import { Route as AuthenticatedAudioRouteImport } from './routes/_authenticated/audio'
 import { Route as AuthenticatedBedtimeRouteImport } from './routes/_authenticated/bedtime'
@@ -20,7 +21,9 @@ import { Route as AuthenticatedConverterRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
+import { Route as AuthenticatedMembershipRouteImport } from './routes/_authenticated/membership'
 import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
+import { Route as AuthenticatedPublicPlaylistsRouteImport } from './routes/_authenticated/public-playlists'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authenticated/playlists.index'
@@ -49,6 +52,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAiYotoRoute = AuthenticatedAiYotoRouteImport.update({
+  id: '/ai-yoto',
+  path: '/ai-yoto',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAlarmsRoute = AuthenticatedAlarmsRouteImport.update({
@@ -86,11 +94,22 @@ const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
   path: '/icons',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMembershipRoute = AuthenticatedMembershipRouteImport.update({
+  id: '/membership',
+  path: '/membership',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPodcastsRoute = AuthenticatedPodcastsRouteImport.update({
   id: '/podcasts',
   path: '/podcasts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPublicPlaylistsRoute =
+  AuthenticatedPublicPlaylistsRouteImport.update({
+    id: '/public-playlists',
+    path: '/public-playlists',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -150,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/ai-yoto': typeof AuthenticatedAiYotoRoute
   '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/bedtime': typeof AuthenticatedBedtimeRoute
@@ -157,7 +177,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/icons': typeof AuthenticatedIconsRoute
+  '/membership': typeof AuthenticatedMembershipRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
+  '/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -173,6 +195,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/ai-yoto': typeof AuthenticatedAiYotoRoute
   '/alarms': typeof AuthenticatedAlarmsRoute
   '/audio': typeof AuthenticatedAudioRoute
   '/bedtime': typeof AuthenticatedBedtimeRoute
@@ -180,7 +203,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/icons': typeof AuthenticatedIconsRoute
+  '/membership': typeof AuthenticatedMembershipRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
+  '/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -198,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/ai-yoto': typeof AuthenticatedAiYotoRoute
   '/_authenticated/alarms': typeof AuthenticatedAlarmsRoute
   '/_authenticated/audio': typeof AuthenticatedAudioRoute
   '/_authenticated/bedtime': typeof AuthenticatedBedtimeRoute
@@ -205,7 +231,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
+  '/_authenticated/membership': typeof AuthenticatedMembershipRoute
   '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
+  '/_authenticated/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -223,6 +251,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/ai-yoto'
     | '/alarms'
     | '/audio'
     | '/bedtime'
@@ -230,7 +259,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/feedback'
     | '/icons'
+    | '/membership'
     | '/podcasts'
+    | '/public-playlists'
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
@@ -246,6 +277,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/ai-yoto'
     | '/alarms'
     | '/audio'
     | '/bedtime'
@@ -253,7 +285,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/feedback'
     | '/icons'
+    | '/membership'
     | '/podcasts'
+    | '/public-playlists'
     | '/settings'
     | '/tools'
     | '/playlists/$playlistId'
@@ -270,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/ai-yoto'
     | '/_authenticated/alarms'
     | '/_authenticated/audio'
     | '/_authenticated/bedtime'
@@ -277,7 +312,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/feedback'
     | '/_authenticated/icons'
+    | '/_authenticated/membership'
     | '/_authenticated/podcasts'
+    | '/_authenticated/public-playlists'
     | '/_authenticated/settings'
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
@@ -330,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ai-yoto': {
+      id: '/_authenticated/ai-yoto'
+      path: '/ai-yoto'
+      fullPath: '/ai-yoto'
+      preLoaderRoute: typeof AuthenticatedAiYotoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/alarms': {
       id: '/_authenticated/alarms'
       path: '/alarms'
@@ -379,11 +423,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIconsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/membership': {
+      id: '/_authenticated/membership'
+      path: '/membership'
+      fullPath: '/membership'
+      preLoaderRoute: typeof AuthenticatedMembershipRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/podcasts': {
       id: '/_authenticated/podcasts'
       path: '/podcasts'
       fullPath: '/podcasts'
       preLoaderRoute: typeof AuthenticatedPodcastsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/public-playlists': {
+      id: '/_authenticated/public-playlists'
+      path: '/public-playlists'
+      fullPath: '/public-playlists'
+      preLoaderRoute: typeof AuthenticatedPublicPlaylistsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -461,6 +519,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAiYotoRoute: typeof AuthenticatedAiYotoRoute
   AuthenticatedAlarmsRoute: typeof AuthenticatedAlarmsRoute
   AuthenticatedAudioRoute: typeof AuthenticatedAudioRoute
   AuthenticatedBedtimeRoute: typeof AuthenticatedBedtimeRoute
@@ -468,7 +527,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
+  AuthenticatedMembershipRoute: typeof AuthenticatedMembershipRoute
   AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
+  AuthenticatedPublicPlaylistsRoute: typeof AuthenticatedPublicPlaylistsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedPlaylistsPlaylistIdRoute: typeof AuthenticatedPlaylistsPlaylistIdRoute
@@ -479,6 +540,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAiYotoRoute: AuthenticatedAiYotoRoute,
   AuthenticatedAlarmsRoute: AuthenticatedAlarmsRoute,
   AuthenticatedAudioRoute: AuthenticatedAudioRoute,
   AuthenticatedBedtimeRoute: AuthenticatedBedtimeRoute,
@@ -486,7 +548,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
+  AuthenticatedMembershipRoute: AuthenticatedMembershipRoute,
   AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
+  AuthenticatedPublicPlaylistsRoute: AuthenticatedPublicPlaylistsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedPlaylistsPlaylistIdRoute: AuthenticatedPlaylistsPlaylistIdRoute,
