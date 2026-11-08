@@ -27,8 +27,8 @@ export function MobileNav() {
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0">
-        <div className="flex h-14 items-center gap-2 border-b border-border/60 px-5">
+      <SheetContent side="left" className="flex h-full w-72 flex-col p-0">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border/60 px-5">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Radio className="size-4" />
           </div>
@@ -37,7 +37,7 @@ export function MobileNav() {
             <div className="text-[11px] text-muted-foreground">Center</div>
           </div>
         </div>
-        <nav className="space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3 overscroll-contain">
           {items.map((item) => {
             const active = pathname.startsWith(item.to);
             const Icon = item.icon;
