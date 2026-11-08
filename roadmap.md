@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Repair Alarms saving, editing and player synchronization; verify supported Yoto protocol
+- [ ] Research visitor growth and prepare ranked next actions without posting or buying a domain
+
 - [x] Fix failing pages: restore missing AI/community tables and permissions; all 18 page entry points open signed-in, and repaired tabs pass phone-size checks
 
 - [ ] Add players without the Yoto app: blocked because Yoto documents app-only initial setup and no public player-pairing/Wi-Fi provisioning API; existing account player listing verified signed-in
