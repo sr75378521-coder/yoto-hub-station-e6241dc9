@@ -1,3 +1,4 @@
+import { MessageSquareHeart, Bug, Lightbulb, Send, Loader2, ArrowLeft } from "lucide-react";
 import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -58,6 +59,28 @@ function FeedbackPage() {
           </p>
         </div>
       </div>
+
+      <div className="flex items-center gap-3">
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => window.history.back()}
+    className="h-10 w-10 shrink-0 rounded-full"
+    aria-label="Go back"
+  >
+    <ArrowLeft className="h-5 w-5" />
+  </Button>
+  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+    <MessageSquareHeart className="h-6 w-6 text-primary" />
+  </div>
+  <div>
+    <h1 className="text-2xl font-bold">Feedback</h1>
+    <p className="text-sm text-muted-foreground">
+      Spotted a problem or have an idea? Tell us about it.
+    </p>
+  </div>
+</div>
+
 
       <div className="grid grid-cols-2 gap-3">
         <button
