@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_credit_usage: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          period: string
+          request_key: string
+          result: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          id?: string
+          period: string
+          request_key: string
+          result?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          period?: string
+          request_key?: string
+          result?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_gateway_blocks: {
+        Row: {
+          id: string
+          message: string
+          status: number
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          message: string
+          status: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          status?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_yoto_drafts: {
+        Row: {
+          chapters: Json
+          id: string
+          source_public_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          yoto_card_id: string | null
+        }
+        Insert: {
+          chapters?: Json
+          id?: string
+          source_public_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          yoto_card_id?: string | null
+        }
+        Update: {
+          chapters?: Json
+          id?: string
+          source_public_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          yoto_card_id?: string | null
+        }
+        Relationships: []
+      }
+      billing_accounts: {
+        Row: {
+          stripe_customer_id: string
+          user_id: string
+        }
+        Insert: {
+          stripe_customer_id: string
+          user_id: string
+        }
+        Update: {
+          stripe_customer_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checkpoints: {
         Row: {
           audio_duration: number | null
@@ -283,6 +382,60 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_grants: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_by: string
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by: string
+          plan: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string
+          plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      news_posts: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          pinned: boolean
+          title: string
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       player_alarms: {
         Row: {
           created_at: string
@@ -328,6 +481,83 @@ export type Database = {
           updated_at?: string
           user_id?: string
           volume?: number
+        }
+        Relationships: []
+      }
+      playlist_comments: {
+        Row: {
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          playlist_id: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string
+          body: string
+          created_at?: string
+          id?: string
+          playlist_id: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          playlist_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_comments_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "public_playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_playlists: {
+        Row: {
+          author: string
+          chapters: Json
+          created_at: string
+          description: string
+          id: string
+          is_public: boolean
+          source: string
+          source_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string
+          chapters?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          is_public?: boolean
+          source?: string
+          source_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          chapters?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          is_public?: boolean
+          source?: string
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -467,6 +697,16 @@ export type Database = {
       is_family_member: {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
+      }
+      reserve_ai_credits: {
+        Args: {
+          p_allowance: number
+          p_cost: number
+          p_key: string
+          p_period: string
+          p_user: string
+        }
+        Returns: Json
       }
     }
     Enums: {
