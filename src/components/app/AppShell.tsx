@@ -13,14 +13,17 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
       <div className="flex min-h-screen bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-2 md:px-6 border-b border-border/60 bg-background/80 backdrop-blur">
-            <div className="flex min-w-0 items-center gap-1">
+          <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-3 md:px-6 border-b border-border/60 bg-background/80 backdrop-blur">
+            {/* Top-Left Corner: Mobile Menu, Round Profile Picture, Page Title */}
+            <div className="flex min-w-0 items-center gap-2.5">
               <MobileNav />
+              <UserMenu />
               <h1 className="truncate text-sm font-semibold tracking-tight">{title}</h1>
             </div>
+
+            {/* Top-Right Corner */}
             <div className="flex items-center gap-1">
               <ThemeToggle />
-              <UserMenu />
             </div>
           </header>
           <main className="flex-1 px-4 md:px-8 py-6 md:py-8 pb-28">{children}</main>
