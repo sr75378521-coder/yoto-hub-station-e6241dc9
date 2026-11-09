@@ -95,6 +95,50 @@ export async function upsertConnection(userId: string, tokens: YotoTokenSet) {
   if (error) throw error;
 }
 
+/**
+ * True when decryption failed because the ciphertext was written with a
+ * different YOTO_TOKEN_ENC_KEY (AES-GCM auth-tag mismatch). A missing key
+ * is a config error and must NOT trigger row deletion.
+ */
+function isUndecryptable(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return msg.includes("authenticate data") || msg.includes("Unsupported state");
+}
+
+/**
+ * Try to decrypt a stored connection. If the ciphertext is unrecoverable
+ * (key changed since it was written), delete the broken row so every
+ * surface falls back to the normal "Connect your Yoto account" flow.
+ * Returns the row when usable, null when gone or self-healed.
+ */
+async function loadUsableConnection<T extends { access_token_ciphertext: string; refresh_token_ciphertext: string }>(
+  userId: string,
+  row: T | null,
+): Promise<T | null> {
+  if (!row) return null;
+  try {
+    decryptToken(row.access_token_ciphertext);
+    decryptToken(row.refresh_token_ciphertext);
+    return row;
+  } catch (e) {
+    if (!isUndecryptable(e)) throw e; // missing key etc. — keep the row, surface the config error
+    await deleteConnection(userId);
+    return null;
+  }
+}
+
+/** True when a stored connection exists AND can be decrypted with the current key. */
+export async function hasUsableConnection(userId: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("yoto_connections")
+    .select("access_token_ciphertext, refresh_token_ciphertext")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (await loadUsableConnection(userId, data)) !== null;
+}
+
 /** Get a valid access token, refreshing if expired/near expiry. Returns null if not connected. */
 export async function getValidAccessToken(userId: string): Promise<string | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -104,16 +148,17 @@ export async function getValidAccessToken(userId: string): Promise<string | null
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
+  const row = await loadUsableConnection(userId, data);
+  if (!row) return null;
 
-  const expiresAt = new Date(data.expires_at).getTime();
+  const expiresAt = new Date(row.expires_at).getTime();
   const skewMs = 60_000; // refresh 60s before expiry
   if (Date.now() < expiresAt - skewMs) {
-    return decryptToken(data.access_token_ciphertext);
+    return decryptToken(row.access_token_ciphertext);
   }
 
   // Refresh
-  const refresh = decryptToken(data.refresh_token_ciphertext);
+  const refresh = decryptToken(row.refresh_token_ciphertext);
   const next = await refreshTokens(refresh);
   await upsertConnection(userId, { ...next, refresh_token: next.refresh_token ?? refresh });
   return next.access_token;
