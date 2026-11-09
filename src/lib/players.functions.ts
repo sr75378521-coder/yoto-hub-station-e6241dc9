@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { yotoGetJson, resolveCardRaw, YotoNotConnectedError } from "@/lib/yoto/api.server";
-import { deleteConnection } from "@/lib/yoto/tokens.server";
+import { deleteConnection, hasUsableConnection } from "@/lib/yoto/tokens.server";
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
@@ -70,10 +70,14 @@ export const getYotoConnectionStatus = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("yoto_connections")
-      .select("yoto_user_id")
+      .select("yoto_user_id, access_token_ciphertext, refresh_token_ciphertext")
       .eq("user_id", context.userId)
       .maybeSingle();
-    return { connected: !!data, yotoUserId: data?.yoto_user_id ?? null };
+    if (!data) return { connected: false, yotoUserId: null };
+    // A row that can no longer be decrypted (encryption key changed) is
+    // treated as not connected; hasUsableConnection self-heals by removing it.
+    const usable = await hasUsableConnection(context.userId);
+    return { connected: usable, yotoUserId: usable ? (data.yoto_user_id ?? null) : null };
   });
 
 export const disconnectYoto = createServerFn({ method: "POST" })
