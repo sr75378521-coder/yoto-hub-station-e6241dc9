@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/news")({
 
 function NewsPage() {
   const queryClient = useQueryClient();
-  const { isAdmin } = useIsAdmin();
+  const isAdmin = useIsAdmin();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<NewsPost | null>(null);
