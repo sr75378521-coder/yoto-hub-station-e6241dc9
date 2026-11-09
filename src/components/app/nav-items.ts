@@ -15,10 +15,12 @@ import {
   Bot,
   Crown,
   Globe,
+  Newspaper,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Players", icon: LayoutDashboard },
+  { to: "/news", label: "News", icon: Newspaper },
   { to: "/ai-yoto", label: "AI Yoto", icon: Bot },
   { to: "/membership", label: "Membership", icon: Crown },
   { to: "/tools", label: "Tools", icon: Wrench },
