@@ -4,10 +4,12 @@ import { MobileNav } from "./MobileNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import { WebPlayerProvider } from "./WebPlayer";
+import { WhatsNewModal } from "./WhatsNewModal";
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   return (
     <WebPlayerProvider>
+      <WhatsNewModal />
       <div className="flex min-h-screen bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
