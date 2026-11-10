@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Lower transcription credit pricing reasonably and verify estimates match actual charges.
+
 - [ ] Repair Alarms saving, editing and player synchronization; verify supported Yoto protocol
 - [ ] Research visitor growth and prepare ranked next actions without posting or buying a domain
 
