@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Lower transcription credit pricing reasonably and verify estimates match actual charges.
+- [x] Lower transcription to one credit per five minutes; shared pricing and timing tests pass, and signed-in upload displays the new estimate.
+- [ ] Verify completed transcription and recorded charge through the live UI: blocked because the current signed-in account has zero AI Yoto credits; no membership or credit balances changed for testing.
 
 - [ ] Repair Alarms saving, editing and player synchronization; verify supported Yoto protocol
 - [ ] Research visitor growth and prepare ranked next actions without posting or buying a domain
