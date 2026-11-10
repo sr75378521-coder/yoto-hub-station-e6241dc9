@@ -187,10 +187,29 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
   const minutes = Math.floor(((playlist.duration ?? 0) % 3600) / 60);
   const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
+  const openView = () => {
+    navigate({
+      to: "/playlists/$playlistId",
+      params: { playlistId: playlist.playlistId },
+      search: { mode: "view" },
+    });
+  };
+
+  const openEdit = () => {
+    navigate({
+      to: "/playlists/$playlistId",
+      params: { playlistId: playlist.playlistId },
+      search: { mode: "edit" },
+    });
+  };
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
-      {/* Edge-to-edge album cover that fills the top with rounded corners */}
-      <div className="relative aspect-square w-full overflow-hidden bg-muted/20">
+      {/* Clickable Edge-to-edge artwork */}
+      <div
+        className="relative aspect-square w-full cursor-pointer overflow-hidden bg-muted/20"
+        onClick={openView}
+      >
         {playlist.artwork ? (
           <img
             src={playlist.artwork}
@@ -204,7 +223,6 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
           </div>
         )}
 
-        {/* Clean floating Yoto badge */}
         <Badge
           variant="secondary"
           className="absolute top-2.5 right-2.5 border-0 bg-background/85 px-2.5 py-0.5 text-[11px] font-medium backdrop-blur-md shadow-xs text-foreground"
@@ -217,7 +235,8 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
       <div className="flex flex-1 flex-col justify-between p-4 space-y-3">
         <div>
           <h3
-            className="line-clamp-1 text-base font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors"
+            onClick={openView}
+            className="line-clamp-1 cursor-pointer text-base font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
             title={playlist.name}
           >
             {playlist.name}
@@ -240,47 +259,38 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
           </div>
         </div>
 
-        {/* Action button row */}
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
-            onClick={() =>
-              navigate({
-                to: "/playlists/$playlistId",
-                params: { playlistId: playlist.playlistId },
-                search: { mode: "view" },
-              })
-            }
-          >
-            <Eye className="size-3.5 mr-1" />
-            View
-          </Button>
+        {/* Clean, spacious action layout: Play on top, View + Edit side-by-side */}
+        <div className="space-y-2 pt-1">
+          <PlayOnDeviceButton
+            cardId={playlist.playlistId}
+            label="Play"
+            variant="default"
+            className="h-9 w-full text-xs font-semibold shadow-xs"
+          />
 
-          {playlist.isEditable && (
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
-              onClick={() =>
-                navigate({
-                  to: "/playlists/$playlistId",
-                  params: { playlistId: playlist.playlistId },
-                  search: { mode: "edit" },
-                })
-              }
+              onClick={openView}
             >
-              <Pencil className="size-3.5 mr-1" />
-              Edit
+              <Eye className="size-3.5 mr-1.5" />
+              View
             </Button>
-          )}
 
-          <PlayOnDeviceButton
-            cardId={playlist.playlistId}
-            variant="default"
-            className="h-8 flex-1 text-xs"
-          />
+            {playlist.isEditable && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
+                onClick={openEdit}
+              >
+                <Pencil className="size-3.5 mr-1.5" />
+                Edit
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -374,9 +384,12 @@ export function PlaylistsSkeleton() {
           <div className="p-4 space-y-3">
             <Skeleton className="h-5 w-3/4 rounded-md" />
             <Skeleton className="h-4 w-1/2 rounded-md" />
-            <div className="flex gap-2 pt-1">
-              <Skeleton className="h-8 flex-1 rounded-md" />
-              <Skeleton className="h-8 flex-1 rounded-md" />
+            <div className="space-y-2 pt-1">
+              <Skeleton className="h-9 w-full rounded-md" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 flex-1 rounded-md" />
+                <Skeleton className="h-8 flex-1 rounded-md" />
+              </div>
             </div>
           </div>
         </div>
