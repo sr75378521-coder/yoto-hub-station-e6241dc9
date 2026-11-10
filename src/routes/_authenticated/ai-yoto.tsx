@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { membershipOptions, connectionOptions, draftsOptions, type Draft } from '@/lib/ai-yoto/queries';
 import { chatEditPlaylist, generatePixels, organizeSegments, transcribeSegment } from '@/lib/ai-yoto/studio.functions';
-import { PLANS, AI_COSTS, applyChapterPlan, mergeChapters, canUseAction, transcriptionCost, type AiChapter, type AudioSegment } from '@/lib/ai-yoto/plans';
+import { PLANS, AI_COSTS, TRANSCRIPTION_SEGMENT_SECONDS, applyChapterPlan, mergeChapters, canUseAction, chapterSegments, remainingTranscriptionCost, type AiChapter, type AudioSegment } from '@/lib/ai-yoto/plans';
 import { openAudio, fileDuration } from '@/lib/ai-yoto/audio.browser';
 import { pixelFile } from '@/lib/ai-yoto/pixels.browser';
 import { uploadTrack, saveCard, getCardForEdit } from '@/lib/yoto/myo.functions';
@@ -94,18 +94,18 @@ function AiYotoPage() {
     let saved = draft;
     let next = [...chapters];
     try {
-      if (Math.ceil(duration / 60) - next.filter(c => c.transcript).length > membership.data.remaining) throw new Error('Not enough credits for this recording. Choose a higher plan or a shorter file.');
+      if (remainingTranscriptionCost(duration, next) > membership.data.remaining) throw new Error('Not enough credits for this recording. Choose a higher plan or a shorter file.');
       saved = await persist(next);
       engine = await openAudio(file);
-      const total = Math.ceil(duration / 60);
+      const total = Math.ceil(duration / TRANSCRIPTION_SEGMENT_SECONDS);
       for (let i = 0; i < total; i++) {
         if (stop.current) break;
         if (next[i]?.transcript) continue;
         setBusy(`Transcribing ${i + 1} of ${total}…`);
-        const start = i * 60, end = Math.min(duration, start + 60);
+        const start = i * TRANSCRIPTION_SEGMENT_SECONDS, end = Math.min(duration, start + TRANSCRIPTION_SEGMENT_SECONDS);
         let path = next[i]?.paths[0];
         if (!path) {
-          path = `${user.id}/ai-yoto/${saved.id}/${i}.wav`;
+          path = `${user.id}/ai-yoto/${saved.id}/five-minute-${i}.wav`;
           const clip = await engine.clip(start, end - start);
           const stored = await supabase.storage.from('studio-audio').upload(path, clip, { contentType: 'audio/wav', upsert: true });
           if (stored.error) throw stored.error;
@@ -113,7 +113,7 @@ function AiYotoPage() {
           saved = await persist(next, title, saved.yoto_card_id, saved.id);
         }
         const result = await transcribe({ data: { path } });
-        next[i] = { title: `Chapter ${i + 1}`, start, end, transcript: result.transcript, paths: [path] };
+        next[i] = { title: `Chapter ${i + 1}`, start, end, transcript: result.transcript, paths: [path], segments: [{ start, end, path, transcript: result.transcript }] };
         saved = await persist(next, title, saved.yoto_card_id, saved.id);
         setProgress((i + 1) / total * 100);
       }
@@ -124,8 +124,7 @@ function AiYotoPage() {
   async function organizeChapters() {
     setBusy('Organizing chapters…'); setError(''); setNotice('');
     try {
-      // One-minute stored clips preserve source alignment; grouping never drops audio.
-      const segments: AudioSegment[] = chapters.flatMap(c => c.paths.map((path, index) => ({ path, start: c.start + index * 60, end: Math.min(c.end, c.start + (index + 1) * 60), transcript: c.paths.length === 1 ? c.transcript : `${c.title}: ${c.transcript}` })));
+      const segments: AudioSegment[] = chapters.flatMap(chapterSegments);
       const result = await organize({ data: { key: crypto.randomUUID(), segments } });
       await persist(result); setNotice('Chapters organized and saved.');
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not organize chapters.'); }
@@ -258,7 +257,7 @@ function AiYotoPage() {
         <Dialog open={!!proposal} onOpenChange={o => { if (!o) setProposal(null); }}><DialogContent><DialogHeader><DialogTitle>Review playlist changes</DialogTitle><DialogDescription>{proposal?.reply}</DialogDescription></DialogHeader>{proposal && <div className="space-y-4"><p className="font-semibold">{proposal.title}</p>{proposal.removed.length > 0 && <p className="text-destructive">Remove: {proposal.removed.join(', ')}</p>}<ol className="max-h-72 list-inside list-decimal overflow-y-auto space-y-2">{proposal.chapters.map((c, i) => <li key={i}>{c.title} <span className="text-muted-foreground">· {fmtTime(c.end - c.start)}</span></li>)}</ol><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setProposal(null)}>Discard</Button><Button onClick={() => { edit(proposal.chapters, proposal.title); setProposal(null); setNotice('Changes applied. Ready to save.'); }}><Check className="size-4" />Apply changes</Button></div></div>}</DialogContent></Dialog>
         <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={!!busy} onClick={() => inputRef.current?.click()}><Upload className="size-4" />Upload audio</Button><Button variant="outline" disabled={!!busy || !connection.data.connected} onClick={browseYoto}><CloudDownload className="size-4" />Open from Yoto</Button>
           {drafts.data.length > 0 && <select aria-label="Saved projects" className="h-9 rounded-md border bg-background px-2 text-sm" value={draft?.id ?? ''} disabled={!!busy} onChange={e => { const d = drafts.data.find(x => x.id === e.target.value); if (d) { load(d); setUndo([]); } }}><option value="">Saved projects…</option>{drafts.data.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}</select>}</div>
-        {file && <div className="rounded-xl border p-4"><div className="flex items-center gap-3"><FileAudio className="size-7 shrink-0 text-primary" /><div className="min-w-0"><h3 className="break-words font-semibold">{file.name}</h3><p className="text-sm text-muted-foreground">{fmtTime(duration)} · {transcriptionCost(duration)} transcription credits</p></div></div><Button className="mt-4" disabled={!!busy} onClick={run}><Sparkles className="size-4" />{chapters.length ? 'Resume transcription' : 'Transcribe & split'}</Button></div>}
+        {file && <div className="rounded-xl border p-4"><div className="flex items-center gap-3"><FileAudio className="size-7 shrink-0 text-primary" /><div className="min-w-0"><h3 className="break-words font-semibold">{file.name}</h3><p className="text-sm text-muted-foreground">{fmtTime(duration)} · {remainingTranscriptionCost(duration, chapters)} transcription credits remaining · 1 credit per 5 minutes, rounded up</p></div></div><Button className="mt-4" disabled={!!busy} onClick={run}><Sparkles className="size-4" />{chapters.length ? 'Resume transcription' : 'Transcribe & split'}</Button></div>}
         {busy && busy !== 'AI Yoto is thinking…' && <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-3"><p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="size-4 animate-spin" />{busy}</p>{busy.startsWith('Transcribing') && <Button variant="outline" size="sm" onClick={() => { stop.current = true; }}>Pause after segment</Button>}</div>{busy.startsWith('Transcribing') && <Progress value={progress} />}</div>}
         {!file && !chapters.length && <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground"><FolderOpen className="mx-auto mb-3 size-8" />Upload a long audio file or open a Yoto playlist to start.</div>}
         {(file || draft) && <div className="space-y-2"><Label htmlFor="project-title">Playlist title</Label><Input id="project-title" value={title} maxLength={120} disabled={!!busy} onChange={e => setTitle(e.target.value)} /></div>}
