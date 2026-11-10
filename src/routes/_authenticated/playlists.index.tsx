@@ -150,7 +150,7 @@ function PlaylistsPage() {
             ) : null}
 
             {bySource.length === 0 && data.playlists.length > 0 ? (
-              <div className="rounded-xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
+              <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
                 <h3 className="text-sm font-semibold">
                   No {source === "myo" ? "personal" : "family"} playlists
                 </h3>
@@ -161,15 +161,15 @@ function PlaylistsPage() {
             ) : data.playlists.length === 0 ? (
               <EmptyPlaylists />
             ) : filteredPlaylists.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
+              <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
                 <h3 className="text-sm font-semibold">No playlists found</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Try adjusting your search query.
                 </p>
               </div>
             ) : (
-              /* Compact responsive grid: 2 on mobile, up to 6 on desktop */
-              <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              /* Big & comfortable on mobile (1 col), MYO scale on desktop (2 to 4 cols) */
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {filteredPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.playlistId} playlist={playlist} />
                 ))}
@@ -189,62 +189,74 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
   const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card text-card-foreground shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-xs">
-      {/* Artwork container: clean neutral padding with object-contain to never crop top/bottom */}
-      <div className="relative aspect-square w-full overflow-hidden bg-muted/20 flex items-center justify-center p-2">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
+      {/* Full-bleed rounded artwork header (not boxed, zero cut off on top/bottom) */}
+      <div className="relative aspect-square w-full overflow-hidden bg-muted/20">
         {playlist.artwork ? (
-          <img
-            src={playlist.artwork}
-            alt={playlist.name}
-            loading="lazy"
-            className="size-full object-contain rounded-md drop-shadow-2xs transition-transform duration-200 group-hover:scale-105"
-          />
+          <>
+            {/* Ambient blur filling any letterboxing naturally */}
+            <img
+              src={playlist.artwork}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 size-full object-cover blur-md scale-110 opacity-30 select-none pointer-events-none"
+            />
+            {/* Crisp foreground image: 100% visible from top to bottom */}
+            <img
+              src={playlist.artwork}
+              alt={playlist.name}
+              loading="lazy"
+              className="relative size-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+          </>
         ) : (
-          <div className="flex size-full items-center justify-center rounded-md bg-gradient-to-br from-primary/10 via-primary/5 to-muted/20">
-            <Music className="size-10 text-primary/30" />
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 via-primary/5 to-muted/20">
+            <Music className="size-16 text-primary/30" />
           </div>
         )}
 
-        {/* Clean subtle pill tag */}
+        {/* Clean translucent Yoto pill badge */}
         <Badge
           variant="secondary"
-          className="absolute top-2 right-2 border-0 bg-background/90 px-1.5 py-0 text-[10px] font-medium backdrop-blur-md shadow-2xs text-foreground"
+          className="absolute top-2.5 right-2.5 border-0 bg-background/85 px-2.5 py-0.5 text-[11px] font-medium backdrop-blur-md shadow-xs text-foreground"
         >
           {playlist.type === "myo_playlist" || playlist.source === "myo" ? "MYO" : "Family"}
         </Badge>
       </div>
 
-      {/* Tidy info section */}
-      <div className="flex flex-1 flex-col justify-between p-2.5 space-y-2">
+      {/* Info & action buttons */}
+      <div className="flex flex-1 flex-col justify-between p-4 space-y-3">
         <div>
           <h3
-            className="line-clamp-1 text-xs sm:text-sm font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors"
+            className="line-clamp-1 text-base font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors"
             title={playlist.name}
           >
             {playlist.name}
           </h3>
-          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             {playlist.trackCount !== undefined && (
-              <div className="flex items-center gap-0.5">
-                <Disc3 className="size-3 shrink-0" />
-                <span>{playlist.trackCount} trk</span>
+              <div className="flex items-center gap-1">
+                <Disc3 className="size-3.5" />
+                <span>
+                  {playlist.trackCount} track{playlist.trackCount === 1 ? "" : "s"}
+                </span>
               </div>
             )}
             {playlist.duration ? (
-              <div className="flex items-center gap-0.5">
-                <Clock className="size-3 shrink-0" />
+              <div className="flex items-center gap-1">
+                <Clock className="size-3.5" />
                 <span>{durationStr}</span>
               </div>
             ) : null}
           </div>
         </div>
 
-        {/* Compact action buttons */}
-        <div className="flex items-center gap-1.5 pt-0.5">
+        {/* Action button row */}
+        <div className="flex items-center gap-2 pt-1">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 flex-1 px-1.5 text-[11px] font-medium border-border/50 hover:bg-muted/60"
+            className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
             onClick={() =>
               navigate({
                 to: "/playlists/$playlistId",
@@ -253,7 +265,7 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
               })
             }
           >
-            <Eye className="size-3 mr-1 shrink-0" />
+            <Eye className="size-3.5 mr-1" />
             View
           </Button>
 
@@ -261,8 +273,7 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-[11px] font-medium border-border/50 hover:bg-muted/60"
-              title="Edit playlist"
+              className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
               onClick={() =>
                 navigate({
                   to: "/playlists/$playlistId",
@@ -271,14 +282,15 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
                 })
               }
             >
-              <Pencil className="size-3" />
+              <Pencil className="size-3.5 mr-1" />
+              Edit
             </Button>
           )}
 
           <PlayOnDeviceButton
             cardId={playlist.playlistId}
             variant="default"
-            className="h-7 flex-1 px-1.5 text-[11px]"
+            className="h-8 flex-1 text-xs"
           />
         </div>
       </div>
@@ -354,10 +366,10 @@ function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
 
 function EmptyPlaylists() {
   return (
-    <div className="rounded-xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
-      <Music className="mx-auto size-10 text-muted-foreground" />
-      <h3 className="mt-3 text-sm font-semibold">No playlists yet</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-10 text-center">
+      <Music className="mx-auto size-12 text-muted-foreground" />
+      <h3 className="mt-4 text-base font-semibold">No playlists yet</h3>
+      <p className="mt-2 text-sm text-muted-foreground">
         Create your first MYO playlist to start building custom content.
       </p>
     </div>
@@ -366,16 +378,16 @@ function EmptyPlaylists() {
 
 export function PlaylistsSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="overflow-hidden rounded-xl border border-border/40 bg-card p-0 shadow-2xs">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-border/50 bg-card p-0 shadow-xs">
           <Skeleton className="aspect-square w-full rounded-none" />
-          <div className="p-2.5 space-y-2">
-            <Skeleton className="h-4 w-3/4 rounded-md" />
-            <Skeleton className="h-3 w-1/2 rounded-md" />
-            <div className="flex gap-1 pt-1">
-              <Skeleton className="h-7 flex-1 rounded-md" />
-              <Skeleton className="h-7 flex-1 rounded-md" />
+          <div className="p-4 space-y-3">
+            <Skeleton className="h-5 w-3/4 rounded-md" />
+            <Skeleton className="h-4 w-1/2 rounded-md" />
+            <div className="flex gap-2 pt-1">
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
             </div>
           </div>
         </div>
