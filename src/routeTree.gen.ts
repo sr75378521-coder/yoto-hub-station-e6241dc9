@@ -22,6 +22,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
 import { Route as AuthenticatedIconsRouteImport } from './routes/_authenticated/icons'
 import { Route as AuthenticatedMembershipRouteImport } from './routes/_authenticated/membership'
+import { Route as AuthenticatedNewsRouteImport } from './routes/_authenticated/news'
 import { Route as AuthenticatedPodcastsRouteImport } from './routes/_authenticated/podcasts'
 import { Route as AuthenticatedPublicPlaylistsRouteImport } from './routes/_authenticated/public-playlists'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -97,6 +98,11 @@ const AuthenticatedIconsRoute = AuthenticatedIconsRouteImport.update({
 const AuthenticatedMembershipRoute = AuthenticatedMembershipRouteImport.update({
   id: '/membership',
   path: '/membership',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNewsRoute = AuthenticatedNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPodcastsRoute = AuthenticatedPodcastsRouteImport.update({
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/membership': typeof AuthenticatedMembershipRoute
+  '/news': typeof AuthenticatedNewsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/feedback': typeof AuthenticatedFeedbackRoute
   '/icons': typeof AuthenticatedIconsRoute
   '/membership': typeof AuthenticatedMembershipRoute
+  '/news': typeof AuthenticatedNewsRoute
   '/podcasts': typeof AuthenticatedPodcastsRoute
   '/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/icons': typeof AuthenticatedIconsRoute
   '/_authenticated/membership': typeof AuthenticatedMembershipRoute
+  '/_authenticated/news': typeof AuthenticatedNewsRoute
   '/_authenticated/podcasts': typeof AuthenticatedPodcastsRoute
   '/_authenticated/public-playlists': typeof AuthenticatedPublicPlaylistsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/icons'
     | '/membership'
+    | '/news'
     | '/podcasts'
     | '/public-playlists'
     | '/settings'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/icons'
     | '/membership'
+    | '/news'
     | '/podcasts'
     | '/public-playlists'
     | '/settings'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/feedback'
     | '/_authenticated/icons'
     | '/_authenticated/membership'
+    | '/_authenticated/news'
     | '/_authenticated/podcasts'
     | '/_authenticated/public-playlists'
     | '/_authenticated/settings'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMembershipRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/news': {
+      id: '/_authenticated/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof AuthenticatedNewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/podcasts': {
       id: '/_authenticated/podcasts'
       path: '/podcasts'
@@ -528,6 +547,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedIconsRoute: typeof AuthenticatedIconsRoute
   AuthenticatedMembershipRoute: typeof AuthenticatedMembershipRoute
+  AuthenticatedNewsRoute: typeof AuthenticatedNewsRoute
   AuthenticatedPodcastsRoute: typeof AuthenticatedPodcastsRoute
   AuthenticatedPublicPlaylistsRoute: typeof AuthenticatedPublicPlaylistsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -549,6 +569,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedIconsRoute: AuthenticatedIconsRoute,
   AuthenticatedMembershipRoute: AuthenticatedMembershipRoute,
+  AuthenticatedNewsRoute: AuthenticatedNewsRoute,
   AuthenticatedPodcastsRoute: AuthenticatedPodcastsRoute,
   AuthenticatedPublicPlaylistsRoute: AuthenticatedPublicPlaylistsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -575,13 +596,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

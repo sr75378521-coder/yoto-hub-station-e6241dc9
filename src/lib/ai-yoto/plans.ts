@@ -1,8 +1,8 @@
 export const PLANS = {
   free: { name: 'Free', price: 0, credits: 5, priceId: '', rank: 0 },
-  basic: { name: 'Basic', price: 2, credits: 50, priceId: 'price_1USTZ52KN95wZHYVEAjjpgkg', rank: 1 },
-  pro: { name: 'Pro', price: 5, credits: 150, priceId: 'price_1USTZB2KN95wZHYVIP91eYYR', rank: 2 },
-  pro_max: { name: 'Pro Max', price: 10, credits: 350, priceId: 'price_1USTZC2KN95wZHYVqM2WwsPp', rank: 3 },
+  basic: { name: 'Basic', price: 2, credits: 50, priceId: 'price_1Ua57JRtwjF7vcCEpvrq5QY2', rank: 1 },
+  pro: { name: 'Pro', price: 5, credits: 150, priceId: 'price_1Ua57JRtwjF7vcCEajrwDN31', rank: 2 },
+  pro_max: { name: 'Pro Max', price: 10, credits: 350, priceId: 'price_1Ua57KRtwjF7vcCErxUA0pHq', rank: 3 },
 } as const;
 export type PlanId = keyof typeof PLANS;
 export const AI_COSTS = { assistant: 1, organize: 1, icon: 2, animated: 4 } as const;
