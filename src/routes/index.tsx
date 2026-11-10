@@ -40,7 +40,7 @@ function Landing() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground flex flex-col justify-between">
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
         style={{ background: "var(--gradient-hero)" }}
@@ -69,7 +69,7 @@ function Landing() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-16 md:pt-28">
+      <main className="relative z-10 mx-auto max-w-5xl px-6 pb-20 pt-16 md:pt-28 flex-1">
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
             <Sparkles className="size-3" /> Early access · v0.1
@@ -119,6 +119,10 @@ function Landing() {
           ))}
         </div>
       </main>
+
+      <footer className="relative z-10 border-t border-border/40 py-8 text-center text-sm text-muted-foreground">
+        <p>Made with 😁 by Spencer R and Jordan B</p>
+      </footer>
     </div>
   );
 }
