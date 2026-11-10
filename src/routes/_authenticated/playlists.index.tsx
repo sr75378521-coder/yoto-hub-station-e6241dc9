@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PlayOnDeviceButton } from "@/components/app/PlayOnDeviceButton";
-import { queryOptions, useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { ConnectYotoCard } from "@/components/app/ConnectYotoCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,8 +57,6 @@ function PlaylistsPage() {
   const { data, isFetching, refetch } = useSuspenseQuery(playlistsQuery(fetchPlaylists));
   const [searchQuery, setSearchQuery] = useState("");
   const [source, setSource] = useState<"all" | "myo" | "family">("all");
-  const [isCreating, setIsCreating] = useState(false);
-  const [newPlaylistName, setNewPlaylistName] = useState("");
 
   const bySource = data.playlists.filter((p) =>
     source === "all" ? true : p.source === source,
@@ -98,7 +96,6 @@ function PlaylistsPage() {
                   </Button>
                   <CreatePlaylistDialog
                     onCreated={() => {
-                      setNewPlaylistName("");
                       toast.success("Playlist created");
                       refetch();
                     }}
@@ -121,7 +118,7 @@ function PlaylistsPage() {
                           onClick={() => setSource(key)}
                           className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                             source === key
-                              ? "bg-primary text-primary-foreground"
+                              ? "bg-primary text-primary-foreground font-medium"
                               : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
@@ -171,7 +168,7 @@ function PlaylistsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.playlistId} playlist={playlist} />
                 ))}
@@ -191,85 +188,100 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
   const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
   return (
-    <Card className="group hover:shadow-md transition-all hover:border-primary/50">
-      <CardHeader className="space-y-3">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
+      {/* 1:1 Square Album Cover without cropping */}
+      <div className="relative aspect-square w-full overflow-hidden bg-muted/20">
         {playlist.artwork ? (
           <img
             src={playlist.artwork}
             alt={playlist.name}
-            className="h-32 w-full rounded-lg object-cover"
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
         ) : (
-          <div className="flex h-32 w-full items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
-            <Music className="size-12 text-primary/40" />
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-muted/20">
+            <Music className="size-16 text-primary/30" />
           </div>
         )}
+
+        {/* Clean subtle Yoto pill badge */}
+        <Badge
+          variant="secondary"
+          className="absolute top-2.5 right-2.5 border-0 bg-background/85 px-2.5 py-0.5 text-[11px] font-medium backdrop-blur-md shadow-xs text-foreground"
+        >
+          {playlist.type === "myo_playlist" || playlist.source === "myo" ? "MYO" : "Family"}
+        </Badge>
+      </div>
+
+      {/* Info & Actions */}
+      <div className="flex flex-1 flex-col justify-between p-4 space-y-3">
         <div>
-          <CardTitle className="line-clamp-2">{playlist.name}</CardTitle>
-          <CardDescription className="mt-1">
-            {playlist.type === "myo_playlist" ? "MYO Playlist" : "Playlist"}
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <h3
+            className="line-clamp-1 text-base font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors"
+            title={playlist.name}
+          >
+            {playlist.name}
+          </h3>
+          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             {playlist.trackCount !== undefined && (
               <div className="flex items-center gap-1">
                 <Disc3 className="size-3" />
-                {playlist.trackCount} track{playlist.trackCount === 1 ? "" : "s"}
+                <span>
+                  {playlist.trackCount} track{playlist.trackCount === 1 ? "" : "s"}
+                </span>
               </div>
             )}
-            {playlist.duration && (
+            {playlist.duration ? (
               <div className="flex items-center gap-1">
                 <Clock className="size-3" />
-                {durationStr}
+                <span>{durationStr}</span>
               </div>
-            )}
+            ) : null}
           </div>
-          <div className="flex flex-wrap gap-2 pt-2">
+        </div>
+
+        {/* Button Controls */}
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
+            onClick={() =>
+              navigate({
+                to: "/playlists/$playlistId",
+                params: { playlistId: playlist.playlistId },
+                search: { mode: "view" },
+              })
+            }
+          >
+            <Eye className="size-3.5 mr-1" />
+            View
+          </Button>
+          {playlist.isEditable && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="h-8 flex-1 text-xs font-medium border-border/60 hover:bg-muted/60"
               onClick={() =>
                 navigate({
                   to: "/playlists/$playlistId",
                   params: { playlistId: playlist.playlistId },
-                  search: { mode: "view" },
+                  search: { mode: "edit" },
                 })
               }
             >
-              <Eye className="size-4" />
-              View
+              <Pencil className="size-3.5 mr-1" />
+              Edit
             </Button>
-            {playlist.isEditable && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() =>
-                  navigate({
-                    to: "/playlists/$playlistId",
-                    params: { playlistId: playlist.playlistId },
-                    search: { mode: "edit" },
-                  })
-                }
-              >
-                <Pencil className="size-4" />
-                Edit
-              </Button>
-            )}
-            <PlayOnDeviceButton
-              cardId={playlist.playlistId}
-              variant="default"
-              className="flex-1"
-            />
-          </div>
-
+          )}
+          <PlayOnDeviceButton
+            cardId={playlist.playlistId}
+            variant="default"
+            className="h-8 flex-1 text-xs"
+          />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -359,9 +371,19 @@ function EmptyPlaylists() {
 
 export function PlaylistsSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {[0, 1, 2].map((i) => (
-        <Skeleton key={i} className="h-64 rounded-lg" />
+    <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-border/50 bg-card p-0 shadow-xs">
+          <Skeleton className="aspect-square w-full rounded-none" />
+          <div className="p-4 space-y-3">
+            <Skeleton className="h-5 w-3/4 rounded-md" />
+            <Skeleton className="h-4 w-1/2 rounded-md" />
+            <div className="flex gap-2 pt-1">
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );
