@@ -208,6 +208,44 @@ export type Database = {
           },
         ]
       }
+      community_comments: {
+        Row: {
+          author_avatar: string | null
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          author_avatar?: string | null
+          author_name?: string
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          author_avatar?: string | null
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "news_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       families: {
         Row: {
           created_at: string
@@ -411,27 +449,36 @@ export type Database = {
       }
       news_posts: {
         Row: {
+          author_avatar: string | null
           author_id: string
+          author_name: string
           body: string
           created_at: string
           id: string
           pinned: boolean
+          status: string
           title: string
         }
         Insert: {
+          author_avatar?: string | null
           author_id?: string
+          author_name?: string
           body: string
           created_at?: string
           id?: string
           pinned?: boolean
+          status?: string
           title: string
         }
         Update: {
+          author_avatar?: string | null
           author_id?: string
+          author_name?: string
           body?: string
           created_at?: string
           id?: string
           pinned?: boolean
+          status?: string
           title?: string
         }
         Relationships: []
