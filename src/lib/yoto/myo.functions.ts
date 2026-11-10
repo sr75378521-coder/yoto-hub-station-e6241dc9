@@ -39,7 +39,10 @@ export const getCardForEdit = createServerFn({ method: "GET" })
     return { cardId: o.cardId };
   })
   .handler(
-    async ({ context, data }): Promise<{ success: boolean; card?: EditableCard; error?: string }> => {
+    async ({
+      context,
+      data,
+    }): Promise<{ success: boolean; card?: EditableCard; error?: string }> => {
       try {
         const res = await yotoGetJson<Record<string, any>>(
           context.userId,
@@ -106,82 +109,84 @@ export const saveCard = createServerFn({ method: "POST" })
       chapters: o.chapters as EditableChapter[],
     };
   })
-  .handler(async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
-    try {
-      let totalDuration = 0;
-      let totalSize = 0;
-      const chapters = data.chapters.map((ch, i) => {
-        const key = String(i + 1).padStart(2, "0");
-        const tracks = ch.tracks.map((t, ti) => {
-          totalDuration += t.duration ?? 0;
-          totalSize += t.fileSize ?? 0;
-          const tkey = String(ti + 1).padStart(2, "0");
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
+      try {
+        let totalDuration = 0;
+        let totalSize = 0;
+        const chapters = data.chapters.map((ch, i) => {
+          const key = String(i + 1).padStart(2, "0");
+          const tracks = ch.tracks.map((t, ti) => {
+            totalDuration += t.duration ?? 0;
+            totalSize += t.fileSize ?? 0;
+            const tkey = String(ti + 1).padStart(2, "0");
+            return {
+              key: tkey,
+              title: t.title,
+              trackUrl: t.trackUrl,
+              type: "audio",
+              format: t.format ?? "aac",
+              duration: t.duration,
+              fileSize: t.fileSize,
+              channels: t.channels ?? "stereo",
+              overlayLabel: String(ti + 1),
+              ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
+            };
+          });
           return {
-            key: tkey,
-            title: t.title,
-            trackUrl: t.trackUrl,
-            type: "audio",
-            format: t.format ?? "aac",
-            duration: t.duration,
-            fileSize: t.fileSize,
-            channels: t.channels ?? "stereo",
-            overlayLabel: String(ti + 1),
-            ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
+            key,
+            title: ch.title,
+            overlayLabel: String(i + 1),
+            tracks,
+            ...(ch.icon ? { display: { icon16x16: ch.icon } } : {}),
           };
         });
-        return {
-          key,
-          title: ch.title,
-          overlayLabel: String(i + 1),
-          tracks,
-          ...(ch.icon ? { display: { icon16x16: ch.icon } } : {}),
-        };
-      });
 
-      // Preserve everything Yoto already stores on this card (cover art,
-      // author, category, etc.) — a bare metadata object wipes the cover.
-      let existingMeta: Record<string, any> = {};
-      if (data.cardId) {
-        try {
-          const cur = await yotoGetJson<Record<string, any>>(
-            context.userId,
-            `/content/${data.cardId}`,
-          );
-          existingMeta = ((cur?.card ?? cur) as Record<string, any>)?.metadata ?? {};
-        } catch {
-          existingMeta = {};
+        // Preserve everything Yoto already stores on this card (cover art,
+        // author, category, etc.) — a bare metadata object wipes the cover.
+        let existingMeta: Record<string, any> = {};
+        if (data.cardId) {
+          try {
+            const cur = await yotoGetJson<Record<string, any>>(
+              context.userId,
+              `/content/${data.cardId}`,
+            );
+            existingMeta = ((cur?.card ?? cur) as Record<string, any>)?.metadata ?? {};
+          } catch {
+            existingMeta = {};
+          }
         }
-      }
 
-      const cover = data.cover?.trim()
-        ? { imageL: data.cover.trim() }
-        : (existingMeta.cover ?? undefined);
+        const cover = data.cover?.trim()
+          ? { imageL: data.cover.trim() }
+          : (existingMeta.cover ?? undefined);
 
-      const body: Record<string, unknown> = {
-        ...(data.cardId ? { cardId: data.cardId } : {}),
-        title: data.title,
-        content: { chapters },
-        metadata: {
-          ...existingMeta,
+        const body: Record<string, unknown> = {
+          ...(data.cardId ? { cardId: data.cardId } : {}),
           title: data.title,
-          description: data.description,
-          ...(data.author !== undefined ? { author: data.author } : {}),
-          ...(cover ? { cover } : {}),
-          media: {
-            ...(existingMeta.media ?? {}),
-            duration: totalDuration,
-            fileSize: totalSize,
+          content: { chapters },
+          metadata: {
+            ...existingMeta,
+            title: data.title,
+            description: data.description,
+            ...(data.author !== undefined ? { author: data.author } : {}),
+            ...(cover ? { cover } : {}),
+            media: {
+              ...(existingMeta.media ?? {}),
+              duration: totalDuration,
+              fileSize: totalSize,
+            },
           },
-        },
-      };
+        };
 
-      const res = await yotoPost<Record<string, any>>(context.userId, "/content", body);
-      const cardId = res?.cardId ?? res?.card?.cardId ?? data.cardId;
-      return { success: true, cardId };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+        const res = await yotoPost<Record<string, any>>(context.userId, "/content", body);
+        const cardId = res?.cardId ?? res?.card?.cardId ?? data.cardId;
+        return { success: true, cardId };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );
 
 export const deleteCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -245,19 +250,21 @@ export const uploadCover = createServerFn({ method: "POST" })
     if (!(file instanceof File)) throw new Error("file required");
     return { file };
   })
-  .handler(async ({ context, data }): Promise<{ success: boolean; url?: string; error?: string }> => {
-    try {
-      const bytes = await data.file.arrayBuffer();
-      const url = await uploadCoverImageRaw(context.userId, {
-        name: data.file.name,
-        type: data.file.type,
-        bytes,
-      });
-      return { success: true, url };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; url?: string; error?: string }> => {
+      try {
+        const bytes = await data.file.arrayBuffer();
+        const url = await uploadCoverImageRaw(context.userId, {
+          name: data.file.name,
+          type: data.file.type,
+          bytes,
+        });
+        return { success: true, url };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );
 
 /* -------------------------------------------------------------------------- */
 /*  Playlist creation, appending tracks, and physical card linking             */
@@ -273,20 +280,26 @@ export const createPlaylist = createServerFn({ method: "POST" })
       description: typeof o.description === "string" ? o.description : "",
     };
   })
-  .handler(async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
-    try {
-      const res = await yotoPost<Record<string, any>>(context.userId, "/content", {
-        title: data.title,
-        content: { chapters: [] },
-        metadata: { title: data.title, description: data.description, media: { duration: 0, fileSize: 0 } },
-      });
-      const cardId = res?.cardId ?? res?.card?.cardId;
-      if (!cardId) throw new Error("Yoto did not return a card id");
-      return { success: true, cardId };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
+      try {
+        const res = await yotoPost<Record<string, any>>(context.userId, "/content", {
+          title: data.title,
+          content: { chapters: [] },
+          metadata: {
+            title: data.title,
+            description: data.description,
+            media: { duration: 0, fileSize: 0 },
+          },
+        });
+        const cardId = res?.cardId ?? res?.card?.cardId;
+        if (!cardId) throw new Error("Yoto did not return a card id");
+        return { success: true, cardId };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );
 
 /** Append already-uploaded tracks (from uploadTrack) to a playlist as new chapters. */
 export const appendTracks = createServerFn({ method: "POST" })
@@ -303,65 +316,67 @@ export const appendTracks = createServerFn({ method: "POST" })
       tracks: o.tracks as EditableTrack[],
     };
   })
-  .handler(async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
-    try {
-      let cardId = data.cardId;
-      let existing: Record<string, any> = {};
-      if (cardId) {
-        const cur = await yotoGetJson<Record<string, any>>(context.userId, `/content/${cardId}`);
-        existing = (cur?.card ?? cur) as Record<string, any>;
-      }
-      const meta = existing?.metadata ?? {};
-      const title = data.newTitle ?? meta?.title ?? existing?.title ?? "New playlist";
-      const prev: any[] = existing?.content?.chapters ?? [];
-
-      const chapters = [
-        ...prev,
-        ...data.tracks.map((t) => ({
-          title: t.title,
-          tracks: [
-            {
-              title: t.title,
-              trackUrl: t.trackUrl,
-              type: "audio",
-              format: t.format ?? "aac",
-              duration: t.duration,
-              fileSize: t.fileSize,
-              channels: t.channels ?? "stereo",
-              ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
-            },
-          ],
-          ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
-        })),
-      ].map((ch: any, i: number) => ({
-        ...ch,
-        key: String(i + 1).padStart(2, "0"),
-        overlayLabel: String(i + 1),
-        tracks: (ch.tracks ?? []).map((t: any, ti: number) => ({
-          ...t,
-          key: String(ti + 1).padStart(2, "0"),
-          overlayLabel: String(ti + 1),
-        })),
-      }));
-
-      let duration = 0;
-      let fileSize = 0;
-      for (const ch of chapters) {
-        for (const t of ch.tracks ?? []) {
-          duration += t.duration ?? 0;
-          fileSize += t.fileSize ?? 0;
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; cardId?: string; error?: string }> => {
+      try {
+        let cardId = data.cardId;
+        let existing: Record<string, any> = {};
+        if (cardId) {
+          const cur = await yotoGetJson<Record<string, any>>(context.userId, `/content/${cardId}`);
+          existing = (cur?.card ?? cur) as Record<string, any>;
         }
-      }
+        const meta = existing?.metadata ?? {};
+        const title = data.newTitle ?? meta?.title ?? existing?.title ?? "New playlist";
+        const prev: any[] = existing?.content?.chapters ?? [];
 
-      const res = await yotoPost<Record<string, any>>(context.userId, "/content", {
-        ...(cardId ? { cardId } : {}),
-        title,
-        content: { chapters },
-        metadata: { ...meta, title, media: { ...(meta.media ?? {}), duration, fileSize } },
-      });
-      cardId = res?.cardId ?? res?.card?.cardId ?? cardId;
-      return { success: true, cardId };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+        const chapters = [
+          ...prev,
+          ...data.tracks.map((t) => ({
+            title: t.title,
+            tracks: [
+              {
+                title: t.title,
+                trackUrl: t.trackUrl,
+                type: "audio",
+                format: t.format ?? "aac",
+                duration: t.duration,
+                fileSize: t.fileSize,
+                channels: t.channels ?? "stereo",
+                ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
+              },
+            ],
+            ...(t.icon ? { display: { icon16x16: t.icon } } : {}),
+          })),
+        ].map((ch: any, i: number) => ({
+          ...ch,
+          key: String(i + 1).padStart(2, "0"),
+          overlayLabel: String(i + 1),
+          tracks: (ch.tracks ?? []).map((t: any, ti: number) => ({
+            ...t,
+            key: String(ti + 1).padStart(2, "0"),
+            overlayLabel: String(ti + 1),
+          })),
+        }));
+
+        let duration = 0;
+        let fileSize = 0;
+        for (const ch of chapters) {
+          for (const t of ch.tracks ?? []) {
+            duration += t.duration ?? 0;
+            fileSize += t.fileSize ?? 0;
+          }
+        }
+
+        const res = await yotoPost<Record<string, any>>(context.userId, "/content", {
+          ...(cardId ? { cardId } : {}),
+          title,
+          content: { chapters },
+          metadata: { ...meta, title, media: { ...(meta.media ?? {}), duration, fileSize } },
+        });
+        cardId = res?.cardId ?? res?.card?.cardId ?? cardId;
+        return { success: true, cardId };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );

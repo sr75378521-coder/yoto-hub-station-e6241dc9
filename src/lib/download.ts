@@ -48,7 +48,10 @@ export async function downloadTracksAsZip(
     }),
   );
   const zipped = zipSync(files, { level: 0 });
-  downloadBlob(new Blob([zipped as BlobPart], { type: "application/zip" }), `${safeName(zipName)}.zip`);
+  downloadBlob(
+    new Blob([zipped as BlobPart], { type: "application/zip" }),
+    `${safeName(zipName)}.zip`,
+  );
 }
 
 const esc = (s: string) =>

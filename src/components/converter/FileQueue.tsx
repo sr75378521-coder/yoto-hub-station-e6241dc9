@@ -33,10 +33,18 @@ export function FileQueue({ jobs, running, onRemove }: Props) {
         const isAudio = job.file.type.startsWith("audio/");
         const Icon = isAudio ? FileAudio : FileVideo;
         const pct = Math.round(job.progress * 100);
-        const secs = job.finishedAt && job.startedAt ? ((job.finishedAt - job.startedAt) / 1000).toFixed(1) : null;
+        const secs =
+          job.finishedAt && job.startedAt
+            ? ((job.finishedAt - job.startedAt) / 1000).toFixed(1)
+            : null;
         return (
-          <li key={job.id} className="group relative grid grid-cols-[2rem_1fr_auto] items-center gap-3 px-4 py-3">
-            <span className="font-mono text-[11px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+          <li
+            key={job.id}
+            className="group relative grid grid-cols-[2rem_1fr_auto] items-center gap-3 px-4 py-3"
+          >
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {String(i + 1).padStart(2, "0")}
+            </span>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -52,7 +60,9 @@ export function FileQueue({ jobs, running, onRemove }: Props) {
                     {secs && <span>· {secs}s</span>}
                   </>
                 )}
-                {job.status === "error" && <span className="truncate text-destructive">{job.error}</span>}
+                {job.status === "error" && (
+                  <span className="truncate text-destructive">{job.error}</span>
+                )}
                 {job.status === "cancelled" && <span>cancelled</span>}
                 {job.status === "queued" && <span>queued</span>}
               </div>

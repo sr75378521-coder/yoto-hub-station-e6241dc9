@@ -55,7 +55,10 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
       audio.loop = checkpoint.loop_audio;
       audio.addEventListener("timeupdate", () => setPosition(audio.currentTime));
       audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
-      audio.addEventListener("play", () => { setPlaying(true); setWaiting(false); });
+      audio.addEventListener("play", () => {
+        setPlaying(true);
+        setWaiting(false);
+      });
       audio.addEventListener("pause", () => setPlaying(false));
       audio.addEventListener("ended", () => {
         setPlaying(false);
@@ -96,45 +99,52 @@ export function useStudioRuntime(checkpoints: Checkpoint[]) {
     else audio.pause();
   }, []);
 
-  const performAction = useCallback((side: Side) => {
-    const list = checkpointsRef.current;
-    const current = list.find((item) => item.id === activeIdRef.current);
-    if (!current) return;
-    const action = side === "left" ? current.left_action : current.right_action;
-    const targetId = side === "left" ? current.left_target : current.right_target;
-    const index = list.findIndex((item) => item.id === current.id);
+  const performAction = useCallback(
+    (side: Side) => {
+      const list = checkpointsRef.current;
+      const current = list.find((item) => item.id === activeIdRef.current);
+      if (!current) return;
+      const action = side === "left" ? current.left_action : current.right_action;
+      const targetId = side === "left" ? current.left_target : current.right_target;
+      const index = list.findIndex((item) => item.id === current.id);
 
-    if (action === "restart") {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        void audioRef.current.play();
+      if (action === "restart") {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          void audioRef.current.play();
+        }
+        return;
       }
-      return;
-    }
-    if (action === "pause") {
-      togglePause();
-      return;
-    }
-    if (action === "stop") {
-      stop();
-      return;
-    }
-    if (action === "none") return;
+      if (action === "pause") {
+        togglePause();
+        return;
+      }
+      if (action === "stop") {
+        stop();
+        return;
+      }
+      if (action === "none") return;
 
-    const destination = action === "jump"
-      ? list.find((item) => item.id === targetId)
-      : action === "previous"
-        ? list[index - 1]
-        : list[index + 1];
-    if (destination) void playCheckpoint(destination);
-  }, [playCheckpoint, stop, togglePause]);
+      const destination =
+        action === "jump"
+          ? list.find((item) => item.id === targetId)
+          : action === "previous"
+            ? list[index - 1]
+            : list[index + 1];
+      if (destination) void playCheckpoint(destination);
+    },
+    [playCheckpoint, stop, togglePause],
+  );
 
-  const seek = useCallback((percent: number) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-    audio.currentTime = (percent / 100) * duration;
-    setPosition(audio.currentTime);
-  }, [duration]);
+  const seek = useCallback(
+    (percent: number) => {
+      const audio = audioRef.current;
+      if (!audio || !duration) return;
+      audio.currentTime = (percent / 100) * duration;
+      setPosition(audio.currentTime);
+    },
+    [duration],
+  );
 
   useEffect(() => () => audioRef.current?.pause(), []);
 

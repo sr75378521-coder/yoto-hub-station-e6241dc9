@@ -99,9 +99,7 @@ export const playerSleepTimer = createServerFn({ method: "POST" })
 
 export const playerPlayCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    baseInput.extend({ cardId: z.string().min(1) }).parse(d),
-  )
+  .inputValidator((d: unknown) => baseInput.extend({ cardId: z.string().min(1) }).parse(d))
   .handler(({ data, context }) =>
     send(context.userId, data.deviceId, "card-play", {
       cardId: data.cardId,
@@ -153,7 +151,6 @@ export const getInsertedCard = createServerFn({ method: "POST" })
     },
   );
 
-
 /** Fetch live status for a single device. */
 export interface PlayerStatus {
   deviceId: string;
@@ -172,7 +169,6 @@ export interface PlayerStatus {
   sleepMinutesRemaining: number | null;
   batteryPercent: number | null;
 }
-
 
 interface YotoDeviceStatusResponse {
   device?: {

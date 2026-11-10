@@ -6,7 +6,10 @@
 export type Ctx = AudioContext;
 
 function AudioCtor(): typeof AudioContext {
-  return window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  return (
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+  );
 }
 
 let shared: AudioContext | null = null;

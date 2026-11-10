@@ -80,10 +80,7 @@ export function PlayOnDeviceButton({
   };
 
   // Online players first — they're the ones you can actually stream to now.
-  const players = [...(data?.players ?? [])].sort(
-    (a, b) => Number(b.online) - Number(a.online),
-  );
-
+  const players = [...(data?.players ?? [])].sort((a, b) => Number(b.online) - Number(a.online));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

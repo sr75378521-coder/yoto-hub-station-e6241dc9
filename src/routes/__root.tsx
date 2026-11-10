@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -95,9 +96,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Yoto Control Center — Manage every Yoto player" },
-      { name: "twitter:description", content: "A modern dashboard for every Yoto player, playlist, and MYO card. Real-time controls, family view, and MYO playlist editing." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7af3aa7d-b019-4d0d-8bcc-8c59bd1e5467/id-preview-75745274--65272925-719d-4f89-ab58-d897d4f056e0.lovable.app-1784656861101.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7af3aa7d-b019-4d0d-8bcc-8c59bd1e5467/id-preview-75745274--65272925-719d-4f89-ab58-d897d4f056e0.lovable.app-1784656861101.png" },
+      {
+        name: "twitter:description",
+        content:
+          "A modern dashboard for every Yoto player, playlist, and MYO card. Real-time controls, family view, and MYO playlist editing.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7af3aa7d-b019-4d0d-8bcc-8c59bd1e5467/id-preview-75745274--65272925-719d-4f89-ab58-d897d4f056e0.lovable.app-1784656861101.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7af3aa7d-b019-4d0d-8bcc-8c59bd1e5467/id-preview-75745274--65272925-719d-4f89-ab58-d897d4f056e0.lovable.app-1784656861101.png",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -108,7 +121,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "stylesheet", href: appCss },
     ],
-
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -125,6 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
+        <Analytics />
       </body>
     </html>
   );
@@ -150,4 +163,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

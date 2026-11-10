@@ -196,7 +196,9 @@ export function PlayerAdvanced({ deviceId, disabled }: Props) {
                 size="sm"
                 variant="outline"
                 disabled={disabled}
-                onClick={() => run(yotoDevice.setAmbientHex(deviceId, hexColor), "Custom colour set")}
+                onClick={() =>
+                  run(yotoDevice.setAmbientHex(deviceId, hexColor), "Custom colour set")
+                }
               >
                 Use colour
               </Button>
@@ -252,7 +254,9 @@ export function PlayerAdvanced({ deviceId, disabled }: Props) {
               <Button
                 size="sm"
                 disabled={disabled}
-                onClick={() => run(yotoDevice.setMaxVolume(deviceId, maxDay, maxNight), "Volume limits saved")}
+                onClick={() =>
+                  run(yotoDevice.setMaxVolume(deviceId, maxDay, maxNight), "Volume limits saved")
+                }
               >
                 Save limits
               </Button>
@@ -326,7 +330,9 @@ export function PlayerAdvanced({ deviceId, disabled }: Props) {
               <Button
                 size="sm"
                 disabled={disabled || !displayText.trim()}
-                onClick={() => run(yotoDevice.showText(deviceId, displayText.trim(), 8), "Message sent")}
+                onClick={() =>
+                  run(yotoDevice.showText(deviceId, displayText.trim(), 8), "Message sent")
+                }
               >
                 Send
               </Button>

@@ -49,8 +49,8 @@ function IconsPage() {
             <Sparkles className="size-6 text-primary" /> My Yoto icons
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Upload your own 16×16 pixel art — it saves straight to your Yoto account and can be
-            used on any playlist track.
+            Upload your own 16×16 pixel art — it saves straight to your Yoto account and can be used
+            on any playlist track.
           </p>
         </div>
 

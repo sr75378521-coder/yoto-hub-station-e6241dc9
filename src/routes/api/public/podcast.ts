@@ -85,12 +85,17 @@ async function search(q: string, limit: number) {
 
 async function feed(feedUrl: URL) {
   const res = await fetch(feedUrl.toString(), {
-    headers: { "user-agent": "Mozilla/5.0 (compatible; Batchcodec/1.0)", accept: "application/rss+xml, application/xml, text/xml, */*" },
+    headers: {
+      "user-agent": "Mozilla/5.0 (compatible; Batchcodec/1.0)",
+      accept: "application/rss+xml, application/xml, text/xml, */*",
+    },
   });
   if (!res.ok) return bad("Could not load that podcast feed.", 502);
   const xml = await res.text();
   const items = xml.match(/<item[\s\S]*?<\/item>/gi) ?? [];
-  const showTitle = decode((xml.match(/<channel[\s\S]*?<title[^>]*>([\s\S]*?)<\/title>/i) ?? [])[1] ?? "Podcast");
+  const showTitle = decode(
+    (xml.match(/<channel[\s\S]*?<title[^>]*>([\s\S]*?)<\/title>/i) ?? [])[1] ?? "Podcast",
+  );
 
   const episodes: EpisodeResult[] = [];
   for (const [i, block] of items.entries()) {

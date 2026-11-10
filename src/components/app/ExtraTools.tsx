@@ -30,9 +30,12 @@ export function PlaylistBackupTool() {
         const res = await fetchDetails({ data: { playlistId: p.playlistId } });
         out.push({ summary: p, detail: res.success ? res.playlist : { error: res.error } });
       }
-      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), playlists: out }, null, 2)], {
-        type: "application/json",
-      });
+      const blob = new Blob(
+        [JSON.stringify({ exportedAt: new Date().toISOString(), playlists: out }, null, 2)],
+        {
+          type: "application/json",
+        },
+      );
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `yoto-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -124,8 +127,7 @@ export function AudioInspectorTool() {
           <FileAudio className="size-4 text-primary" /> Audio checker
         </CardTitle>
         <CardDescription>
-          Drop audio files here to see length, quality and anything that might cause upload
-          trouble.
+          Drop audio files here to see length, quality and anything that might cause upload trouble.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -137,14 +139,22 @@ export function AudioInspectorTool() {
           className="hidden"
           onChange={(e) => void inspect(e.target.files)}
         />
-        <Button variant="outline" className="w-full" onClick={() => inputRef.current?.click()} disabled={busy}>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+        >
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
           Choose files
         </Button>
         {rows.length > 0 && (
           <div className="space-y-2">
             {rows.map((r, i) => (
-              <div key={`${r.name}-${i}`} className="rounded-xl border border-border/70 p-3 text-sm">
+              <div
+                key={`${r.name}-${i}`}
+                className="rounded-xl border border-border/70 p-3 text-sm"
+              >
                 <p className="truncate font-medium">{r.name}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">

@@ -56,7 +56,8 @@ export function useCurrentProject() {
     if (!selectionExists && firstProject) setSelectedProjectId(firstProject.id);
   }, [projects.data, selectedProjectId]);
 
-  const project = projects.data?.find((item) => item.id === selectedProjectId) ?? projects.data?.[0];
+  const project =
+    projects.data?.find((item) => item.id === selectedProjectId) ?? projects.data?.[0];
   const projectId = project?.id;
 
   const checkpoints = useQuery({
@@ -116,7 +117,10 @@ export function useCurrentProject() {
   const renameProject = useMutation({
     mutationFn: async (title: string) => {
       if (!projectId) throw new Error("Choose a playlist first.");
-      const { error } = await supabase.from("studio_projects").update({ title }).eq("id", projectId);
+      const { error } = await supabase
+        .from("studio_projects")
+        .update({ title })
+        .eq("id", projectId);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["studio", "projects"] }),
@@ -150,16 +154,22 @@ export function useCurrentProject() {
       const userId = await requireUserId();
       const created = await supabase
         .from("studio_projects")
-        .insert({ user_id: userId, title: `${project.title} copy`, description: project.description })
+        .insert({
+          user_id: userId,
+          title: `${project.title} copy`,
+          description: project.description,
+        })
         .select("*")
         .single();
       if (created.error) throw created.error;
 
-      const copies = (checkpoints.data ?? []).map(({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...checkpoint }) => ({
-        ...checkpoint,
-        project_id: created.data.id,
-        user_id: userId,
-      }));
+      const copies = (checkpoints.data ?? []).map(
+        ({ id: _id, created_at: _createdAt, updated_at: _updatedAt, ...checkpoint }) => ({
+          ...checkpoint,
+          project_id: created.data.id,
+          user_id: userId,
+        }),
+      );
       if (copies.length) {
         const copied = await supabase.from("checkpoints").insert(copies);
         if (copied.error) throw copied.error;
@@ -206,13 +216,17 @@ export function useCurrentProject() {
 export async function uploadCheckpointAudio(file: File, checkpointId: string) {
   const userId = await requireUserId();
   const path = `${userId}/${checkpointId}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-  const { error } = await supabase.storage.from("studio-audio").upload(path, file, { upsert: true });
+  const { error } = await supabase.storage
+    .from("studio-audio")
+    .upload(path, file, { upsert: true });
   if (error) throw error;
   return path;
 }
 
 export async function getAudioUrl(path: string) {
-  const { data, error } = await supabase.storage.from("studio-audio").createSignedUrl(path, 60 * 60);
+  const { data, error } = await supabase.storage
+    .from("studio-audio")
+    .createSignedUrl(path, 60 * 60);
   if (error) throw error;
   return data.signedUrl;
 }
@@ -252,11 +266,19 @@ export async function addAudioBoxes(
     const duration = await durationOf(file);
     const upd = await supabase
       .from("checkpoints")
-      .update({ audio_path: path, audio_name: file.name, audio_size: file.size, audio_duration: duration })
+      .update({
+        audio_path: path,
+        audio_name: file.name,
+        audio_size: file.size,
+        audio_duration: duration,
+      })
       .eq("id", created.data.id);
     if (upd.error) throw upd.error;
     if (prev && !prev.auto_target) {
-      await supabase.from("checkpoints").update({ auto_advance: true, auto_target: created.data.id }).eq("id", prev.id);
+      await supabase
+        .from("checkpoints")
+        .update({ auto_advance: true, auto_target: created.data.id })
+        .eq("id", prev.id);
     }
     prev = created.data;
   }

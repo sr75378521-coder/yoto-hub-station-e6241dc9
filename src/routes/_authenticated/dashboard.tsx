@@ -81,7 +81,6 @@ function DashboardPage() {
     deviceIds,
   });
 
-
   return (
     <AppShell title="Players">
       <div className="mx-auto max-w-6xl space-y-8">

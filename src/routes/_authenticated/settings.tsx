@@ -262,9 +262,7 @@ function SettingsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1 rounded-lg bg-muted/40 p-3">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Last Check
-                </p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Last Check</p>
                 <p className="text-sm font-medium">Just now</p>
               </div>
               <div className="space-y-1 rounded-lg bg-muted/40 p-3">

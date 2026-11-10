@@ -75,7 +75,8 @@ export const Route = createFileRoute("/_authenticated/audio")({
       { property: "og:title", content: "Audio Playground · Yoto Control Center" },
       {
         property: "og:description",
-        content: "A full audio editor for your Yoto MYO playlists — trim, merge and master in the browser.",
+        content:
+          "A full audio editor for your Yoto MYO playlists — trim, merge and master in the browser.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -260,10 +261,7 @@ function AudioPlaygroundPage() {
       if (!tracks.length) return;
       setBusy("Saving to playlist…");
       const res = await doAppend({
-        data:
-          dest === "__new__"
-            ? { newTitle: newName.trim(), tracks }
-            : { cardId: dest, tracks },
+        data: dest === "__new__" ? { newTitle: newName.trim(), tracks } : { cardId: dest, tracks },
       });
       if (!res.success) {
         toast.error(res.error ?? "Couldn't save to the playlist");
@@ -290,15 +288,17 @@ function AudioPlaygroundPage() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Audio Playground</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pull audio out of your Yoto playlists or drop your own files, then cut, merge, fade,
-            EQ and master — and send the result straight back to a playlist.
+            Pull audio out of your Yoto playlists or drop your own files, then cut, merge, fade, EQ
+            and master — and send the result straight back to a playlist.
           </p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">1 · Bring in audio</CardTitle>
-            <CardDescription>Import from a playlist or upload files from this device.</CardDescription>
+            <CardDescription>
+              Import from a playlist or upload files from this device.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row">
             <ImportFromPlaylist
@@ -330,9 +330,7 @@ function AudioPlaygroundPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base">2 · Edit clips ({clips.length})</CardTitle>
-              <CardDescription>
-                Total after edits: {fmtTime(totalDuration)}
-              </CardDescription>
+              <CardDescription>Total after edits: {fmtTime(totalDuration)}</CardDescription>
             </div>
             {clips.length > 0 && (
               <Button size="sm" variant="outline" onClick={() => setClips([])}>
@@ -369,7 +367,12 @@ function AudioPlaygroundPage() {
                     setClips((prev) => {
                       const mid = (clip.start + clip.end) / 2;
                       const a = { ...clip, id: `${clip.id}-a`, end: mid, name: `${clip.name} (1)` };
-                      const b = { ...clip, id: `${clip.id}-b`, start: mid, name: `${clip.name} (2)` };
+                      const b = {
+                        ...clip,
+                        id: `${clip.id}-b`,
+                        start: mid,
+                        name: `${clip.name} (2)`,
+                      };
                       return prev.flatMap((c) => (c.id === clip.id ? [a, b] : [c]));
                     })
                   }
@@ -503,7 +506,13 @@ function ClipEditor({
         <Button size="icon" variant="ghost" className="size-8" onClick={onPreview}>
           {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
         </Button>
-        <Button size="icon" variant="ghost" className="size-8" onClick={() => onMove(-1)} disabled={index === 0}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-8"
+          onClick={() => onMove(-1)}
+          disabled={index === 0}
+        >
           <ArrowUp className="size-4" />
         </Button>
         <Button
@@ -551,13 +560,62 @@ function ClipEditor({
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Knob label={`Gain · ${clip.gainDb.toFixed(1)} dB`} value={clip.gainDb} min={-24} max={24} step={0.5} onChange={(v) => onPatch({ gainDb: v })} />
-        <Knob label={`Fade in · ${clip.fadeIn.toFixed(1)}s`} value={clip.fadeIn} min={0} max={10} step={0.1} onChange={(v) => onPatch({ fadeIn: v })} />
-        <Knob label={`Fade out · ${clip.fadeOut.toFixed(1)}s`} value={clip.fadeOut} min={0} max={10} step={0.1} onChange={(v) => onPatch({ fadeOut: v })} />
-        <Knob label={`Speed · ${clip.speed.toFixed(2)}×`} value={clip.speed} min={0.5} max={2} step={0.01} onChange={(v) => onPatch({ speed: v })} />
-        <Knob label={`Bass · ${clip.eqLow.toFixed(0)} dB`} value={clip.eqLow} min={-20} max={20} step={1} onChange={(v) => onPatch({ eqLow: v })} />
-        <Knob label={`Mid · ${clip.eqMid.toFixed(0)} dB`} value={clip.eqMid} min={-20} max={20} step={1} onChange={(v) => onPatch({ eqMid: v })} />
-        <Knob label={`Treble · ${clip.eqHigh.toFixed(0)} dB`} value={clip.eqHigh} min={-20} max={20} step={1} onChange={(v) => onPatch({ eqHigh: v })} />
+        <Knob
+          label={`Gain · ${clip.gainDb.toFixed(1)} dB`}
+          value={clip.gainDb}
+          min={-24}
+          max={24}
+          step={0.5}
+          onChange={(v) => onPatch({ gainDb: v })}
+        />
+        <Knob
+          label={`Fade in · ${clip.fadeIn.toFixed(1)}s`}
+          value={clip.fadeIn}
+          min={0}
+          max={10}
+          step={0.1}
+          onChange={(v) => onPatch({ fadeIn: v })}
+        />
+        <Knob
+          label={`Fade out · ${clip.fadeOut.toFixed(1)}s`}
+          value={clip.fadeOut}
+          min={0}
+          max={10}
+          step={0.1}
+          onChange={(v) => onPatch({ fadeOut: v })}
+        />
+        <Knob
+          label={`Speed · ${clip.speed.toFixed(2)}×`}
+          value={clip.speed}
+          min={0.5}
+          max={2}
+          step={0.01}
+          onChange={(v) => onPatch({ speed: v })}
+        />
+        <Knob
+          label={`Bass · ${clip.eqLow.toFixed(0)} dB`}
+          value={clip.eqLow}
+          min={-20}
+          max={20}
+          step={1}
+          onChange={(v) => onPatch({ eqLow: v })}
+        />
+        <Knob
+          label={`Mid · ${clip.eqMid.toFixed(0)} dB`}
+          value={clip.eqMid}
+          min={-20}
+          max={20}
+          step={1}
+          onChange={(v) => onPatch({ eqMid: v })}
+        />
+        <Knob
+          label={`Treble · ${clip.eqHigh.toFixed(0)} dB`}
+          value={clip.eqHigh}
+          min={-20}
+          max={20}
+          step={1}
+          onChange={(v) => onPatch({ eqHigh: v })}
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -594,7 +652,13 @@ function Knob({
   return (
     <div className="space-y-1.5">
       <Label className="text-[11px] text-muted-foreground">{label}</Label>
-      <Slider value={[value]} min={min} max={max} step={step} onValueChange={([v]) => onChange(v ?? value)} />
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={([v]) => onChange(v ?? value)}
+      />
     </div>
   );
 }
@@ -665,7 +729,10 @@ function ImportFromPlaylist({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="h-auto flex-1 flex-col gap-1 rounded-2xl border-2 border-dashed p-6">
+        <Button
+          variant="outline"
+          className="h-auto flex-1 flex-col gap-1 rounded-2xl border-2 border-dashed p-6"
+        >
           <Import className="size-5 text-primary" />
           Import from a playlist
           <span className="text-[11px] text-muted-foreground">Personal or family library</span>

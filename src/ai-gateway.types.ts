@@ -1,1 +1,1 @@
-import type {} from './generated/ai-gateway/models';
+import type {} from "./generated/ai-gateway/models";

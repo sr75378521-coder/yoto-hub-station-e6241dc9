@@ -7,6 +7,7 @@ I've successfully implemented all the Family, Playlist Library, and Settings tab
 ### New Pages Created
 
 #### 1. **Family Tab** (`/family`)
+
 - **File**: `src/routes/_authenticated/family.tsx`
 - **Features**:
   - Display all family members with their profiles
@@ -18,6 +19,7 @@ I've successfully implemented all the Family, Playlist Library, and Settings tab
   - Error handling and loading states
 
 #### 2. **Playlists Tab** (`/playlists`)
+
 - **File**: `src/routes/_authenticated/playlists.tsx`
 - **Features**:
   - View all MYO playlists
@@ -33,6 +35,7 @@ I've successfully implemented all the Family, Playlist Library, and Settings tab
   - Real-time data refresh
 
 #### 3. **Library Tab** (`/library`)
+
 - **File**: `src/routes/_authenticated/library.tsx`
 - **Features**:
   - **Cards Tab**: Browse MYO cards with track counts
@@ -44,6 +47,7 @@ I've successfully implemented all the Family, Playlist Library, and Settings tab
   - Metadata display (duration, size, dates)
 
 #### 4. **Settings Tab** (`/settings`)
+
 - **File**: `src/routes/_authenticated/settings.tsx`
 - **Features**:
   - **Account Section**:
@@ -90,6 +94,7 @@ getSettingsData() - Fetches user settings and account info
 ### UI/UX Features
 
 ✨ **Consistent Design**:
+
 - Matching card-based layouts
 - Responsive grid systems
 - Dark mode support
@@ -98,6 +103,7 @@ getSettingsData() - Fetches user settings and account info
 - Toast notifications for user feedback
 
 🎨 **Components Used**:
+
 - Tabs, Cards, Buttons, Badges
 - Dialogs for actions
 - Switches and Select inputs
@@ -108,6 +114,7 @@ getSettingsData() - Fetches user settings and account info
 ### Data Integration
 
 All pages integrate with the Yoto API through:
+
 - **TanStack Query** for data fetching and caching
 - **Server functions** with Supabase authentication middleware
 - **Real-time refresh intervals** (30-60 seconds)

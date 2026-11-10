@@ -17,25 +17,33 @@ async function searchPodcasts(q: string, limit: number): Promise<PodcastResult[]
   try {
     const res = await fetch(url);
     if (res.ok) data = await res.json();
-  } catch { /* fall back to server */ }
+  } catch {
+    /* fall back to server */
+  }
   if (!data) {
     const res = await fetch(`${API}?mode=search&q=${encodeURIComponent(q)}&limit=${limit}`);
     const d = (await res.json()) as { results?: PodcastResult[]; error?: string };
     if (d.error) throw new Error(d.error);
     return d.results ?? [];
   }
-  return (data.results ?? []).filter((r) => r.feedUrl).map((r) => ({
-    id: r.collectionId,
-    title: r.collectionName ?? "Untitled",
-    author: r.artistName ?? "",
-    artwork: r.artworkUrl600 ?? r.artworkUrl100 ?? "",
-    feedUrl: r.feedUrl,
-    genre: r.primaryGenreName ?? "",
-    episodeCount: r.trackCount ?? 0,
-  }));
+  return (data.results ?? [])
+    .filter((r) => r.feedUrl)
+    .map((r) => ({
+      id: r.collectionId,
+      title: r.collectionName ?? "Untitled",
+      author: r.artistName ?? "",
+      artwork: r.artworkUrl600 ?? r.artworkUrl100 ?? "",
+      feedUrl: r.feedUrl,
+      genre: r.primaryGenreName ?? "",
+      episodeCount: r.trackCount ?? 0,
+    }));
 }
 
-type DlState = { status: "pending" | "downloading" | "done" | "error"; progress: number; error?: string | undefined };
+type DlState = {
+  status: "pending" | "downloading" | "done" | "error";
+  progress: number;
+  error?: string | undefined;
+};
 
 function prettyDuration(raw: string): string {
   if (!raw) return "";
@@ -50,7 +58,12 @@ function prettyDuration(raw: string): string {
 function safeName(title: string, url: string): string {
   const extMatch = url.split("?")[0]?.match(/\.(mp3|m4a|aac|ogg|opus|wav|flac|mp4|m4v)$/i);
   const ext = extMatch ? extMatch[0] : ".mp3";
-  const base = title.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 120) || "episode";
+  const base =
+    title
+      .replace(/[\\/:*?"<>|]+/g, "-")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120) || "episode";
   return `${base}${ext}`;
 }
 
@@ -75,10 +88,20 @@ function matchEpisode(ep: EpisodeResult, q: string): boolean {
     return new RegExp(`(?:^|[^\\d])0*${n}(?:[^\\d]|$)`).test(title);
   }
   const title = ep.title.toLowerCase();
-  return t.split(/\s+/).every((w) => title.includes(w) || (/^\d+$/.test(w) && ep.episode === Number(w)));
+  return t
+    .split(/\s+/)
+    .every((w) => title.includes(w) || (/^\d+$/.test(w) && ep.episode === Number(w)));
 }
 
-export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (files: File[]) => void; disabled?: boolean | undefined; alwaysOpen?: boolean | undefined }) {
+export function PodcastImport({
+  onImport,
+  disabled,
+  alwaysOpen,
+}: {
+  onImport?: (files: File[]) => void;
+  disabled?: boolean | undefined;
+  alwaysOpen?: boolean | undefined;
+}) {
   const [openState, setOpen] = useState(false);
   const open = alwaysOpen || openState;
   const [filter, setFilter] = useState("");
@@ -103,8 +126,11 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
           try {
             const isYoto = term === "Yoto";
             const r = await searchPodcasts(term, isYoto ? 30 : 3);
-            const hidden = (p: PodcastResult) => /paulo\s*e\s*100/i.test(p.title) || /podcast\s*yotos?/i.test(p.title);
-            return isYoto ? r.filter((p) => (/yoto/i.test(p.author) || /yoto/i.test(p.title)) && !hidden(p)) : r.slice(0, 1).filter((p) => !hidden(p));
+            const hidden = (p: PodcastResult) =>
+              /paulo\s*e\s*100/i.test(p.title) || /podcast\s*yotos?/i.test(p.title);
+            return isYoto
+              ? r.filter((p) => (/yoto/i.test(p.author) || /yoto/i.test(p.title)) && !hidden(p))
+              : r.slice(0, 1).filter((p) => !hidden(p));
           } catch {
             return [];
           }
@@ -145,7 +171,15 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
       if (!t) return;
       if (/^https?:\/\//i.test(t)) {
         setResults([]);
-        await openShow({ id: 0, title: "Custom feed", author: t, artwork: "", feedUrl: t, genre: "", episodeCount: 0 });
+        await openShow({
+          id: 0,
+          title: "Custom feed",
+          author: t,
+          artwork: "",
+          feedUrl: t,
+          genre: "",
+          episodeCount: 0,
+        });
         return;
       }
       setSearching(true);
@@ -171,7 +205,10 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
       return next;
     });
 
-  const visible = useMemo(() => episodes.filter((e) => matchEpisode(e, filter)), [episodes, filter]);
+  const visible = useMemo(
+    () => episodes.filter((e) => matchEpisode(e, filter)),
+    [episodes, filter],
+  );
   const allSelected = visible.length > 0 && visible.every((e) => selected.has(e.guid));
   const toggleAll = () =>
     setSelected((prev) => {
@@ -187,7 +224,9 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
     try {
       const r = await fetch(ep.url, { mode: "cors" });
       if (r.ok) res = r;
-    } catch { /* blocked, use relay */ }
+    } catch {
+      /* blocked, use relay */
+    }
     if (!res) res = await fetch(mediaUrl(ep.url));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const total = Number(res.headers.get("content-length")) || ep.size || 0;
@@ -205,7 +244,10 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
         const now = performance.now();
         if (total && now - last > 150) {
           last = now;
-          setStates((s) => ({ ...s, [ep.guid]: { status: "downloading", progress: Math.min(1, received / total) } }));
+          setStates((s) => ({
+            ...s,
+            [ep.guid]: { status: "downloading", progress: Math.min(1, received / total) },
+          }));
         }
       }
     }
@@ -228,10 +270,14 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
 
     // Stream the ZIP straight to disk when the browser supports it (handles huge batches
     // without running out of memory); otherwise collect it in memory.
-    let writable: { write: (d: Uint8Array) => Promise<void>; close: () => Promise<void> } | null = null;
+    let writable: { write: (d: Uint8Array) => Promise<void>; close: () => Promise<void> } | null =
+      null;
     if (mode === "download" && "showSaveFilePicker" in window) {
       try {
-        const handle = await (window as any).showSaveFilePicker({ suggestedName: zipName, types: [{ description: "ZIP", accept: { "application/zip": [".zip"] } }] });
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: zipName,
+          types: [{ description: "ZIP", accept: { "application/zip": [".zip"] } }],
+        });
         writable = await handle.createWritable();
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -243,15 +289,21 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
     const zipFinished = new Promise<void>((r) => (zipDone = r));
     const zipper = new Zip((err, chunk, final) => {
       if (err) return;
-      if (writable) { const w = writable; writeChain = writeChain.then(() => w.write(chunk)); }
-      else parts.push(chunk);
+      if (writable) {
+        const w = writable;
+        writeChain = writeChain.then(() => w.write(chunk));
+      } else parts.push(chunk);
       if (final) zipDone();
     });
     let added = 0;
 
     cancelRef.current = false;
     setRunning(true);
-    setStates(Object.fromEntries(chosen.map((e) => [e.guid, { status: "pending", progress: 0 } as DlState])));
+    setStates(
+      Object.fromEntries(
+        chosen.map((e) => [e.guid, { status: "pending", progress: 0 } as DlState]),
+      ),
+    );
     let next = 0;
     const worker = async () => {
       while (!cancelRef.current && next < chosen.length) {
@@ -260,7 +312,8 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
         setStates((s) => ({ ...s, [ep.guid]: { status: "downloading", progress: 0 } }));
         try {
           const blob = await fetchEpisode(ep);
-          if (mode === "queue") onImport?.([new File([blob], names[i]!, { type: blob.type || "audio/mpeg" })]);
+          if (mode === "queue")
+            onImport?.([new File([blob], names[i]!, { type: blob.type || "audio/mpeg" })]);
           else {
             const entry = new ZipPassThrough(names[i]!);
             zipper.add(entry);
@@ -269,7 +322,14 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
           }
           setStates((s) => ({ ...s, [ep.guid]: { status: "done", progress: 1 } }));
         } catch (e) {
-          setStates((s) => ({ ...s, [ep.guid]: { status: "error", progress: 0, error: e instanceof Error ? e.message : "failed" } }));
+          setStates((s) => ({
+            ...s,
+            [ep.guid]: {
+              status: "error",
+              progress: 0,
+              error: e instanceof Error ? e.message : "failed",
+            },
+          }));
         }
       }
     };
@@ -291,19 +351,21 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
-      {!alwaysOpen && <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-secondary/50"
-      >
-        <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-          <Mic className="h-4 w-4 text-primary" /> Add podcast episodes
-        </span>
-        <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-          type any show · download or convert in bulk
-          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
-        </span>
-      </button>}
+      {!alwaysOpen && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-secondary/50"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
+            <Mic className="h-4 w-4 text-primary" /> Add podcast episodes
+          </span>
+          <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+            type any show · download or convert in bulk
+            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+          </span>
+        </button>
+      )}
 
       {open && (
         <div className={cn(!alwaysOpen && "border-t border-border")}>
@@ -322,13 +384,20 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                 className="h-10"
               />
               <Button type="submit" disabled={searching || !query.trim()}>
-                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Search
+                {searching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}{" "}
+                Search
               </Button>
             </form>
             {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
             {results.length === 0 && !show && (
               <div className="mt-4">
-                <p className="mb-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Suggested shows</p>
+                <p className="mb-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Suggested shows
+                </p>
                 {featured.length === 0 ? (
                   <div className="flex items-center gap-2 py-6 font-mono text-xs text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> loading suggestions…
@@ -343,13 +412,22 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                         className="group overflow-hidden rounded-xl border border-border bg-background/40 text-left transition-all hover:border-primary/60 hover:shadow-glow"
                       >
                         {p.artwork ? (
-                          <img src={p.artwork} alt={p.title} loading="lazy" className="aspect-square w-full object-cover transition-transform group-hover:scale-105" />
+                          <img
+                            src={p.artwork}
+                            alt={p.title}
+                            loading="lazy"
+                            className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                          />
                         ) : (
-                          <div className="flex aspect-square w-full items-center justify-center bg-secondary"><Mic className="h-6 w-6 text-muted-foreground" /></div>
+                          <div className="flex aspect-square w-full items-center justify-center bg-secondary">
+                            <Mic className="h-6 w-6 text-muted-foreground" />
+                          </div>
                         )}
                         <div className="p-2">
                           <p className="line-clamp-2 text-xs font-medium leading-snug">{p.title}</p>
-                          <p className="truncate font-mono text-[10px] text-muted-foreground">{p.author}</p>
+                          <p className="truncate font-mono text-[10px] text-muted-foreground">
+                            {p.author}
+                          </p>
                         </div>
                       </button>
                     ))}
@@ -358,7 +436,16 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
               </div>
             )}
             {(results.length > 0 || show) && (
-              <button type="button" onClick={() => { setResults([]); setShow(null); setEpisodes([]); setQuery(""); }} className="mt-3 font-mono text-[11px] text-muted-foreground hover:text-primary">
+              <button
+                type="button"
+                onClick={() => {
+                  setResults([]);
+                  setShow(null);
+                  setEpisodes([]);
+                  setQuery("");
+                }}
+                className="mt-3 font-mono text-[11px] text-muted-foreground hover:text-primary"
+              >
                 ← back to suggested shows
               </button>
             )}
@@ -376,10 +463,18 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                     show?.id === p.id ? "border-primary" : "border-border",
                   )}
                 >
-                  {p.artwork && <img src={p.artwork} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />}
+                  {p.artwork && (
+                    <img
+                      src={p.artwork}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-md object-cover"
+                    />
+                  )}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{p.title}</p>
-                    <p className="truncate font-mono text-[11px] text-muted-foreground">{p.author}</p>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">
+                      {p.author}
+                    </p>
                     <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
                       {p.genre}
                       {p.episodeCount ? ` · ${p.episodeCount} eps` : ""}
@@ -394,7 +489,9 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
             <div className="border-t border-border">
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <div className="flex items-center gap-3">
-                  {show.artwork && <img src={show.artwork} alt="" className="h-9 w-9 rounded-md object-cover" />}
+                  {show.artwork && (
+                    <img src={show.artwork} alt="" className="h-9 w-9 rounded-md object-cover" />
+                  )}
                   <div>
                     <p className="text-sm font-medium">{show.title}</p>
                     <p className="font-mono text-[11px] text-muted-foreground">
@@ -405,21 +502,46 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button size="sm" variant="ghost" onClick={toggleAll} disabled={!visible.length || running}>
-                    {allSelected ? <Square className="h-3.5 w-3.5" /> : <CheckSquare className="h-3.5 w-3.5" />}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={toggleAll}
+                    disabled={!visible.length || running}
+                  >
+                    {allSelected ? (
+                      <Square className="h-3.5 w-3.5" />
+                    ) : (
+                      <CheckSquare className="h-3.5 w-3.5" />
+                    )}
                     {allSelected ? "Clear" : filter ? `Select ${visible.length}` : "Select all"}
                   </Button>
                   {running ? (
-                    <Button size="sm" variant="destructive" onClick={() => (cancelRef.current = true)}>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => (cancelRef.current = true)}
+                    >
                       <X className="h-3.5 w-3.5" /> Stop
                     </Button>
-                  ) : onImport && (
-                    <Button size="sm" className="shadow-glow" disabled={!selected.size || disabled} onClick={() => importSelected("queue")}>
-                      <Download className="h-3.5 w-3.5" /> Add {selected.size || ""} to queue
-                    </Button>
+                  ) : (
+                    onImport && (
+                      <Button
+                        size="sm"
+                        className="shadow-glow"
+                        disabled={!selected.size || disabled}
+                        onClick={() => importSelected("queue")}
+                      >
+                        <Download className="h-3.5 w-3.5" /> Add {selected.size || ""} to queue
+                      </Button>
+                    )
                   )}
                   {!running && (
-                    <Button size="sm" variant="outline" disabled={!selected.size} onClick={() => importSelected("download")}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!selected.size}
+                      onClick={() => importSelected("download")}
+                    >
                       <Download className="h-3.5 w-3.5" /> Download {selected.size || ""}
                     </Button>
                   )}
@@ -439,7 +561,12 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                     {visible.length} / {episodes.length}
                   </span>
                   {filter && (
-                    <button type="button" aria-label="Clear filter" onClick={() => setFilter("")} className="text-muted-foreground hover:text-foreground">
+                    <button
+                      type="button"
+                      aria-label="Clear filter"
+                      onClick={() => setFilter("")}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -451,11 +578,18 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                 </div>
               ) : (
                 <ul className="max-h-[45vh] divide-y divide-border overflow-y-auto border-t border-border">
-                  {visible.length === 0 && <li className="px-4 py-8 text-center font-mono text-xs text-muted-foreground">no episodes match "{filter}"</li>}
+                  {visible.length === 0 && (
+                    <li className="px-4 py-8 text-center font-mono text-xs text-muted-foreground">
+                      no episodes match "{filter}"
+                    </li>
+                  )}
                   {visible.map((ep, i) => {
                     const st = states[ep.guid];
                     return (
-                      <li key={ep.guid + i} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5">
+                      <li
+                        key={ep.guid + i}
+                        className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5"
+                      >
                         <input
                           type="checkbox"
                           checked={selected.has(ep.guid)}
@@ -465,12 +599,23 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                           className="h-4 w-4 accent-[hsl(var(--primary))]"
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-sm">{ep.episode > 0 && <span className="mr-1.5 font-mono text-[11px] text-primary">{ep.season > 0 ? `S${ep.season} ` : ""}E{ep.episode}</span>}{ep.title}</p>
+                          <p className="truncate text-sm">
+                            {ep.episode > 0 && (
+                              <span className="mr-1.5 font-mono text-[11px] text-primary">
+                                {ep.season > 0 ? `S${ep.season} ` : ""}E{ep.episode}
+                              </span>
+                            )}
+                            {ep.title}
+                          </p>
                           <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">
                             {ep.date && <span>{new Date(ep.date).toLocaleDateString()}</span>}
-                            {prettyDuration(ep.duration) && <span>· {prettyDuration(ep.duration)}</span>}
+                            {prettyDuration(ep.duration) && (
+                              <span>· {prettyDuration(ep.duration)}</span>
+                            )}
                             {ep.size > 0 && <span>· {formatBytes(ep.size)}</span>}
-                            {st?.status === "error" && <span className="text-destructive">· {st.error}</span>}
+                            {st?.status === "error" && (
+                              <span className="text-destructive">· {st.error}</span>
+                            )}
                           </div>
                           {st?.status === "downloading" && (
                             <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-secondary">
@@ -484,7 +629,8 @@ export function PodcastImport({ onImport, disabled, alwaysOpen }: { onImport?: (
                         <div className="font-mono text-xs">
                           {st?.status === "downloading" && (
                             <span className="flex items-center gap-1.5 text-primary">
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {Math.round(st.progress * 100)}%
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />{" "}
+                              {Math.round(st.progress * 100)}%
                             </span>
                           )}
                           {st?.status === "done" && <span className="text-success">added</span>}

@@ -37,16 +37,96 @@ export const AUDIO_CODECS: Codec[] = [
 ];
 
 export const CONTAINERS: Container[] = [
-  { id: "mp4", label: "MP4", ext: "mp4", mime: "video/mp4", kind: "video", videoCodecs: ["libx264", "libx265", "copy"], audioCodecs: ["aac", "libmp3lame", "libopus", "copy"] },
-  { id: "mkv", label: "MKV", ext: "mkv", mime: "video/x-matroska", kind: "video", videoCodecs: ["libx264", "libx265", "libvpx-vp9", "libvpx", "copy"], audioCodecs: ["aac", "libmp3lame", "libopus", "libvorbis", "flac", "pcm_s16le", "copy"] },
-  { id: "webm", label: "WebM", ext: "webm", mime: "video/webm", kind: "video", videoCodecs: ["libvpx-vp9", "libvpx"], audioCodecs: ["libopus", "libvorbis"] },
-  { id: "mov", label: "MOV", ext: "mov", mime: "video/quicktime", kind: "video", videoCodecs: ["libx264", "libx265", "copy"], audioCodecs: ["aac", "pcm_s16le", "pcm_s24le", "copy"] },
-  { id: "mp3", label: "MP3", ext: "mp3", mime: "audio/mpeg", kind: "audio", videoCodecs: [], audioCodecs: ["libmp3lame"] },
-  { id: "m4a", label: "M4A", ext: "m4a", mime: "audio/mp4", kind: "audio", videoCodecs: [], audioCodecs: ["aac"] },
-  { id: "opus", label: "Opus", ext: "opus", mime: "audio/ogg", kind: "audio", videoCodecs: [], audioCodecs: ["libopus"] },
-  { id: "ogg", label: "OGG", ext: "ogg", mime: "audio/ogg", kind: "audio", videoCodecs: [], audioCodecs: ["libvorbis", "libopus", "flac"] },
-  { id: "flac", label: "FLAC", ext: "flac", mime: "audio/flac", kind: "audio", videoCodecs: [], audioCodecs: ["flac"] },
-  { id: "wav", label: "WAV", ext: "wav", mime: "audio/wav", kind: "audio", videoCodecs: [], audioCodecs: ["pcm_s16le", "pcm_s24le"] },
+  {
+    id: "mp4",
+    label: "MP4",
+    ext: "mp4",
+    mime: "video/mp4",
+    kind: "video",
+    videoCodecs: ["libx264", "libx265", "copy"],
+    audioCodecs: ["aac", "libmp3lame", "libopus", "copy"],
+  },
+  {
+    id: "mkv",
+    label: "MKV",
+    ext: "mkv",
+    mime: "video/x-matroska",
+    kind: "video",
+    videoCodecs: ["libx264", "libx265", "libvpx-vp9", "libvpx", "copy"],
+    audioCodecs: ["aac", "libmp3lame", "libopus", "libvorbis", "flac", "pcm_s16le", "copy"],
+  },
+  {
+    id: "webm",
+    label: "WebM",
+    ext: "webm",
+    mime: "video/webm",
+    kind: "video",
+    videoCodecs: ["libvpx-vp9", "libvpx"],
+    audioCodecs: ["libopus", "libvorbis"],
+  },
+  {
+    id: "mov",
+    label: "MOV",
+    ext: "mov",
+    mime: "video/quicktime",
+    kind: "video",
+    videoCodecs: ["libx264", "libx265", "copy"],
+    audioCodecs: ["aac", "pcm_s16le", "pcm_s24le", "copy"],
+  },
+  {
+    id: "mp3",
+    label: "MP3",
+    ext: "mp3",
+    mime: "audio/mpeg",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["libmp3lame"],
+  },
+  {
+    id: "m4a",
+    label: "M4A",
+    ext: "m4a",
+    mime: "audio/mp4",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["aac"],
+  },
+  {
+    id: "opus",
+    label: "Opus",
+    ext: "opus",
+    mime: "audio/ogg",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["libopus"],
+  },
+  {
+    id: "ogg",
+    label: "OGG",
+    ext: "ogg",
+    mime: "audio/ogg",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["libvorbis", "libopus", "flac"],
+  },
+  {
+    id: "flac",
+    label: "FLAC",
+    ext: "flac",
+    mime: "audio/flac",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["flac"],
+  },
+  {
+    id: "wav",
+    label: "WAV",
+    ext: "wav",
+    mime: "audio/wav",
+    kind: "audio",
+    videoCodecs: [],
+    audioCodecs: ["pcm_s16le", "pcm_s24le"],
+  },
 ];
 
 export const RESOLUTIONS = [
@@ -60,7 +140,15 @@ export const RESOLUTIONS = [
 ];
 
 export const FRAMERATES = ["source", "24", "25", "30", "50", "60"];
-export const SPEED_PRESETS = ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow"];
+export const SPEED_PRESETS = [
+  "ultrafast",
+  "superfast",
+  "veryfast",
+  "faster",
+  "fast",
+  "medium",
+  "slow",
+];
 export const AUDIO_BITRATES = ["64", "96", "128", "160", "192", "256", "320"];
 export const SAMPLE_RATES = ["source", "22050", "44100", "48000", "96000"];
 export const CHANNELS = [
@@ -103,8 +191,14 @@ export function getContainer(id: string): Container {
 export function normalizeSpec(spec: OutputSpec): OutputSpec {
   const c = getContainer(spec.container);
   const videoCodec =
-    c.kind === "video" ? (c.videoCodecs.includes(spec.videoCodec) ? spec.videoCodec : (c.videoCodecs[0] ?? "")) : "";
-  const audioCodec = c.audioCodecs.includes(spec.audioCodec) ? spec.audioCodec : (c.audioCodecs[0] ?? "aac");
+    c.kind === "video"
+      ? c.videoCodecs.includes(spec.videoCodec)
+        ? spec.videoCodec
+        : (c.videoCodecs[0] ?? "")
+      : "";
+  const audioCodec = c.audioCodecs.includes(spec.audioCodec)
+    ? spec.audioCodec
+    : (c.audioCodecs[0] ?? "aac");
   return { ...spec, videoCodec, audioCodec };
 }
 
@@ -146,8 +240,23 @@ export function buildArgs(input: string, output: string, spec: OutputSpec): stri
           if (c.id === "mp4" || c.id === "mov") args.push("-tag:v", "hvc1");
         }
       } else if (spec.videoCodec.startsWith("libvpx")) {
-        const cpu = ["ultrafast", "superfast", "veryfast"].includes(spec.speed) ? "5" : ["faster", "fast"].includes(spec.speed) ? "3" : "1";
-        args.push("-crf", String(spec.crf), "-b:v", "0", "-deadline", "realtime", "-cpu-used", cpu, "-row-mt", "1");
+        const cpu = ["ultrafast", "superfast", "veryfast"].includes(spec.speed)
+          ? "5"
+          : ["faster", "fast"].includes(spec.speed)
+            ? "3"
+            : "1";
+        args.push(
+          "-crf",
+          String(spec.crf),
+          "-b:v",
+          "0",
+          "-deadline",
+          "realtime",
+          "-cpu-used",
+          cpu,
+          "-row-mt",
+          "1",
+        );
         if (spec.videoCodec === "libvpx-vp9") args.push("-pix_fmt", "yuv420p");
       }
     }

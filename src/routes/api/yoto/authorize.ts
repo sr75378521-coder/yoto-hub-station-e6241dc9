@@ -1,7 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { YOTO_AUTH_BASE, YOTO_AUDIENCE, YOTO_SCOPES, YOTO_CALLBACK_PATH } from "@/lib/yoto/config";
-import { generateCodeVerifier, codeChallengeFromVerifier, generateState } from "@/lib/yoto/pkce.server";
+import {
+  generateCodeVerifier,
+  codeChallengeFromVerifier,
+  generateState,
+} from "@/lib/yoto/pkce.server";
 
 /**
  * Start the Yoto OAuth flow.
@@ -45,7 +49,8 @@ export const Route = createFileRoute("/api/yoto/authorize")({
           code_verifier: verifier,
           redirect_to: "/dashboard",
         });
-        if (insertErr) return new Response(`Failed to store state: ${insertErr.message}`, { status: 500 });
+        if (insertErr)
+          return new Response(`Failed to store state: ${insertErr.message}`, { status: 500 });
 
         const redirectUri = `${url.origin}${YOTO_CALLBACK_PATH}`;
         const authorize = new URL(`${YOTO_AUTH_BASE}/authorize`);
