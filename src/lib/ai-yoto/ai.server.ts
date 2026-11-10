@@ -3,9 +3,9 @@ import { Output, streamText } from 'ai';
 import { z } from 'zod';
 import { createLovableAiGatewayRunIdFetch } from './run-id.server.ts';
 import { withCredits } from './credits.server';
-import { AI_COSTS, transcriptionCost, validateChapterRanges, type AudioSegment } from './plans';
-import { wavSeconds, readTranscript } from './stream';
-import { transcribe } from './transcribe.server';
+import { AI_COSTS, TRANSCRIPTION_SEGMENT_SECONDS, transcriptionCost, validateChapterRanges, type AudioSegment } from './plans';
+import { wavSeconds } from './stream';
+import { transcribeAudioStream } from '@lovable.dev/ai-gateway';
 
 function provider() {
   const key = process.env['LOVABLE_API_KEY'];
@@ -33,16 +33,19 @@ export async function transcribeStored(userId: string, path: string) {
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const download = await supabaseAdmin.storage.from('studio-audio').download(path);
   if (download.error || !download.data) throw new Error('Saved audio could not be read.');
-  if (download.data.size > 4 * 1024 * 1024) throw new Error('Audio segment is too large.');
+  if (download.data.size > 12 * 1024 * 1024) throw new Error('Audio segment is too large.');
   const bytes = await download.data.arrayBuffer();
   const duration = wavSeconds(bytes);
-  if (duration > 65) throw new Error('Audio segments must be at most one minute.');
+  if (duration > TRANSCRIPTION_SEGMENT_SECONDS) throw new Error('Audio segments must be at most five minutes.');
   return withCredits(userId, `transcribe:${path}`, transcriptionCost(duration), 'transcribe', async () => {
-    const apiKey = process.env['LOVABLE_API_KEY'];
-    if (!apiKey) throw new Error('AI is not configured.');
-    const response = await transcribe({ baseURL: 'https://ai.gateway.lovable.dev', apiKey, model: 'openai/gpt-transcribe', maxFileBytes: 4 * 1024 * 1024, audioOnly: true }, new File([bytes], 'audio.wav', { type: 'audio/wav' }));
-    if (!response.ok) return checkedGatewayFetchResponse(response);
-    return { transcript: await readTranscript(response), duration };
+    const response = await transcribeAudioStream({ model: 'openai/gpt-transcribe', file: new File([bytes], 'audio.wav', { type: 'audio/wav' }) }, { maxRetries: 0 });
+    let transcript = '', done = false;
+    for await (const event of response) {
+      if (event.type === 'transcript.text.delta') transcript += event.delta;
+      if (event.type === 'transcript.text.done') { transcript = event.text; done = true; }
+    }
+    if (!done || !transcript.trim()) throw new Error('Transcription did not finish or no speech was found. Your audio is saved.');
+    return { transcript: transcript.trim(), duration };
   });
 }
 export async function organizeAudio(userId: string, key: string, segments: AudioSegment[]) {

@@ -6,9 +6,10 @@ export const PLANS = {
 } as const;
 export type PlanId = keyof typeof PLANS;
 export const AI_COSTS = { assistant: 1, organize: 1, icon: 2, animated: 4 } as const;
+export const TRANSCRIPTION_SEGMENT_SECONDS = 300;
 export function transcriptionCost(seconds: number) {
   if (!Number.isFinite(seconds) || seconds <= 0) throw new Error('Invalid audio duration');
-  return Math.ceil(seconds / 60);
+  return Math.ceil(seconds / TRANSCRIPTION_SEGMENT_SECONDS);
 }
 export function canUseAction(plan: PlanId, action: string) {
   if (action === 'icon') return PLANS[plan].rank >= 2;
@@ -19,7 +20,20 @@ export function planFromPrice(priceId: string): PlanId {
   return (Object.keys(PLANS) as PlanId[]).find(id => PLANS[id].priceId === priceId && priceId !== '') ?? 'free';
 }
 export interface AudioSegment { start: number; end: number; path: string; transcript: string }
-export interface AiChapter { title: string; start: number; end: number; transcript: string; paths: string[]; icon?: string; iconUrl?: string; tracks?: import('@/lib/yoto/myo.functions').EditableTrack[] }
+export interface AiChapter { title: string; start: number; end: number; transcript: string; paths: string[]; segments?: AudioSegment[]; icon?: string; iconUrl?: string; tracks?: import('@/lib/yoto/myo.functions').EditableTrack[] }
+/** Preserve exact timing for new clips and the original one-minute legacy clips. */
+export function chapterSegments(chapter: AiChapter): AudioSegment[] {
+  return chapter.segments ?? chapter.paths.map((path, index) => ({ path, start: chapter.start + index * 60, end: Math.min(chapter.end, chapter.start + (index + 1) * 60), transcript: chapter.paths.length === 1 ? chapter.transcript : `${chapter.title}: ${chapter.transcript}` }));
+}
+export function remainingTranscriptionCost(seconds: number, completed: readonly AiChapter[]) {
+  const count = Math.ceil(seconds / TRANSCRIPTION_SEGMENT_SECONDS);
+  let cost = 0;
+  for (let i = 0; i < count; i++) {
+    if (completed[i]?.transcript.trim()) continue;
+    cost += transcriptionCost(Math.min(TRANSCRIPTION_SEGMENT_SECONDS, seconds - i * TRANSCRIPTION_SEGMENT_SECONDS));
+  }
+  return cost;
+}
 export function validateChapterRanges(ranges: { title: string; first: number; last: number }[], segments: AudioSegment[]): AiChapter[] {
   let next = 0;
   const chapters = ranges.map(r => {
@@ -28,7 +42,7 @@ export function validateChapterRanges(ranges: { title: string; first: number; la
     const first = parts[0], last = parts.at(-1);
     if (!first || !last) throw new Error('Empty chapter');
     next = r.last + 1;
-    return { title: r.title.slice(0, 120), start: first.start, end: last.end, transcript: parts.map(p => p.transcript).join(' '), paths: parts.map(p => p.path) };
+    return { title: r.title.slice(0, 120), start: first.start, end: last.end, transcript: parts.map(p => p.transcript).join(' '), paths: parts.map(p => p.path), segments: parts };
   });
   if (next !== segments.length) throw new Error('AI did not include the full audio. Your audio is still saved.');
   return chapters;
@@ -59,6 +73,7 @@ export function mergeChapters(parts: AiChapter[], title: string): AiChapter {
     title, start: first.start, end: parts.at(-1)!.end,
     transcript: parts.map(c => c.transcript).filter(Boolean).join('\n'),
     paths: parts.flatMap(c => c.paths), icon: first.icon, iconUrl: first.iconUrl,
+    segments: parts.flatMap(chapterSegments),
     tracks: allTracks ? parts.flatMap(c => c.tracks!) : parts.some(c => c.tracks?.length) ? undefined : first.tracks,
   };
 }

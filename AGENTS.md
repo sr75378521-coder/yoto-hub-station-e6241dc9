@@ -13,3 +13,5 @@
 - Keep Yoto credentials encrypted and server-only; account migration uses Cloud's supported database export, never custom password or token dumps.
 - Spark Studio's wait-for-button mode uses the persisted auto-advance and loop flags, shared through studio-flow helpers; do not introduce a competing playback-mode field.
 - Apply database schema through the managed Drizzle migration journal; older SQL files under supabase/migrations are historical references, not a second migration queue, to avoid duplicate policies.
+- Transcription uses the shared segment duration and pricing helpers on both sides; persist exact clip boundaries so grouping remains accurate for new and legacy audio.
+- Use the typed AI Gateway SDK for transcription; preserve the selected model and completion validation to avoid changing quality when adjusting app credits.
