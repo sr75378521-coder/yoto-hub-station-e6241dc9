@@ -168,7 +168,6 @@ function PlaylistsPage() {
                 </p>
               </div>
             ) : (
-              /* Big & comfortable on mobile (1 col), MYO scale on desktop (2 to 4 cols) */
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {filteredPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.playlistId} playlist={playlist} />
@@ -190,32 +189,22 @@ function PlaylistCard({ playlist }: { playlist: PlaylistSummary }) {
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md">
-      {/* Full-bleed rounded artwork header (not boxed, zero cut off on top/bottom) */}
+      {/* Edge-to-edge album cover that fills the top with rounded corners */}
       <div className="relative aspect-square w-full overflow-hidden bg-muted/20">
         {playlist.artwork ? (
-          <>
-            {/* Ambient blur filling any letterboxing naturally */}
-            <img
-              src={playlist.artwork}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 size-full object-cover blur-md scale-110 opacity-30 select-none pointer-events-none"
-            />
-            {/* Crisp foreground image: 100% visible from top to bottom */}
-            <img
-              src={playlist.artwork}
-              alt={playlist.name}
-              loading="lazy"
-              className="relative size-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-          </>
+          <img
+            src={playlist.artwork}
+            alt={playlist.name}
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
           <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 via-primary/5 to-muted/20">
             <Music className="size-16 text-primary/30" />
           </div>
         )}
 
-        {/* Clean translucent Yoto pill badge */}
+        {/* Clean floating Yoto badge */}
         <Badge
           variant="secondary"
           className="absolute top-2.5 right-2.5 border-0 bg-background/85 px-2.5 py-0.5 text-[11px] font-medium backdrop-blur-md shadow-xs text-foreground"
