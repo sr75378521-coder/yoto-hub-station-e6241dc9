@@ -102,9 +102,21 @@ function Landing() {
 
         <div className="mx-auto mt-20 grid max-w-4xl gap-4 md:grid-cols-3">
           {[
-            { icon: Radio, title: "Live player control", body: "Real-time playback, volume, sleep timer and shuffle across every player." },
-            { icon: ListMusic, title: "MYO playlist editor", body: "Reorder chapters and tracks, replace artwork, upload MP3/M4A/WAV." },
-            { icon: Users, title: "Family view", body: "See who's listening to what, jump into any player, and manage permissions." },
+            {
+              icon: Radio,
+              title: "Live player control",
+              body: "Real-time playback, volume, sleep timer and shuffle across every player.",
+            },
+            {
+              icon: ListMusic,
+              title: "MYO playlist editor",
+              body: "Reorder chapters and tracks, replace artwork, upload MP3/M4A/WAV.",
+            },
+            {
+              icon: Users,
+              title: "Family view",
+              body: "See who's listening to what, jump into any player, and manage permissions.",
+            },
           ].map(({ icon: Icon, title, body }) => (
             <div
               key={title}

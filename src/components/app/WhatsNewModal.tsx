@@ -73,9 +73,7 @@ export function WhatsNewModal() {
               })}
             </span>
           </div>
-          <DialogTitle className="text-xl font-bold leading-tight">
-            {latestPost.title}
-          </DialogTitle>
+          <DialogTitle className="text-xl font-bold leading-tight">{latestPost.title}</DialogTitle>
           <DialogDescription className="sr-only">
             Announcement popup for Yoto Control Center updates.
           </DialogDescription>

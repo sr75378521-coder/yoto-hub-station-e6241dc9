@@ -18,12 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { uploadIcon } from "@/lib/yoto/icons.functions";
 
 const SIZE = 16;
@@ -31,9 +26,24 @@ const CELLS = SIZE * SIZE;
 const EMPTY = "";
 
 const PALETTE = [
-  "#ffffff", "#c9ced6", "#8a929e", "#4b5563", "#1f2937", "#000000",
-  "#ff4d4f", "#ff7a45", "#ffc53d", "#ffe58f", "#95de64", "#52c41a",
-  "#13c2c2", "#40a9ff", "#2f54eb", "#9254de", "#f759ab", "#a0522d",
+  "#ffffff",
+  "#c9ced6",
+  "#8a929e",
+  "#4b5563",
+  "#1f2937",
+  "#000000",
+  "#ff4d4f",
+  "#ff7a45",
+  "#ffc53d",
+  "#ffe58f",
+  "#95de64",
+  "#52c41a",
+  "#13c2c2",
+  "#40a9ff",
+  "#2f54eb",
+  "#9254de",
+  "#f759ab",
+  "#a0522d",
 ];
 
 type Frame = string[];
@@ -74,9 +84,7 @@ async function imageFileToFrame(file: File): Promise<Frame> {
     for (let i = 0; i < CELLS; i++) {
       const [r, g, b, a] = [data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]];
       frame[i] =
-        a < 40
-          ? EMPTY
-          : `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+        a < 40 ? EMPTY : `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
     }
     return frame;
   } finally {
@@ -193,203 +201,211 @@ export function PixelIconEditor({
 
   return (
     <TooltipProvider delayDuration={200}>
-    <Card className={compact ? "border-none shadow-none" : undefined}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Brush className="size-4 text-primary" /> Pixel art icon creator
-        </CardTitle>
-        <CardDescription>
-          Paint a 16×16 icon, animate it across frames, then save it to your Yoto account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="flex flex-col gap-5 lg:flex-row">
-          {/* Canvas */}
-          <div
-            className="grid aspect-square w-full max-w-sm shrink-0 select-none overflow-hidden rounded-2xl border-2 border-border bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:16px_16px]"
-            style={{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }}
-            onPointerDown={() => (painting.current = true)}
-          >
-            {frame.map((c, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`pixel ${i}`}
-                className="border-[0.5px] border-border/25"
-                style={c ? { backgroundColor: c } : undefined}
-                onPointerDown={() => handleCell(i)}
-                onPointerEnter={() => painting.current && tool !== "picker" && paint(i)}
-              />
-            ))}
-          </div>
+      <Card className={compact ? "border-none shadow-none" : undefined}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Brush className="size-4 text-primary" /> Pixel art icon creator
+          </CardTitle>
+          <CardDescription>
+            Paint a 16×16 icon, animate it across frames, then save it to your Yoto account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="flex flex-col gap-5 lg:flex-row">
+            {/* Canvas */}
+            <div
+              className="grid aspect-square w-full max-w-sm shrink-0 select-none overflow-hidden rounded-2xl border-2 border-border bg-[repeating-conic-gradient(var(--muted)_0_25%,transparent_0_50%)] bg-[length:16px_16px]"
+              style={{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }}
+              onPointerDown={() => (painting.current = true)}
+            >
+              {frame.map((c, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`pixel ${i}`}
+                  className="border-[0.5px] border-border/25"
+                  style={c ? { backgroundColor: c } : undefined}
+                  onPointerDown={() => handleCell(i)}
+                  onPointerEnter={() => painting.current && tool !== "picker" && paint(i)}
+                />
+              ))}
+            </div>
 
-          <div className="flex-1 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {tools.map((t) => (
-                <Tooltip key={t.id}>
+            <div className="flex-1 space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {tools.map((t) => (
+                  <Tooltip key={t.id}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant={tool === t.id ? "default" : "outline"}
+                        onClick={() => setTool(t.id)}
+                      >
+                        <t.icon className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.label}</TooltipContent>
+                  </Tooltip>
+                ))}
+                <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       size="icon"
-                      variant={tool === t.id ? "default" : "outline"}
-                      onClick={() => setTool(t.id)}
+                      variant="outline"
+                      onClick={() =>
+                        setFrames((prev) => prev.map((f, i) => (i === active ? blankFrame() : f)))
+                      }
                     >
-                      <t.icon className="size-4" />
+                      <Square className="size-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t.label}</TooltipContent>
+                  <TooltipContent>Clear canvas</TooltipContent>
                 </Tooltip>
-              ))}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() =>
-                      setFrames((prev) => prev.map((f, i) => (i === active ? blankFrame() : f)))
-                    }
-                  >
-                    <Square className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Clear canvas</TooltipContent>
-              </Tooltip>
-              <input
-                ref={importRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => void handleImport(e.target.files)}
-              />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" variant="outline" onClick={() => importRef.current?.click()}>
-                    <ImageIcon className="size-4" /> Image → pixels
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Drop in any image to auto-convert to 16×16</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <div
-              className="rounded-2xl border-2 border-dashed border-border p-4 text-center text-xs text-muted-foreground"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                void handleImport(e.dataTransfer.files);
-              }}
-            >
-              Drag an image here to convert it into pixel art
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs">Palette</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {PALETTE.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    aria-label={c}
-                    onClick={() => {
-                      setColor(c);
-                      setTool("brush");
-                    }}
-                    className={`size-6 rounded-md border-2 transition hover:scale-110 ${
-                      color === c ? "border-primary" : "border-border/60"
-                    }`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
                 <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="size-6 cursor-pointer rounded-md border-2 border-border/60 bg-transparent p-0"
-                  aria-label="Custom color"
+                  ref={importRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void handleImport(e.target.files)}
                 />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" onClick={() => importRef.current?.click()}>
+                      <ImageIcon className="size-4" /> Image → pixels
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Drop in any image to auto-convert to 16×16</TooltipContent>
+                </Tooltip>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <img
-                src={preview}
-                alt="Icon preview"
-                className="pixel-icon size-16 rounded-xl border border-border bg-secondary/60"
-              />
-              <div className="flex-1 space-y-1.5">
-                <Label htmlFor="icon-name" className="text-xs">
-                  Icon name
-                </Label>
-                <Input
-                  id="icon-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-              <Button onClick={save} disabled={saving}>
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Frames timeline */}
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Animation frames</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant={playing ? "default" : "outline"}
-                onClick={() => setPlaying((p) => !p)}
-                disabled={frames.length < 2}
-              >
-                <Play className="size-4" /> {playing ? "Stop" : "Preview"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setFrames((prev) => [...prev, [...(prev[active] ?? blankFrame())]]);
-                  setActive(frames.length);
+              <div
+                className="rounded-2xl border-2 border-dashed border-border p-4 text-center text-xs text-muted-foreground"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void handleImport(e.dataTransfer.files);
                 }}
               >
-                <Plus className="size-4" /> Add frame
-              </Button>
+                Drag an image here to convert it into pixel art
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Palette</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      aria-label={c}
+                      onClick={() => {
+                        setColor(c);
+                        setTool("brush");
+                      }}
+                      className={`size-6 rounded-md border-2 transition hover:scale-110 ${
+                        color === c ? "border-primary" : "border-border/60"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="size-6 cursor-pointer rounded-md border-2 border-border/60 bg-transparent p-0"
+                    aria-label="Custom color"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <img
+                  src={preview}
+                  alt="Icon preview"
+                  className="pixel-icon size-16 rounded-xl border border-border bg-secondary/60"
+                />
+                <div className="flex-1 space-y-1.5">
+                  <Label htmlFor="icon-name" className="text-xs">
+                    Icon name
+                  </Label>
+                  <Input
+                    id="icon-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <Button onClick={save} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  Save
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {frames.map((f, i) => (
-              <div key={i} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setActive(i)}
-                  className={`flex size-14 items-center justify-center rounded-xl border-2 bg-secondary/60 ${
-                    i === active ? "border-primary" : "border-transparent"
-                  }`}
+
+          {/* Frames timeline */}
+          <div className="space-y-2 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Animation frames</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={playing ? "default" : "outline"}
+                  onClick={() => setPlaying((p) => !p)}
+                  disabled={frames.length < 2}
                 >
-                  <img src={frameToPngDataUrl(f, 4)} alt={`Frame ${i + 1}`} className="pixel-icon size-10" />
-                </button>
-                {frames.length > 1 && (
+                  <Play className="size-4" /> {playing ? "Stop" : "Preview"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setFrames((prev) => [...prev, [...(prev[active] ?? blankFrame())]]);
+                    setActive(frames.length);
+                  }}
+                >
+                  <Plus className="size-4" /> Add frame
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {frames.map((f, i) => (
+                <div key={i} className="relative">
                   <button
                     type="button"
-                    aria-label="Delete frame"
-                    className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
-                    onClick={() => {
-                      setFrames((prev) => prev.filter((_, x) => x !== i));
-                      setActive((a) => Math.max(0, a - (i <= a ? 1 : 0)));
-                    }}
+                    onClick={() => setActive(i)}
+                    className={`flex size-14 items-center justify-center rounded-xl border-2 bg-secondary/60 ${
+                      i === active ? "border-primary" : "border-transparent"
+                    }`}
                   >
-                    <Trash2 className="size-3" />
+                    <img
+                      src={frameToPngDataUrl(f, 4)}
+                      alt={`Frame ${i + 1}`}
+                      className="pixel-icon size-10"
+                    />
                   </button>
-                )}
-              </div>
-            ))}
+                  {frames.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label="Delete frame"
+                      className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                      onClick={() => {
+                        setFrames((prev) => prev.filter((_, x) => x !== i));
+                        setActive((a) => Math.max(0, a - (i <= a ? 1 : 0)));
+                      }}
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
     </TooltipProvider>
   );
 }

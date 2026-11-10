@@ -67,10 +67,7 @@ export async function yotoPut<T = unknown>(
  * `/card/resolve/{id}` returns real https mp3 urls; `/content/{id}` returns
  * `yoto:#<sha256>` placeholders that a browser cannot play.
  */
-export async function resolveCardRaw(
-  userId: string,
-  cardId: string,
-): Promise<Record<string, any>> {
+export async function resolveCardRaw(userId: string, cardId: string): Promise<Record<string, any>> {
   let resolved: Record<string, any> | null = null;
   try {
     resolved = await yotoGetJson<Record<string, any>>(userId, `/card/resolve/${cardId}`);

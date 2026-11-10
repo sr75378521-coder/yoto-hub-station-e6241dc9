@@ -5,7 +5,6 @@ import { deleteConnection, hasUsableConnection } from "@/lib/yoto/tokens.server"
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
-
 export interface PlayerSummary {
   deviceId: string;
   name: string;
@@ -138,10 +137,7 @@ export const getFamilyData = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<FamilyData> => {
     try {
       // Fetch family members
-      const familyResponse = await yotoGetJson<YotoFamilyResponse>(
-        context.userId,
-        "/family/users",
-      );
+      const familyResponse = await yotoGetJson<YotoFamilyResponse>(context.userId, "/family/users");
       const members: FamilyMember[] = (familyResponse.users ?? []).map((u) => ({
         userId: u.userId,
         firstName: u.firstName ?? "User",
@@ -287,7 +283,6 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
         playlists.push(mapCard(c, "family"));
       }
 
-
       // If both failed, surface the first error
       if (myoRes.status === "rejected" && familyRes.status === "rejected") {
         const err = myoRes.reason;
@@ -310,10 +305,6 @@ export const getPlaylistsData = createServerFn({ method: "GET" })
     }
   });
 
-
-
-
-
 export const getPlaylistDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => {
@@ -332,7 +323,6 @@ export const getPlaylistDetails = createServerFn({ method: "GET" })
       };
     }
   });
-
 
 // Settings Types
 export interface UserSettings {
@@ -396,11 +386,22 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
     async ({
       context,
       data,
-    }): Promise<{ title: string; artwork?: string; tracks: WebTrack[]; canDownload: boolean; error?: string }> => {
+    }): Promise<{
+      title: string;
+      artwork?: string;
+      tracks: WebTrack[];
+      canDownload: boolean;
+      error?: string;
+    }> => {
       let canDownload = false;
       try {
         const [roleRes, mineRes] = await Promise.allSettled([
-          context.supabase.from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle(),
+          context.supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", context.userId)
+            .eq("role", "admin")
+            .maybeSingle(),
           yotoGetJson<{ cards?: { cardId: string }[] }>(context.userId, "/content/mine"),
         ]);
         const isAdmin = roleRes.status === "fulfilled" && !!roleRes.value.data;
@@ -431,13 +432,16 @@ export const getPlaylistTracks = createServerFn({ method: "GET" })
               title: t?.title ?? ch?.title ?? `Track ${tracks.length + 1}`,
               duration: typeof t?.duration === "number" ? t.duration : undefined,
               url,
-              artwork:
-                ch?.display?.icon16x16 ?? t?.display?.icon16x16 ?? cover ?? undefined,
+              artwork: ch?.display?.icon16x16 ?? t?.display?.icon16x16 ?? cover ?? undefined,
             });
           });
         });
-        return { title: meta?.title ?? card?.title ?? "Playlist", artwork: cover, tracks, canDownload };
-
+        return {
+          title: meta?.title ?? card?.title ?? "Playlist",
+          artwork: cover,
+          tracks,
+          canDownload,
+        };
       } catch (e) {
         return {
           title: "Playlist",
@@ -554,7 +558,10 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: usersRes } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const users = usersRes?.users ?? [];
-    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
     const { data: conns } = await supabaseAdmin.from("yoto_connections").select("user_id");
     const now = Date.now();
     return {
@@ -605,7 +612,7 @@ export const listAdminUsers = createServerFn({ method: "GET" })
         last_sign_in_at: u.last_sign_in_at ?? null,
         banned: Boolean(
           (u as { banned_until?: string | null }).banned_until &&
-            new Date((u as { banned_until?: string | null }).banned_until as string) > new Date(),
+          new Date((u as { banned_until?: string | null }).banned_until as string) > new Date(),
         ),
       })),
     };
@@ -613,7 +620,11 @@ export const listAdminUsers = createServerFn({ method: "GET" })
 
 export const grantAdminByEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string }) => ({ email: String(d.email ?? "").trim().toLowerCase() }))
+  .inputValidator((d: { email: string }) => ({
+    email: String(d.email ?? "")
+      .trim()
+      .toLowerCase(),
+  }))
   .handler(async ({ context, data }): Promise<{ success: boolean; error?: string }> => {
     await assertAdmin(context);
     if (!data.email) return { success: false, error: "Enter an email address" };
@@ -681,17 +692,19 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
 export const adminSendPasswordReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { email: string }) => ({ email: String(d.email ?? "").trim() }))
-  .handler(async ({ context, data }): Promise<{ success: boolean; link?: string; error?: string }> => {
-    await assertAdmin(context);
-    if (!data.email) return { success: false, error: "That person has no email address" };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: data.email,
-    });
-    if (error) return { success: false, error: error.message };
-    return { success: true, link: link?.properties?.action_link ?? undefined };
-  });
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; link?: string; error?: string }> => {
+      await assertAdmin(context);
+      if (!data.email) return { success: false, error: "That person has no email address" };
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email: data.email,
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true, link: link?.properties?.action_link ?? undefined };
+    },
+  );
 
 export const adminDisconnectAllYoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

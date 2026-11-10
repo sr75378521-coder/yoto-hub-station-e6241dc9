@@ -1,4 +1,13 @@
-import { Pause, Play, Trash2, UploadCloud, Repeat, Volume2, Settings2, ChevronDown } from "lucide-react";
+import {
+  Pause,
+  Play,
+  Trash2,
+  UploadCloud,
+  Repeat,
+  Volume2,
+  Settings2,
+  ChevronDown,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -6,14 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import {
-  ACTIONS,
-  uploadCheckpointAudio,
-  type Checkpoint,
-} from "@/hooks/useStudioProject";
+import { ACTIONS, uploadCheckpointAudio, type Checkpoint } from "@/hooks/useStudioProject";
 
 const ICONS = ["🎧", "🧙", "🦸", "🐉", "🧝", "🧚", "🚀", "🐺", "🦉", "🗺️", "⚔️", "🔮"];
 
@@ -43,7 +54,19 @@ type Props = {
   onSeek: (percent: number) => void;
 };
 
-export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDragStart, onPlay, isActive, isPlaying, runtimePosition, runtimeDuration, onSeek }: Props) {
+export function CheckpointCard({
+  checkpoint,
+  siblings,
+  onPatch,
+  onDelete,
+  onDragStart,
+  onPlay,
+  isActive,
+  isPlaying,
+  runtimePosition,
+  runtimeDuration,
+  onSeek,
+}: Props) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -103,7 +126,11 @@ export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDrag
           className="size-14 shrink-0 rounded-full"
           aria-label={isActive && isPlaying ? "Pause" : "Play"}
         >
-          {isActive && isPlaying ? <Pause className="size-6" /> : <Play className="ml-0.5 size-6" />}
+          {isActive && isPlaying ? (
+            <Pause className="size-6" />
+          ) : (
+            <Play className="ml-0.5 size-6" />
+          )}
         </Button>
 
         <Input
@@ -140,21 +167,30 @@ export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDrag
       </div>
 
       <div className="mt-5 flex items-center gap-3">
-        <span className="text-sm tabular-nums text-muted-foreground">{formatTime(isActive ? runtimePosition : 0)}</span>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {formatTime(isActive ? runtimePosition : 0)}
+        </span>
         <Slider
           value={[isActive && runtimeDuration ? (runtimePosition / runtimeDuration) * 100 : 0]}
           onValueChange={([value]) => isActive && onSeek(value ?? 0)}
           className="flex-1"
         />
-        <span className="text-sm tabular-nums text-muted-foreground">{formatTime(isActive ? runtimeDuration : checkpoint.audio_duration ?? 0)}</span>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {formatTime(isActive ? runtimeDuration : (checkpoint.audio_duration ?? 0))}
+        </span>
       </div>
 
       <div className="mt-5 flex items-end justify-center gap-11">
         <div className="flex flex-col items-center gap-2">
           <Label className="text-sm font-semibold">Left</Label>
           <Select value={checkpoint.left_action} onValueChange={(v) => onPatch({ left_action: v })}>
-            <SelectTrigger className="size-14 rounded-full border-primary bg-primary px-0 text-[0] text-primary-foreground [&>svg]:hidden" title={ACTIONS.find((a) => a.value === checkpoint.left_action)?.label}>
-              <span className="sr-only"><SelectValue /></span>
+            <SelectTrigger
+              className="size-14 rounded-full border-primary bg-primary px-0 text-[0] text-primary-foreground [&>svg]:hidden"
+              title={ACTIONS.find((a) => a.value === checkpoint.left_action)?.label}
+            >
+              <span className="sr-only">
+                <SelectValue />
+              </span>
               <ChevronDown className="size-5" />
             </SelectTrigger>
             <SelectContent>
@@ -186,9 +222,17 @@ export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDrag
 
         <div className="flex flex-col items-center gap-2">
           <Label className="text-sm font-semibold">Right</Label>
-          <Select value={checkpoint.right_action} onValueChange={(v) => onPatch({ right_action: v })}>
-            <SelectTrigger className="size-14 rounded-full border-primary bg-primary px-0 text-[0] text-primary-foreground [&>svg]:hidden" title={ACTIONS.find((a) => a.value === checkpoint.right_action)?.label}>
-              <span className="sr-only"><SelectValue /></span>
+          <Select
+            value={checkpoint.right_action}
+            onValueChange={(v) => onPatch({ right_action: v })}
+          >
+            <SelectTrigger
+              className="size-14 rounded-full border-primary bg-primary px-0 text-[0] text-primary-foreground [&>svg]:hidden"
+              title={ACTIONS.find((a) => a.value === checkpoint.right_action)?.label}
+            >
+              <span className="sr-only">
+                <SelectValue />
+              </span>
               <ChevronDown className="size-5" />
             </SelectTrigger>
             <SelectContent>
@@ -242,17 +286,31 @@ export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDrag
           <PopoverContent align="end" className="w-72 space-y-4">
             <div className="space-y-1.5">
               <Label>Checkpoint name</Label>
-              <Input value={checkpoint.title} onChange={(e) => onPatch({ title: e.target.value })} />
+              <Input
+                value={checkpoint.title}
+                onChange={(e) => onPatch({ title: e.target.value })}
+              />
             </div>
             <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2"><Repeat className="size-4" /> Loop audio</Label>
-              <Switch checked={checkpoint.loop_audio} onCheckedChange={(loop_audio) => {
-                onPatch({ loop_audio });
-              }} />
+              <Label className="flex items-center gap-2">
+                <Repeat className="size-4" /> Loop audio
+              </Label>
+              <Switch
+                checked={checkpoint.loop_audio}
+                onCheckedChange={(loop_audio) => {
+                  onPatch({ loop_audio });
+                }}
+              />
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Volume2 className="size-4" /> Volume {checkpoint.volume}%</Label>
-              <Slider value={[checkpoint.volume]} max={100} onValueCommit={([value]) => onPatch({ volume: value ?? 100 })} />
+              <Label className="flex items-center gap-2">
+                <Volume2 className="size-4" /> Volume {checkpoint.volume}%
+              </Label>
+              <Slider
+                value={[checkpoint.volume]}
+                max={100}
+                onValueCommit={([value]) => onPatch({ volume: value ?? 100 })}
+              />
             </div>
           </PopoverContent>
         </Popover>
@@ -265,10 +323,10 @@ export function CheckpointCard({ checkpoint, siblings, onPatch, onDelete, onDrag
         >
           <Trash2 className="size-4" />
         </Button>
-       </div>
-       <span className="absolute -bottom-2 left-[35%] size-4 rounded-full border-2 border-primary bg-primary" />
-       <span className="absolute -bottom-2 left-[57%] size-4 rounded-full border-2 border-primary bg-primary" />
-       <span className="absolute -bottom-2 left-[79%] size-4 rounded-full border-2 border-primary bg-primary" />
+      </div>
+      <span className="absolute -bottom-2 left-[35%] size-4 rounded-full border-2 border-primary bg-primary" />
+      <span className="absolute -bottom-2 left-[57%] size-4 rounded-full border-2 border-primary bg-primary" />
+      <span className="absolute -bottom-2 left-[79%] size-4 rounded-full border-2 border-primary bg-primary" />
     </div>
   );
 }

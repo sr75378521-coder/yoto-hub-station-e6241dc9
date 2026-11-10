@@ -9,9 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { awardMembership, listMembershipGrants } from '@/lib/ai-yoto/grants.functions';
-import { PLANS, type PlanId } from '@/lib/ai-yoto/plans';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { awardMembership, listMembershipGrants } from "@/lib/ai-yoto/grants.functions";
+import { PLANS, type PlanId } from "@/lib/ai-yoto/plans";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   checkIsAdmin,
   getAdminStats,
@@ -71,9 +77,9 @@ function AdminPage() {
   const fetchHealth = useServerFn(getAdminHealth);
   const award = useServerFn(awardMembership);
   const listGrants = useServerFn(listMembershipGrants);
-  const [awardUser, setAwardUser] = useState('');
-  const [awardPlan, setAwardPlan] = useState<Exclude<PlanId, 'free'>>('pro_max');
-  const [awardMonths, setAwardMonths] = useState('0');
+  const [awardUser, setAwardUser] = useState("");
+  const [awardPlan, setAwardPlan] = useState<Exclude<PlanId, "free">>("pro_max");
+  const [awardMonths, setAwardMonths] = useState("0");
 
   const [query, setQuery] = useState("");
   const [email, setEmail] = useState("");
@@ -84,11 +90,21 @@ function AdminPage() {
     queryFn: () => checkAdmin(),
   });
   const enabled = !!adminStatus?.isAdmin;
-  const grants = useQuery({ queryKey: ['admin-membership-grants'], queryFn: () => listGrants(), enabled });
+  const grants = useQuery({
+    queryKey: ["admin-membership-grants"],
+    queryFn: () => listGrants(),
+    enabled,
+  });
   const awardMutation = useMutation({
-    mutationFn: (v: { userId: string; plan: Exclude<PlanId, 'free'> | null; months: number }) => award({ data: v }),
-    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['admin-membership-grants'] }); void queryClient.invalidateQueries({ queryKey: ['membership'] }); toast.success('Complimentary membership updated'); },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : 'Could not update membership'),
+    mutationFn: (v: { userId: string; plan: Exclude<PlanId, "free"> | null; months: number }) =>
+      award({ data: v }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-membership-grants"] });
+      void queryClient.invalidateQueries({ queryKey: ["membership"] });
+      toast.success("Complimentary membership updated");
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Could not update membership"),
   });
 
   const { data: stats } = useQuery({
@@ -234,13 +250,100 @@ function AdminPage() {
         <section className="space-y-4 border-b pb-6">
           <h2 className="text-lg font-semibold">Complimentary memberships</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Select value={awardUser} onValueChange={setAwardUser}><SelectTrigger aria-label="Award to account"><SelectValue placeholder="Choose account" /></SelectTrigger><SelectContent>{usersData?.users.map(u => <SelectItem key={u.id} value={u.id}>{u.email ?? 'Unknown account'}</SelectItem>)}</SelectContent></Select>
-            <Select value={awardPlan} onValueChange={v => { if (v === 'basic' || v === 'pro' || v === 'pro_max') setAwardPlan(v); }}><SelectTrigger aria-label="Award plan"><SelectValue /></SelectTrigger><SelectContent>{(['basic', 'pro', 'pro_max'] as const).map(id => <SelectItem key={id} value={id}>{PLANS[id].name}</SelectItem>)}</SelectContent></Select>
-            <Select value={awardMonths} onValueChange={setAwardMonths}><SelectTrigger aria-label="Award duration"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">No expiration</SelectItem><SelectItem value="1">1 month</SelectItem><SelectItem value="3">3 months</SelectItem><SelectItem value="12">12 months</SelectItem></SelectContent></Select>
+            <Select value={awardUser} onValueChange={setAwardUser}>
+              <SelectTrigger aria-label="Award to account">
+                <SelectValue placeholder="Choose account" />
+              </SelectTrigger>
+              <SelectContent>
+                {usersData?.users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.email ?? "Unknown account"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={awardPlan}
+              onValueChange={(v) => {
+                if (v === "basic" || v === "pro" || v === "pro_max") setAwardPlan(v);
+              }}
+            >
+              <SelectTrigger aria-label="Award plan">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(["basic", "pro", "pro_max"] as const).map((id) => (
+                  <SelectItem key={id} value={id}>
+                    {PLANS[id].name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={awardMonths} onValueChange={setAwardMonths}>
+              <SelectTrigger aria-label="Award duration">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">No expiration</SelectItem>
+                <SelectItem value="1">1 month</SelectItem>
+                <SelectItem value="3">3 months</SelectItem>
+                <SelectItem value="12">12 months</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button disabled={!awardUser || awardMutation.isPending} onClick={() => awardMutation.mutate({ userId: awardUser, plan: awardPlan, months: Number(awardMonths) })}><UserPlus className="size-4" />Award free membership</Button>
-          {grants.error && <p role="alert" className="text-sm text-destructive">{grants.error.message}</p>}
-          <div className="divide-y">{grants.data?.map(g => <div key={g.user_id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="font-medium">{usersData?.users.find(u => u.id === g.user_id)?.email ?? 'Account'}</p><p className="text-sm text-muted-foreground">{PLANS[g.plan as PlanId]?.name} · {g.expires_at ? `Ends ${new Date(g.expires_at).toLocaleDateString()}` : 'No expiration'}</p></div><Button variant="outline" size="sm" disabled={awardMutation.isPending} onClick={() => { if (confirm('Remove this complimentary membership? Existing paid subscriptions will remain unchanged.')) awardMutation.mutate({ userId: g.user_id, plan: null, months: 0 }); }}>Revoke award</Button></div>)}</div>
+          <Button
+            disabled={!awardUser || awardMutation.isPending}
+            onClick={() =>
+              awardMutation.mutate({
+                userId: awardUser,
+                plan: awardPlan,
+                months: Number(awardMonths),
+              })
+            }
+          >
+            <UserPlus className="size-4" />
+            Award free membership
+          </Button>
+          {grants.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {grants.error.message}
+            </p>
+          )}
+          <div className="divide-y">
+            {grants.data?.map((g) => (
+              <div
+                key={g.user_id}
+                className="flex flex-wrap items-center justify-between gap-3 py-3"
+              >
+                <div>
+                  <p className="font-medium">
+                    {usersData?.users.find((u) => u.id === g.user_id)?.email ?? "Account"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {PLANS[g.plan as PlanId]?.name} ·{" "}
+                    {g.expires_at
+                      ? `Ends ${new Date(g.expires_at).toLocaleDateString()}`
+                      : "No expiration"}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={awardMutation.isPending}
+                  onClick={() => {
+                    if (
+                      confirm(
+                        "Remove this complimentary membership? Existing paid subscriptions will remain unchanged.",
+                      )
+                    )
+                      awardMutation.mutate({ userId: g.user_id, plan: null, months: 0 });
+                  }}
+                >
+                  Revoke award
+                </Button>
+              </div>
+            ))}
+          </div>
         </section>
         <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
           <Stat label="Users" value={stats?.totalUsers} />

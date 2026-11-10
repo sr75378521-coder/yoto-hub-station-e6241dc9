@@ -57,9 +57,7 @@ function PlaylistsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [source, setSource] = useState<"all" | "myo" | "family">("all");
 
-  const bySource = data.playlists.filter((p) =>
-    source === "all" ? true : p.source === source,
-  );
+  const bySource = data.playlists.filter((p) => (source === "all" ? true : p.source === source));
   const filteredPlaylists = bySource.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -106,11 +104,13 @@ function PlaylistsPage() {
               {data.playlists.length > 0 && (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <div className="inline-flex items-center rounded-lg border border-border/70 bg-card/50 p-1">
-                    {([
-                      ["all", `All (${data.playlists.length})`],
-                      ["myo", `Personal (${myoCount})`],
-                      ["family", `Family (${familyCount})`],
-                    ] as const).map(([key, text], i) => (
+                    {(
+                      [
+                        ["all", `All (${data.playlists.length})`],
+                        ["myo", `Personal (${myoCount})`],
+                        ["family", `Family (${familyCount})`],
+                      ] as const
+                    ).map(([key, text], i) => (
                       <div key={key} className="flex items-center">
                         {i > 0 && <div className="mx-1 h-4 w-px bg-border" />}
                         <button
@@ -316,7 +316,11 @@ function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
       setName("");
       setIsOpen(false);
       onCreated();
-      navigate({ to: "/playlists/$playlistId", params: { playlistId: res.cardId }, search: { mode: "edit" } });
+      navigate({
+        to: "/playlists/$playlistId",
+        params: { playlistId: res.cardId },
+        search: { mode: "edit" },
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create playlist");
     } finally {
@@ -335,7 +339,9 @@ function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Playlist</DialogTitle>
-          <DialogDescription>Create a new MYO playlist to customize your Yoto content.</DialogDescription>
+          <DialogDescription>
+            Create a new MYO playlist to customize your Yoto content.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -355,7 +361,9 @@ function CreatePlaylistDialog({ onCreated }: { onCreated: () => void }) {
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={busy}>{busy ? "Creating..." : "Create"}</Button>
+            <Button onClick={handleCreate} disabled={busy}>
+              {busy ? "Creating..." : "Create"}
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -379,7 +387,10 @@ export function PlaylistsSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-border/50 bg-card p-0 shadow-xs">
+        <div
+          key={i}
+          className="overflow-hidden rounded-2xl border border-border/50 bg-card p-0 shadow-xs"
+        >
           <Skeleton className="aspect-square w-full rounded-none" />
           <div className="p-4 space-y-3">
             <Skeleton className="h-5 w-3/4 rounded-md" />

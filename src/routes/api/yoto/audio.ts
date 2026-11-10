@@ -16,7 +16,6 @@ export const Route = createFileRoute("/api/yoto/audio")({
         const downloadName = params.get("dl");
         if (!target) return new Response("missing u", { status: 400 });
 
-
         let upstream: URL;
         try {
           upstream = new URL(target);
@@ -56,7 +55,6 @@ export const Route = createFileRoute("/api/yoto/audio")({
           const safe = downloadName.replace(/[^\w.\- ]+/g, "_").slice(0, 120) || "track";
           out.set("content-disposition", `attachment; filename="${safe}"`);
         }
-
 
         return new Response(res.body, { status: res.status, headers: out });
       },

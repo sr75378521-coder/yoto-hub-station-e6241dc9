@@ -147,7 +147,7 @@ function CommunityPage() {
       toast.success(
         isAdmin
           ? "Post published!"
-          : "Your post was submitted and is pending review by a moderator!"
+          : "Your post was submitted and is pending review by a moderator!",
       );
     },
     onError: (err: any) => {
@@ -204,8 +204,7 @@ function CommunityPage() {
     setDialogOpen(true);
   };
 
-  const currentDisplayName =
-    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const currentDisplayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const currentAvatar = user?.user_metadata?.avatar_url || "";
 
   return (
@@ -424,9 +423,7 @@ function CommunityPage() {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>
-                {editingPost ? "Edit Post" : "Create Community Discussion"}
-              </DialogTitle>
+              <DialogTitle>{editingPost ? "Edit Post" : "Create Community Discussion"}</DialogTitle>
               <DialogDescription>
                 {isAdmin
                   ? "As an admin, your post will publish immediately."
@@ -496,22 +493,12 @@ function CommunityPage() {
               )}
 
               <div className="flex justify-end gap-2 pt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={saveMutation.isPending} className="gap-2">
-                  {saveMutation.isPending && (
-                    <Loader2 className="size-4 animate-spin" />
-                  )}
-                  {editingPost
-                    ? "Update Post"
-                    : isAdmin
-                    ? "Publish Post"
-                    : "Submit for Review"}
+                  {saveMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+                  {editingPost ? "Update Post" : isAdmin ? "Publish Post" : "Submit for Review"}
                 </Button>
               </div>
             </form>
@@ -578,17 +565,11 @@ function CommunityPage() {
               )}
 
               <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setProfileOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setProfileOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={profileMutation.isPending}>
-                  {profileMutation.isPending && (
-                    <Loader2 className="size-4 animate-spin mr-1.5" />
-                  )}
+                  {profileMutation.isPending && <Loader2 className="size-4 animate-spin mr-1.5" />}
                   Save Profile
                 </Button>
               </div>
@@ -694,16 +675,12 @@ function CommentsThread({
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="font-semibold text-foreground">
-                      {c.author_name}
-                    </span>
+                    <span className="font-semibold text-foreground">{c.author_name}</span>
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(c.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="mt-1 text-muted-foreground whitespace-pre-wrap">
-                    {c.body}
-                  </p>
+                  <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{c.body}</p>
                 </div>
                 {(isAdmin || isOwner) && (
                   <Button

@@ -111,10 +111,9 @@ function isUndecryptable(e: unknown): boolean {
  * surface falls back to the normal "Connect your Yoto account" flow.
  * Returns the row when usable, null when gone or self-healed.
  */
-async function loadUsableConnection<T extends { access_token_ciphertext: string; refresh_token_ciphertext: string }>(
-  userId: string,
-  row: T | null,
-): Promise<T | null> {
+async function loadUsableConnection<
+  T extends { access_token_ciphertext: string; refresh_token_ciphertext: string },
+>(userId: string, row: T | null): Promise<T | null> {
   if (!row) return null;
   try {
     decryptToken(row.access_token_ciphertext);

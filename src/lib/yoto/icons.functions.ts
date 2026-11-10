@@ -6,13 +6,19 @@ export type { YotoIcon };
 
 export const listIcons = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ success: boolean; icons: YotoIcon[]; error?: string }> => {
-    try {
-      return { success: true, icons: await listIconsRaw(context.userId) };
-    } catch (e) {
-      return { success: false, icons: [], error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+  .handler(
+    async ({ context }): Promise<{ success: boolean; icons: YotoIcon[]; error?: string }> => {
+      try {
+        return { success: true, icons: await listIconsRaw(context.userId) };
+      } catch (e) {
+        return {
+          success: false,
+          icons: [],
+          error: e instanceof Error ? e.message : "Unknown error",
+        };
+      }
+    },
+  );
 
 export const uploadIcon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -22,16 +28,18 @@ export const uploadIcon = createServerFn({ method: "POST" })
     if (!(file instanceof File)) throw new Error("file required");
     return { file };
   })
-  .handler(async ({ context, data }): Promise<{ success: boolean; icon?: YotoIcon; error?: string }> => {
-    try {
-      const bytes = await data.file.arrayBuffer();
-      const icon = await uploadIconRaw(context.userId, {
-        name: data.file.name,
-        type: data.file.type,
-        bytes,
-      });
-      return { success: true, icon };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
-    }
-  });
+  .handler(
+    async ({ context, data }): Promise<{ success: boolean; icon?: YotoIcon; error?: string }> => {
+      try {
+        const bytes = await data.file.arrayBuffer();
+        const icon = await uploadIconRaw(context.userId, {
+          name: data.file.name,
+          type: data.file.type,
+          bytes,
+        });
+        return { success: true, icon };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+      }
+    },
+  );

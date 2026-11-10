@@ -30,12 +30,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { uploadTrack } from "@/lib/yoto/myo.functions";
 import { PlaylistBackupTool, AudioInspectorTool } from "@/components/app/ExtraTools";
 
@@ -68,8 +63,8 @@ function ToolsPage() {
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Creator tools</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Preview audio the way it sounds on a Yoto, design pixel icons, and prep files for
-              your MYO cards.
+              Preview audio the way it sounds on a Yoto, design pixel icons, and prep files for your
+              MYO cards.
             </p>
           </div>
           <div className="grid gap-6 xl:grid-cols-2">
@@ -93,8 +88,7 @@ interface QueueItem {
   url: string;
 }
 
-const fmt = (s: number) =>
-  `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 function AudioPlayerTool() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -128,7 +122,8 @@ function AudioPlayerTool() {
     if (!current) return;
     const id = setInterval(() => {
       const el = audioRef.current;
-      if (el && !el.paused) localStorage.setItem(`tools-bookmark:${current.name}`, String(el.currentTime));
+      if (el && !el.paused)
+        localStorage.setItem(`tools-bookmark:${current.name}`, String(el.currentTime));
     }, 3000);
     return () => clearInterval(id);
   }, [current]);
@@ -144,8 +139,7 @@ function AudioPlayerTool() {
   const ensureGraph = () => {
     const el = audioRef.current;
     if (!el || ctxRef.current) return ctxRef.current;
-    const Ctor: typeof AudioContext =
-      window.AudioContext ?? (window as any).webkitAudioContext;
+    const Ctor: typeof AudioContext = window.AudioContext ?? (window as any).webkitAudioContext;
     if (!Ctor) return null;
     const ctx = new Ctor();
     const src = ctx.createMediaElementSource(el);
@@ -202,7 +196,9 @@ function AudioPlayerTool() {
         <CardTitle className="flex items-center gap-2 text-base">
           <AudioLines className="size-4 text-primary" /> Advanced web audio player
         </CardTitle>
-        <CardDescription>Queue tracks, scrub, change speed, and hear a Yoto preview.</CardDescription>
+        <CardDescription>
+          Queue tracks, scrub, change speed, and hear a Yoto preview.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
@@ -360,7 +356,9 @@ function AudioFileManager() {
 
   const add = async (list: FileList | null) => {
     if (!list?.length) return;
-    const incoming = Array.from(list).filter((f) => /audio\/|\.(mp3|wav|m4a|flac)$/i.test(f.type + f.name));
+    const incoming = Array.from(list).filter((f) =>
+      /audio\/|\.(mp3|wav|m4a|flac)$/i.test(f.type + f.name),
+    );
     for (const file of incoming) {
       const { peaks, duration } = await analyse(file);
       setFiles((prev) => [
@@ -472,7 +470,10 @@ function AudioFileManager() {
             <div key={f.id} className="rounded-2xl border border-border/70 p-3">
               <div className="flex items-center gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">{f.file.name}</p>
-                <Badge variant={f.status === "error" ? "destructive" : "secondary"} className="text-[10px]">
+                <Badge
+                  variant={f.status === "error" ? "destructive" : "secondary"}
+                  className="text-[10px]"
+                >
                   {f.status}
                 </Badge>
                 <Button
@@ -506,7 +507,9 @@ function AudioFileManager() {
                   step={0.1}
                   onValueChange={([s, e]) =>
                     setFiles((prev) =>
-                      prev.map((x) => (x.id === f.id ? { ...x, start: s ?? 0, end: e ?? x.end } : x)),
+                      prev.map((x) =>
+                        x.id === f.id ? { ...x, start: s ?? 0, end: e ?? x.end } : x,
+                      ),
                     )
                   }
                 />

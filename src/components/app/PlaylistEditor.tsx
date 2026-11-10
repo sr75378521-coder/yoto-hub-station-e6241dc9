@@ -96,7 +96,10 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     }
     toast.info(`Zipping ${list.length} track${list.length === 1 ? "" : "s"}…`);
     try {
-      await downloadTracksAsZip(title || "playlist", list.map((t) => ({ url: t.url!, title: t.title })));
+      await downloadTracksAsZip(
+        title || "playlist",
+        list.map((t) => ({ url: t.url!, title: t.title })),
+      );
       toast.success("ZIP downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "ZIP download failed");
@@ -124,8 +127,6 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     }
   };
 
-
-
   const mutate = (next: EditableChapter[]) => {
     setChapters(next);
     setDirty(true);
@@ -142,7 +143,6 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     toast.success("Icon applied to every track");
   };
 
-
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= chapters.length) return;
@@ -157,7 +157,11 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     mutate(
       chapters.map((ch, x) =>
         x === i
-          ? { ...ch, title: value, tracks: ch.tracks.map((t, ti) => (ti === 0 ? { ...t, title: value } : t)) }
+          ? {
+              ...ch,
+              title: value,
+              tracks: ch.tracks.map((t, ti) => (ti === 0 ? { ...t, title: value } : t)),
+            }
           : ch,
       ),
     );
@@ -205,7 +209,9 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
     if (fileRef.current) fileRef.current.value = "";
     if (added.length) {
       mutate([...chapters, ...added]);
-      toast.success(`Added ${added.length} track${added.length === 1 ? "" : "s"} — remember to save`);
+      toast.success(
+        `Added ${added.length} track${added.length === 1 ? "" : "s"} — remember to save`,
+      );
     }
   };
 
@@ -346,7 +352,6 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
           </div>
         </div>
 
-
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">
@@ -404,127 +409,140 @@ export function PlaylistEditor({ card }: { card: EditableCard }) {
             </p>
           )}
 
-
           <div className="space-y-2">
             {chapters.map((ch, ci) => {
               const chUrl = urlByTitle.get(ch.tracks[0]?.title ?? "") ?? urlByTitle.get(ch.title);
               return (
-              <div key={`${ch.key}-${ci}`} className="rounded-2xl border border-border/70 p-3">
-                <div className="flex flex-wrap items-center gap-2">
+                <div key={`${ch.key}-${ci}`} className="rounded-2xl border border-border/70 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="w-6 text-xs tabular-nums text-muted-foreground">
+                      {ci + 1}.
+                    </span>
+                    <IconPicker
+                      value={ch.icon}
+                      onChange={(ref) =>
+                        mutate(
+                          chapters.map((c, x) =>
+                            x === ci
+                              ? {
+                                  ...c,
+                                  icon: ref,
+                                  tracks: c.tracks.map((t, ti) =>
+                                    ti === 0 ? { ...t, icon: ref } : t,
+                                  ),
+                                }
+                              : c,
+                          ),
+                        )
+                      }
+                      onApplyAll={applyIconToAll}
+                    />
 
-                  <span className="w-6 text-xs tabular-nums text-muted-foreground">{ci + 1}.</span>
-                  <IconPicker
-                    value={ch.icon}
-                    onChange={(ref) =>
-                      mutate(
-                        chapters.map((c, x) =>
-                          x === ci
-                            ? {
-                                ...c,
-                                icon: ref,
-                                tracks: c.tracks.map((t, ti) =>
-                                  ti === 0 ? { ...t, icon: ref } : t,
-                                ),
-                              }
-                            : c,
-                        ),
-                      )
-                    }
-                    onApplyAll={applyIconToAll}
-                  />
-
-                  <Input
-                    value={ch.title}
-                    onChange={(e) => renameChapter(ci, e.target.value)}
-                    className="h-9 flex-1"
-                  />
-                  <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
-                    {fmtDur(ch.tracks[0]?.duration)}
-                  </span>
-                  {chUrl && (
-                    <Button size="icon" variant="ghost" className="size-8" asChild>
-                      <a href={downloadHref(chUrl, ch.title)} download title="Download audio">
-                        <Download className="size-4" />
-                      </a>
+                    <Input
+                      value={ch.title}
+                      onChange={(e) => renameChapter(ci, e.target.value)}
+                      className="h-9 flex-1"
+                    />
+                    <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+                      {fmtDur(ch.tracks[0]?.duration)}
+                    </span>
+                    {chUrl && (
+                      <Button size="icon" variant="ghost" className="size-8" asChild>
+                        <a href={downloadHref(chUrl, ch.title)} download title="Download audio">
+                          <Download className="size-4" />
+                        </a>
+                      </Button>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8"
+                      onClick={() => move(ci, -1)}
+                      disabled={ci === 0}
+                    >
+                      <ChevronUp className="size-4" />
                     </Button>
-                  )}
-                  <Button size="icon" variant="ghost" className="size-8" onClick={() => move(ci, -1)} disabled={ci === 0}>
-                    <ChevronUp className="size-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-8"
-                    onClick={() => move(ci, 1)}
-                    disabled={ci === chapters.length - 1}
-                  >
-                    <ChevronDown className="size-4" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="size-8" onClick={() => removeChapter(ci)}>
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-
-                {/* Only list tracks separately when a chapter holds more than
-                    one — otherwise the single track duplicates the row above. */}
-                {ch.tracks.length > 1 && (
-                  <div className="mt-2 space-y-1 pl-8">
-                    {ch.tracks.map((t, ti) => {
-                      const tUrl = urlByTitle.get(t.title);
-                      return (
-                      <div key={`${t.key}-${ti}`} className="flex items-center gap-2">
-                        <IconPicker
-                          value={t.icon}
-                          onChange={(ref) =>
-                            mutate(
-                              chapters.map((c, x) =>
-                                x === ci
-                                  ? {
-                                      ...c,
-                                      tracks: c.tracks.map((tt, y) =>
-                                        y === ti ? { ...tt, icon: ref } : tt,
-                                      ),
-                                    }
-                                  : c,
-                              ),
-                            )
-                          }
-                          onApplyAll={applyIconToAll}
-                        />
-
-                        <Input
-                          value={t.title}
-                          onChange={(e) => renameTrack(ci, ti, e.target.value)}
-                          className="h-8 flex-1 text-xs"
-                        />
-                        <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
-                          {fmtDur(t.duration)}
-                        </span>
-                        {tUrl && (
-                          <Button size="icon" variant="ghost" className="size-7" asChild>
-                            <a href={downloadHref(tUrl, t.title)} download title="Download audio">
-                              <Download className="size-3.5" />
-                            </a>
-                          </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7"
-                          onClick={() => removeTrack(ci, ti)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                      );
-                    })}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8"
+                      onClick={() => move(ci, 1)}
+                      disabled={ci === chapters.length - 1}
+                    >
+                      <ChevronDown className="size-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8"
+                      onClick={() => removeChapter(ci)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
-                )}
 
-              </div>
+                  {/* Only list tracks separately when a chapter holds more than
+                    one — otherwise the single track duplicates the row above. */}
+                  {ch.tracks.length > 1 && (
+                    <div className="mt-2 space-y-1 pl-8">
+                      {ch.tracks.map((t, ti) => {
+                        const tUrl = urlByTitle.get(t.title);
+                        return (
+                          <div key={`${t.key}-${ti}`} className="flex items-center gap-2">
+                            <IconPicker
+                              value={t.icon}
+                              onChange={(ref) =>
+                                mutate(
+                                  chapters.map((c, x) =>
+                                    x === ci
+                                      ? {
+                                          ...c,
+                                          tracks: c.tracks.map((tt, y) =>
+                                            y === ti ? { ...tt, icon: ref } : tt,
+                                          ),
+                                        }
+                                      : c,
+                                  ),
+                                )
+                              }
+                              onApplyAll={applyIconToAll}
+                            />
+
+                            <Input
+                              value={t.title}
+                              onChange={(e) => renameTrack(ci, ti, e.target.value)}
+                              className="h-8 flex-1 text-xs"
+                            />
+                            <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+                              {fmtDur(t.duration)}
+                            </span>
+                            {tUrl && (
+                              <Button size="icon" variant="ghost" className="size-7" asChild>
+                                <a
+                                  href={downloadHref(tUrl, t.title)}
+                                  download
+                                  title="Download audio"
+                                >
+                                  <Download className="size-3.5" />
+                                </a>
+                              </Button>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-7"
+                              onClick={() => removeTrack(ci, ti)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
-
           </div>
 
           {dirty && (

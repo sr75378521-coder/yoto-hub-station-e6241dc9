@@ -11,9 +11,15 @@ export const Route = createFileRoute("/_authenticated/feedback")({
   head: () => ({
     meta: [
       { title: "Feedback — Yoto Control Center" },
-      { name: "description", content: "Report an issue or request a feature for Yoto Control Center." },
+      {
+        name: "description",
+        content: "Report an issue or request a feature for Yoto Control Center.",
+      },
       { property: "og:title", content: "Feedback — Yoto Control Center" },
-      { property: "og:description", content: "Report an issue or request a feature for Yoto Control Center." },
+      {
+        property: "og:description",
+        content: "Report an issue or request a feature for Yoto Control Center.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -110,7 +116,11 @@ function FeedbackPage() {
       />
 
       <Button onClick={onSubmit} disabled={sending} className="w-full rounded-full sm:w-auto">
-        {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+        {sending ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="mr-2 h-4 w-4" />
+        )}
         Send feedback
       </Button>
     </div>

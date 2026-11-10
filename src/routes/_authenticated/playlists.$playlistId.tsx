@@ -15,8 +15,6 @@ import { downloadTracksAsZip, downloadPlaylistRss } from "@/lib/download";
 import { toast } from "sonner";
 import { ReconnectYotoButton } from "@/components/app/ReconnectYotoButton";
 
-
-
 const detailsQuery = (fn: (a: { data: { playlistId: string } }) => Promise<any>, id: string) =>
   queryOptions({
     queryKey: ["playlist-details", id],
@@ -58,17 +56,21 @@ function PlaylistDetailPage() {
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/playlists" })}>
             <ArrowLeft className="size-4" /> Back
           </Button>
-          <Card><CardContent className="space-y-4 p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Couldn't load this playlist{data?.error ? `: ${data.error}` : "."}
-            </p>
-            {String(data?.error ?? "").includes("scope") && (
+          <Card>
+            <CardContent className="space-y-4 p-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Your Yoto connection is missing content permissions. Reconnect to grant them.
+                Couldn't load this playlist{data?.error ? `: ${data.error}` : "."}
               </p>
-            )}
-            <div className="flex justify-center"><ReconnectYotoButton /></div>
-          </CardContent></Card>
+              {String(data?.error ?? "").includes("scope") && (
+                <p className="text-sm text-muted-foreground">
+                  Your Yoto connection is missing content permissions. Reconnect to grant them.
+                </p>
+              )}
+              <div className="flex justify-center">
+                <ReconnectYotoButton />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </AppShell>
     );
@@ -78,8 +80,7 @@ function PlaylistDetailPage() {
   const card = p.card ?? p;
   const meta = card.metadata ?? {};
   const chapters: any[] = card.content?.chapters ?? [];
-  const cover =
-    meta.cover?.imageL ?? meta.cover?.imageM ?? meta.cover?.imageS ?? "";
+  const cover = meta.cover?.imageL ?? meta.cover?.imageM ?? meta.cover?.imageS ?? "";
   const title = meta.title ?? card.title ?? "Untitled";
   const cardId = p.cardId ?? playlistId;
 
@@ -90,7 +91,7 @@ function PlaylistDetailPage() {
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/playlists" })}>
             <ArrowLeft className="size-4" /> Back
           </Button>
-          
+
           <div className="ms-auto flex flex-wrap items-center gap-2">
             <Button
               size="sm"
@@ -129,11 +130,19 @@ function PlaylistDetailPage() {
             <div className="flex-1 space-y-2">
               <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
               {meta.author && <CardDescription>By {meta.author}</CardDescription>}
-              {meta.description && <p className="text-sm text-muted-foreground">{meta.description}</p>}
+              {meta.description && (
+                <p className="text-sm text-muted-foreground">{meta.description}</p>
+              )}
               <div className="flex flex-wrap items-center gap-4 pt-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1"><Disc3 className="size-3" />{chapters.length} chapter{chapters.length === 1 ? "" : "s"}</div>
+                <div className="flex items-center gap-1">
+                  <Disc3 className="size-3" />
+                  {chapters.length} chapter{chapters.length === 1 ? "" : "s"}
+                </div>
                 {meta.duration && (
-                  <div className="flex items-center gap-1"><Clock className="size-3" />{Math.round((meta.duration ?? 0) / 60)}m</div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="size-3" />
+                    {Math.round((meta.duration ?? 0) / 60)}m
+                  </div>
                 )}
               </div>
               <div className="pt-3">
@@ -146,19 +155,37 @@ function PlaylistDetailPage() {
         {mode === "edit" ? (
           <>
             <EditorSection cardId={cardId} />
-            <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+            <FilesCard
+              playlistId={cardId}
+              title={title}
+              cover={cover}
+              description={meta.description}
+            />
           </>
         ) : (
-          <FilesCard playlistId={cardId} title={title} cover={cover} description={meta.description} />
+          <FilesCard
+            playlistId={cardId}
+            title={title}
+            cover={cover}
+            description={meta.description}
+          />
         )}
-
       </div>
     </AppShell>
   );
 }
 
-
-function FilesCard({ playlistId, title, cover, description }: { playlistId: string; title: string; cover?: string; description?: string }) {
+function FilesCard({
+  playlistId,
+  title,
+  cover,
+  description,
+}: {
+  playlistId: string;
+  title: string;
+  cover?: string;
+  description?: string;
+}) {
   const fetchTracks = useServerFn(getPlaylistTracks);
   const { data, isLoading } = useQuery({
     queryKey: ["playlist-tracks", playlistId],
@@ -175,7 +202,11 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
   const downloadAll = async () => {
     setZipping("0/" + tracks.length);
     try {
-      await downloadTracksAsZip(title, tracks.map((t) => ({ url: t.url!, title: t.title })), (d: number, n: number) => setZipping(`${d}/${n}`));
+      await downloadTracksAsZip(
+        title,
+        tracks.map((t) => ({ url: t.url!, title: t.title })),
+        (d: number, n: number) => setZipping(`${d}/${n}`),
+      );
       toast.success("ZIP downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "ZIP download failed");
@@ -190,16 +221,37 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
         <div>
           <CardTitle className="text-base">Files ({tracks.length})</CardTitle>
           {!isLoading && !canDownload && tracks.length > 0 && (
-            <p className="text-xs text-muted-foreground">Sorry you can't download yoto made playlists.</p>
+            <p className="text-xs text-muted-foreground">
+              Sorry you can't download yoto made playlists.
+            </p>
           )}
         </div>
         {tracks.length > 0 && canDownload && (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" disabled={!!zipping} onClick={() => void downloadAll()}>
-              {zipping ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!!zipping}
+              onClick={() => void downloadAll()}
+            >
+              {zipping ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               {zipping ? `Zipping ${zipping}` : "Download all (ZIP)"}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => downloadPlaylistRss(title, tracks.map((t) => ({ url: t.url!, title: t.title, duration: t.duration })), { cover, description })}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                downloadPlaylistRss(
+                  title,
+                  tracks.map((t) => ({ url: t.url!, title: t.title, duration: t.duration })),
+                  { cover, description },
+                )
+              }
+            >
               <Rss className="size-4" /> RSS feed
             </Button>
           </div>
@@ -227,11 +279,13 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
                   ? `${Math.floor(t.duration / 60)}:${String(Math.floor(t.duration % 60)).padStart(2, "0")}`
                   : ""}
               </span>
-              {canDownload && <Button size="icon" variant="ghost" className="size-8" asChild>
-                <a href={dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`)} download>
-                  <Download className="size-4" />
-                </a>
-              </Button>}
+              {canDownload && (
+                <Button size="icon" variant="ghost" className="size-8" asChild>
+                  <a href={dl(t.url!, `${String(i + 1).padStart(2, "0")} ${t.title}`)} download>
+                    <Download className="size-4" />
+                  </a>
+                </Button>
+              )}
             </div>
           ))
         )}
@@ -240,10 +294,7 @@ function FilesCard({ playlistId, title, cover, description }: { playlistId: stri
   );
 }
 
-
-
 function EditorSection({ cardId }: { cardId: string }) {
-
   const fetchCard = useServerFn(getCardForEdit);
   const { data, isLoading } = useQuery({
     queryKey: ["card-edit", cardId],
@@ -272,4 +323,3 @@ function EditorSection({ cardId }: { cardId: string }) {
 
   return <PlaylistEditor key={cardId} card={data.card} />;
 }
-

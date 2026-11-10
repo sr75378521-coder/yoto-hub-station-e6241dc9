@@ -56,7 +56,6 @@ export function useIconSrc() {
   };
 }
 
-
 export function IconUploadButton({ onUploaded }: { onUploaded?: (icon: YotoIcon) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const doUpload = useServerFn(uploadIcon);
@@ -161,7 +160,6 @@ export function IconPicker({
 
   const src = resolve(value);
 
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -231,7 +229,6 @@ export function IconPicker({
             </Button>
           </div>
         )}
-
       </DialogContent>
     </Dialog>
   );

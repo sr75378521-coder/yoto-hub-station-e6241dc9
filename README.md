@@ -14,61 +14,61 @@ Create a modern web dashboard that allows me to manage my entire Yoto account fr
 
 The application should support:
 
- Viewing all Yoto players
+Viewing all Yoto players
 
- Controlling every player
+Controlling every player
 
- Viewing my family
+Viewing my family
 
- Viewing every playlist
+Viewing every playlist
 
- Editing MYO playlists
+Editing MYO playlists
 
- Creating playlists
+Creating playlists
 
- Uploading audio
+Uploading audio
 
- Downloading backups where supported
+Downloading backups where supported
 
- Managing MYO cards
+Managing MYO cards
 
- Real-time player updates
+Real-time player updates
 
- Responsive mobile interface
+Responsive mobile interface
 
- Dark mode
+Dark mode
 
- Secure authentication
+Secure authentication
 
 Tech Stack
 
 Use:
 
- Next.js 15 (App Router)
+Next.js 15 (App Router)
 
- React
+React
 
- TypeScript
+TypeScript
 
- Tailwind CSS
+Tailwind CSS
 
- shadcn/ui
+shadcn/ui
 
- TanStack Query
+TanStack Query
 
- Prisma
+Prisma
 
- PostgreSQL (SQLite for development is acceptable)
+PostgreSQL (SQLite for development is acceptable)
 
- Zod
+Zod
 
- React Hook Form
+React Hook Form
 
- MQTT for live player updates
+MQTT for live player updates
 
- Docker support
+Docker support
 
- Vercel deployment support
+Vercel deployment support
 
 Do not use JavaScript. Everything should be TypeScript.
 
@@ -94,31 +94,31 @@ All Yoto players
 
 Each player card should show:
 
- name
+name
 
- room
+room
 
- online/offline
+online/offline
 
- battery percentage
+battery percentage
 
- charging status
+charging status
 
- Wi-Fi strength
+Wi-Fi strength
 
- firmware version
+firmware version
 
- current volume
+current volume
 
- currently playing
+currently playing
 
- elapsed time
+elapsed time
 
- remaining time
+remaining time
 
- card inserted
+card inserted
 
- playlist artwork
+playlist artwork
 
 Display recently played content.
 
@@ -164,15 +164,15 @@ Display every family member.
 
 Show:
 
- profile
+profile
 
- assigned players
+assigned players
 
- favorite playlists
+favorite playlists
 
- recently played
+recently played
 
- permissions
+permissions
 
 Playlist Manager
 
@@ -292,15 +292,15 @@ UI
 
 Create a polished interface inspired by:
 
- Linear
+Linear
 
- Vercel Dashboard
+Vercel Dashboard
 
- Spotify Web Player
+Spotify Web Player
 
- Apple Music
+Apple Music
 
- GitHub
+GitHub
 
 Requirements:
 
@@ -500,23 +500,23 @@ Deliverables
 
 Produce a complete production-ready project with:
 
- Full source code
+Full source code
 
- No placeholders or "TODO" sections
+No placeholders or "TODO" sections
 
- Fully typed TypeScript
+Fully typed TypeScript
 
- Clean folder structure
+Clean folder structure
 
- Comments where helpful
+Comments where helpful
 
- Docker support
+Docker support
 
- Vercel deployment support
+Vercel deployment support
 
- GitHub Actions for linting and type checking
+GitHub Actions for linting and type checking
 
- Example .env.example
+Example .env.example
 
 If an API capability is unavailable or restricted by the official Yoto platform (for example, downloading commercial audio), implement the closest supported behavior and document the limitation rather than attempting to work around it.
 

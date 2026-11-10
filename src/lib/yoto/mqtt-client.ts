@@ -69,7 +69,14 @@ const entries = new Map<string, Entry>();
 function entryFor(deviceId: string): Entry {
   let e = entries.get(deviceId);
   if (!e) {
-    e = { refs: 0, client: null, state: { ...EMPTY }, listeners: new Set(), keepalive: null, connecting: null };
+    e = {
+      refs: 0,
+      client: null,
+      state: { ...EMPTY },
+      listeners: new Set(),
+      keepalive: null,
+      connecting: null,
+    };
     entries.set(deviceId, e);
   }
   return e;
@@ -141,7 +148,8 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
       if (topic.endsWith("/data/events")) {
         const ev = payload as Record<string, any>;
         patch(e, {
-          cardId: typeof ev.cardId === "string" && ev.cardId !== "none" ? ev.cardId : e.state.cardId,
+          cardId:
+            typeof ev.cardId === "string" && ev.cardId !== "none" ? ev.cardId : e.state.cardId,
           chapterKey: ev.chapterKey ?? e.state.chapterKey,
           chapterTitle: ev.chapterTitle ?? e.state.chapterTitle,
           trackKey: ev.trackKey ?? e.state.trackKey,
@@ -152,7 +160,9 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           volume: typeof ev.volume === "number" ? toLevel(ev.volume) : e.state.volume,
           sleepTimerActive: Boolean(ev.sleepTimerActive),
           sleepTimerSeconds:
-            typeof ev.sleepTimerSeconds === "number" ? ev.sleepTimerSeconds : e.state.sleepTimerSeconds,
+            typeof ev.sleepTimerSeconds === "number"
+              ? ev.sleepTimerSeconds
+              : e.state.sleepTimerSeconds,
         });
       } else if (topic.endsWith("/data/status")) {
         const s = (payload?.status ?? payload) as Record<string, any>;
@@ -166,7 +176,9 @@ async function connect(deviceId: string): Promise<MqttClient | null> {
           charging: Boolean(s.charging),
           cardInserted: Boolean(s.cardInserted),
           cardId:
-            typeof s.activeCard === "string" && s.activeCard !== "none" ? s.activeCard : e.state.cardId,
+            typeof s.activeCard === "string" && s.activeCard !== "none"
+              ? s.activeCard
+              : e.state.cardId,
           volume: typeof s.volume === "number" ? toLevel(s.volume) : e.state.volume,
           wifiStrength: typeof s.wifiStrength === "number" ? s.wifiStrength : e.state.wifiStrength,
           firmware: typeof s.fwVersion === "string" ? s.fwVersion : e.state.firmware,
@@ -268,16 +280,24 @@ export const yotoDevice = {
   resume: (id: string) => publish(id, "card/resume", ""),
   stop: (id: string) => publish(id, "card/stop", ""),
   reboot: (id: string) => publish(id, "reboot", ""),
-  setAmbient: (id: string, r: number, g: number, b: number) => publish(id, "ambients/set", { r, g, b }),
+  setAmbient: (id: string, r: number, g: number, b: number) =>
+    publish(id, "ambients/set", { r, g, b }),
   ambientOff: (id: string) => publish(id, "ambients/set", { r: 0, g: 0, b: 0 }),
   /** Player configuration (display brightness, volume limits, timers…). */
   setConfig: (id: string, config: Record<string, unknown>) => publish(id, "set-config", config),
   setDayBrightness: (id: string, level: number) =>
     publish(id, "set-config", { displayDimBrightness: level, day: { displayBrightness: level } }),
   setNightBrightness: (id: string, level: number) =>
-    publish(id, "set-config", { nightDisplayBrightness: level, night: { displayBrightness: level } }),
+    publish(id, "set-config", {
+      nightDisplayBrightness: level,
+      night: { displayBrightness: level },
+    }),
   setMaxVolume: (id: string, day: number, night: number) =>
-    publish(id, "set-config", { maxVolumeLimit: day, day: { maxVolume: day }, night: { maxVolume: night } }),
+    publish(id, "set-config", {
+      maxVolumeLimit: day,
+      day: { maxVolume: day },
+      night: { maxVolume: night },
+    }),
   /** Documented Yoto topics: command/bluetooth/on and command/bluetooth/off. */
   setBluetooth: (id: string, enabled: boolean) =>
     enabled

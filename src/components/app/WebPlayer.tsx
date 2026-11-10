@@ -119,26 +119,23 @@ export function WebPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [queueId, title, artwork, tracks, index, Math.floor(position)]);
 
-  const playQueue = useCallback(
-    ({ id, title: t, artwork: a, tracks: list }: QueueArgs) => {
-      const playable = list.filter((x) => x.url);
-      const saved = loadResume();
-      const resuming = saved && id && saved.id === id;
-      setQueueId(id);
-      setTracks(playable);
-      setTitle(t);
-      setArtwork(a);
-      const startIndex = resuming ? Math.min(saved.index, playable.length - 1) : 0;
-      setIndex(startIndex);
-      setPosition(resuming ? saved.position : 0);
-      seekTo.current = resuming ? saved.position : 0;
-      setPlaying(true);
-      if (resuming && saved.position > 5) {
-        toast.success(`Resuming from ${fmt(saved.position)}`);
-      }
-    },
-    [],
-  );
+  const playQueue = useCallback(({ id, title: t, artwork: a, tracks: list }: QueueArgs) => {
+    const playable = list.filter((x) => x.url);
+    const saved = loadResume();
+    const resuming = saved && id && saved.id === id;
+    setQueueId(id);
+    setTracks(playable);
+    setTitle(t);
+    setArtwork(a);
+    const startIndex = resuming ? Math.min(saved.index, playable.length - 1) : 0;
+    setIndex(startIndex);
+    setPosition(resuming ? saved.position : 0);
+    seekTo.current = resuming ? saved.position : 0;
+    setPlaying(true);
+    if (resuming && saved.position > 5) {
+      toast.success(`Resuming from ${fmt(saved.position)}`);
+    }
+  }, []);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -356,7 +353,9 @@ export function WebPlayerProvider({ children }: { children: ReactNode }) {
                         i === index ? "font-semibold text-primary" : ""
                       }`}
                     >
-                      <span className="w-5 text-xs tabular-nums text-muted-foreground">{i + 1}</span>
+                      <span className="w-5 text-xs tabular-nums text-muted-foreground">
+                        {i + 1}
+                      </span>
                       <span className="flex-1 truncate">{t.title}</span>
                     </button>
                   ))}
@@ -368,7 +367,12 @@ export function WebPlayerProvider({ children }: { children: ReactNode }) {
           {/* Mini bar */}
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur">
             <div className="mx-auto flex max-w-5xl items-center gap-4">
-              <Button size="icon" variant="ghost" onClick={() => setExpanded(true)} title="Now playing">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setExpanded(true)}
+                title="Now playing"
+              >
                 <ChevronUp className="size-5" />
               </Button>
               {artwork ? (

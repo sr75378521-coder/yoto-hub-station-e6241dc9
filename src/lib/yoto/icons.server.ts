@@ -23,11 +23,9 @@ export function iconDisplayUrl(ref?: string | null): string | undefined {
 }
 
 function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
-  const mediaId: string | undefined =
-    raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
+  const mediaId: string | undefined = raw?.mediaId ?? raw?.displayIconId ?? raw?.id ?? undefined;
   if (!mediaId) return null;
-  const url: string =
-    raw?.url ?? raw?.displayIconUrl ?? iconDisplayUrl(mediaId) ?? "";
+  const url: string = raw?.url ?? raw?.displayIconUrl ?? iconDisplayUrl(mediaId) ?? "";
   return {
     mediaId,
     title: raw?.title ?? raw?.name ?? "Icon",
@@ -39,13 +37,7 @@ function normalize(raw: any, source: "mine" | "yoto"): YotoIcon | null {
 
 function extract(res: any): any[] {
   if (Array.isArray(res)) return res;
-  return (
-    res?.displayIcons ??
-    res?.icons ??
-    res?.results ??
-    res?.data ??
-    []
-  );
+  return res?.displayIcons ?? res?.icons ?? res?.results ?? res?.data ?? [];
 }
 
 export async function listIconsRaw(userId: string): Promise<YotoIcon[]> {

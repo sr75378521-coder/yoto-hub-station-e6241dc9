@@ -86,9 +86,7 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
     <div className="space-y-3">
       {(state?.trackTitle || state?.chapterTitle) && (
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            {state.trackTitle ?? state.chapterTitle}
-          </p>
+          <p className="truncate text-sm font-medium">{state.trackTitle ?? state.chapterTitle}</p>
           {state.trackTitle && state.chapterTitle && (
             <p className="truncate text-xs text-muted-foreground">{state.chapterTitle}</p>
           )}
@@ -280,21 +278,57 @@ export function PlayerControls({ deviceId, initialOnline }: Props) {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-1">
-        <Button variant="outline" size="sm" disabled={disabled || !cardId}
-          onClick={() => run(yotoDevice.chapterStep(deviceId, -1), "Chapter")}>Prev chapter</Button>
-        <Button variant="outline" size="sm" disabled={disabled || !cardId}
-          onClick={() => run(yotoDevice.restartTrack(deviceId), "Restart")}>Restart track</Button>
-        <Button variant="outline" size="sm" disabled={disabled || !cardId}
-          onClick={() => run(yotoDevice.chapterStep(deviceId, 1), "Chapter")}>Next chapter</Button>
-        <Button variant="outline" size="sm" disabled={disabled || !playing}
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.chapterStep(deviceId, -1), "Chapter")}
+        >
+          Prev chapter
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.restartTrack(deviceId), "Restart")}
+        >
+          Restart track
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || !cardId}
+          onClick={() => run(yotoDevice.chapterStep(deviceId, 1), "Chapter")}
+        >
+          Next chapter
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || !playing}
           onClick={() => {
             toast.info("Fading out over 30 seconds…");
             run(yotoDevice.fadeOutAndStop(deviceId, 30), "Fade out");
-          }}>Fade out</Button>
-        <Button variant="outline" size="sm" disabled={disabled}
-          onClick={() => run(yotoDevice.bluetoothPairMode(deviceId), "Bluetooth pairing")}>BT pair</Button>
-        <Button variant="outline" size="sm" disabled={disabled}
-          onClick={() => run(yotoDevice.bluetoothDisconnect(deviceId), "Bluetooth")}>BT disconnect</Button>
+          }}
+        >
+          Fade out
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => run(yotoDevice.bluetoothPairMode(deviceId), "Bluetooth pairing")}
+        >
+          BT pair
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => run(yotoDevice.bluetoothDisconnect(deviceId), "Bluetooth")}
+        >
+          BT disconnect
+        </Button>
       </div>
 
       <PlayerAdvanced deviceId={deviceId} disabled={disabled} />

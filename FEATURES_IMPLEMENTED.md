@@ -31,15 +31,16 @@ The sidebar now has **5 fully functional main sections**:
   - Full name (first + last name)
   - Email address
   - Role/permission level (Admin, Parent, Child, Member, etc.)
-  
+
 - **Real-time Updates**: Auto-refreshes every 60 seconds via TanStack Query
 - **Invite Functionality**: "Invite Family Member" button in empty state
-- **Responsive Design**: 
+- **Responsive Design**:
   - Single column on mobile
   - Cards layout on tablet/desktop
   - Hover effects for better UX
 
 ### Data Source
+
 ```
 Endpoint: GET /family/users
 Returns: Array of family members with full profile data
@@ -47,7 +48,9 @@ Cache: 60-second automatic refresh
 ```
 
 ### Empty State
+
 When no family members exist:
+
 - Shows friendly message
 - Provides "Invite Family Member" button
 - Clear call-to-action
@@ -66,7 +69,7 @@ When no family members exist:
   - Input field for playlist name
   - Validation (name required)
   - Success toast notification
-  
+
 - **Search & Filter**: Real-time search across all playlists
   - Search box filters by playlist name
   - Case-insensitive matching
@@ -86,6 +89,7 @@ When no family members exist:
   - 3 columns on desktop
 
 ### Data Source
+
 ```
 Endpoint: GET /playlist-v2/playlists
 Returns: Array of playlists with metadata
@@ -94,6 +98,7 @@ Cache: 60-second automatic refresh
 ```
 
 ### UX Enhancements
+
 - Loading skeletons while fetching
 - Smooth hover animations on cards
 - Visual feedback for buttons
@@ -112,6 +117,7 @@ Cache: 60-second automatic refresh
 The Library is organized into **4 main sections** via tabs:
 
 #### 1. **Cards Tab**
+
 - Browse all MYO cards on the account
 - Card information includes:
   - Card name/title
@@ -122,6 +128,7 @@ The Library is organized into **4 main sections** via tabs:
 - Grid layout (responsive: 1-2-3 columns)
 
 #### 2. **Favorites Tab**
+
 - Quick access to favorite playlists/content
 - Each item shows:
   - Name
@@ -133,6 +140,7 @@ The Library is organized into **4 main sections** via tabs:
 - Empty state: "No favorites yet"
 
 #### 3. **Recently Added Tab**
+
 - Latest additions to library
 - Display metadata:
   - Item name
@@ -143,6 +151,7 @@ The Library is organized into **4 main sections** via tabs:
 - Empty state for new accounts
 
 #### 4. **Downloads Tab**
+
 - Manage offline downloaded content
 - Shows progress for in-progress downloads
 - Downloaded items marked with checkmark
@@ -154,6 +163,7 @@ The Library is organized into **4 main sections** via tabs:
 - Empty state: "No downloads yet"
 
 ### Shared Features
+
 - Reusable EmptyState component
 - Consistent card styling
 - Responsive layouts
@@ -170,6 +180,7 @@ The Library is organized into **4 main sections** via tabs:
 ### Account Section
 
 **Connected Yoto Account:**
+
 - Display account name
 - Display email address
 - Shows currently connected account info
@@ -182,6 +193,7 @@ The Library is organized into **4 main sections** via tabs:
 ### Preferences Section
 
 **Theme Selection:**
+
 - Dropdown menu with 3 options:
   - Light mode (with Sun icon)
   - Dark mode (with Moon icon)
@@ -190,6 +202,7 @@ The Library is organized into **4 main sections** via tabs:
 - Shows current selection below dropdown
 
 **Notifications:**
+
 - Toggle for Push Notifications (main switch)
 - Child toggles (disabled if main is off):
   - Playback Updates: Notify on status changes
@@ -200,6 +213,7 @@ The Library is organized into **4 main sections** via tabs:
 ### System Section
 
 **API Status:**
+
 - Connection status indicator (green checkmark if connected)
 - Status message ("Yoto API is responding normally")
 - Grid showing:
@@ -208,6 +222,7 @@ The Library is organized into **4 main sections** via tabs:
   - Status details
 
 **Developer Tools:**
+
 - Clear Cache button
 - View API Logs button
 - Build/version information display
@@ -248,31 +263,31 @@ Full TypeScript interfaces for type safety:
 
 ```typescript
 interface FamilyMember {
-  userId: string
-  firstName?: string
-  lastName?: string
-  email?: string
-  profileImage?: string
-  role?: string
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  profileImage?: string;
+  role?: string;
 }
 
 interface PlaylistSummary {
-  playlistId: string
-  name: string
-  type?: string
-  artwork?: string
-  duration?: number
-  trackCount?: number
-  createdDate?: string
-  isEditable?: boolean
+  playlistId: string;
+  name: string;
+  type?: string;
+  artwork?: string;
+  duration?: number;
+  trackCount?: number;
+  createdDate?: string;
+  isEditable?: boolean;
 }
 
 interface UserSettings {
-  theme?: string
-  notifications?: boolean
-  apiStatus?: string
-  accountEmail?: string
-  accountName?: string
+  theme?: string;
+  notifications?: boolean;
+  apiStatus?: string;
+  accountEmail?: string;
+  accountName?: string;
 }
 ```
 
@@ -305,24 +320,28 @@ interface UserSettings {
 ### Design Features
 
 ✨ **Consistency:**
+
 - Matching color schemes across all pages
 - Unified spacing and padding
 - Consistent typography hierarchy
 - Icon usage matches design system
 
 🎯 **Responsiveness:**
+
 - Mobile-first design approach
 - Breakpoints for tablet and desktop
 - Touch-friendly interactions
 - Readable font sizes across devices
 
 🌓 **Dark Mode:**
+
 - Full dark mode support via Tailwind
 - Proper contrast ratios
 - Consistent color palette
 - No hardcoded colors (all using CSS variables)
 
 ⚡ **Performance:**
+
 - Lazy loading for routes
 - Code splitting by page
 - Query caching to reduce API calls
@@ -336,23 +355,27 @@ interface UserSettings {
 ### Graceful Degradation
 
 **When Yoto API is disconnected:**
+
 - Shows friendly "Connect your Yoto account" card
 - Provides authentication button
 - Clear explanation of what's needed
 
 **When data fails to load:**
+
 - User-friendly error messages
 - Displays the actual error from API
 - "Try again" buttons
 - Maintains UI structure
 
 **When network fails:**
+
 - Toast notifications about failures
 - Option to retry operations
 - Cached data shown if available
 - Clear error descriptions
 
 **Form validation:**
+
 - Zod validation for inputs
 - Real-time error feedback
 - Clear error messages
@@ -363,6 +386,7 @@ interface UserSettings {
 ## 🧪 Quality Assurance
 
 ### Code Quality
+
 - ✅ Full TypeScript coverage
 - ✅ No console errors
 - ✅ ESLint compliant
@@ -371,6 +395,7 @@ interface UserSettings {
 - ✅ Proper error boundaries
 
 ### Testing Checklist
+
 - ✅ Navigation between all tabs works
 - ✅ Sidebar highlights active tab
 - ✅ Data loads correctly from APIs
@@ -386,14 +411,14 @@ interface UserSettings {
 
 ## 📊 File Statistics
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `family.tsx` | ~190 | Family member display and management |
-| `playlists.tsx` | ~320 | Playlist browsing and creation |
-| `library.tsx` | ~320 | Library tabs and content management |
-| `settings.tsx` | ~380 | User preferences and account settings |
-| `players.functions.ts` | +210 | New server functions for data fetching |
-| `Sidebar.tsx` | ~42 | Navigation sidebar (updated) |
+| File                   | Lines | Purpose                                |
+| ---------------------- | ----- | -------------------------------------- |
+| `family.tsx`           | ~190  | Family member display and management   |
+| `playlists.tsx`        | ~320  | Playlist browsing and creation         |
+| `library.tsx`          | ~320  | Library tabs and content management    |
+| `settings.tsx`         | ~380  | User preferences and account settings  |
+| `players.functions.ts` | +210  | New server functions for data fetching |
+| `Sidebar.tsx`          | ~42   | Navigation sidebar (updated)           |
 
 **Total New Code:** ~1,060 lines
 
@@ -416,18 +441,21 @@ interface UserSettings {
 ### Adding More Features
 
 **To add more data to any page:**
+
 1. Add new server function in `players.functions.ts`
 2. Define TypeScript interfaces
 3. Use `useSuspenseQuery` with `queryOptions` in component
 4. Display data in responsive layout
 
 **To add new tabs in Library:**
+
 1. Add new `TabsTrigger` in tabs list
 2. Create new section component
 3. Add data fetching logic
 4. Implement empty state
 
 **To add more playlist actions:**
+
 1. Add button to `PlaylistCard`
 2. Create new server function for action
 3. Use `useMutation` with `useQueryClient`

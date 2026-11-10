@@ -41,7 +41,11 @@ const WORKER_MT_URL = "/ffmpeg-core-mt.worker.js";
 
 /** Multi-threaded ffmpeg needs SharedArrayBuffer, which needs cross-origin isolation. */
 export function canUseThreads(): boolean {
-  return typeof window !== "undefined" && window.crossOriginIsolated === true && typeof SharedArrayBuffer !== "undefined";
+  return (
+    typeof window !== "undefined" &&
+    window.crossOriginIsolated === true &&
+    typeof SharedArrayBuffer !== "undefined"
+  );
 }
 
 function defaultWorkers(): number {
@@ -111,7 +115,9 @@ class ConverterEngine {
     this.set({ jobs: this.state.jobs.filter((j) => j.id !== id) });
   }
   clearFinished() {
-    this.set({ jobs: this.state.jobs.filter((j) => j.status === "queued" || j.status === "converting") });
+    this.set({
+      jobs: this.state.jobs.filter((j) => j.status === "queued" || j.status === "converting"),
+    });
   }
   clearAll() {
     if (this.state.running) return;
@@ -120,26 +126,37 @@ class ConverterEngine {
   resetForRetry() {
     this.set({
       jobs: this.state.jobs.map((j) =>
-        j.status === "error" || j.status === "cancelled" ? { ...j, status: "queued", progress: 0, error: undefined } : j,
+        j.status === "error" || j.status === "cancelled"
+          ? { ...j, status: "queued", progress: 0, error: undefined }
+          : j,
       ),
     });
   }
 
   private async createFFmpeg(): Promise<FFmpeg> {
-    const [{ FFmpeg }, { toBlobURL }] = await Promise.all([import("@ffmpeg/ffmpeg"), import("@ffmpeg/util")]);
+    const [{ FFmpeg }, { toBlobURL }] = await Promise.all([
+      import("@ffmpeg/ffmpeg"),
+      import("@ffmpeg/util"),
+    ]);
     // Blob URLs let the worker import the core regardless of dev/prod hosting rules.
     const mt = this.state.threaded;
     const [coreURL, wasmURL, workerURL] = await Promise.all([
       this.coreBlob ?? (this.coreBlob = toBlobURL(mt ? CORE_MT_URL : CORE_URL, "text/javascript")),
       this.wasmBlob ?? (this.wasmBlob = toBlobURL(mt ? WASM_MT_URL : WASM_URL, "application/wasm")),
-      mt ? (this.workerBlob ?? (this.workerBlob = toBlobURL(WORKER_MT_URL, "text/javascript"))) : Promise.resolve(""),
+      mt
+        ? (this.workerBlob ?? (this.workerBlob = toBlobURL(WORKER_MT_URL, "text/javascript")))
+        : Promise.resolve(""),
     ]);
     if (!this.classWorkerURL) {
-      this.classWorkerURL = URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" }));
+      this.classWorkerURL = URL.createObjectURL(
+        new Blob([workerSource], { type: "text/javascript" }),
+      );
     }
     const classWorkerURL = this.classWorkerURL;
     const ff = new FFmpeg();
-    await ff.load(mt ? { classWorkerURL, coreURL, wasmURL, workerURL } : { classWorkerURL, coreURL, wasmURL });
+    await ff.load(
+      mt ? { classWorkerURL, coreURL, wasmURL, workerURL } : { classWorkerURL, coreURL, wasmURL },
+    );
     return ff;
   }
 
@@ -154,7 +171,10 @@ class ConverterEngine {
       this.slots = [slot];
       this.set({ engineReady: true, engineLoading: false });
     } catch (e) {
-      this.set({ engineLoading: false, engineError: e instanceof Error ? e.message : "Failed to load the conversion engine" });
+      this.set({
+        engineLoading: false,
+        engineError: e instanceof Error ? e.message : "Failed to load the conversion engine",
+      });
     }
   }
 
@@ -193,7 +213,10 @@ class ConverterEngine {
       runners.push(...this.slots.slice(runners.length).map((s) => this.runLoop(s)));
       await Promise.all(runners);
     } catch (e) {
-      this.set({ engineError: e instanceof Error ? e.message : "Conversion engine failed to start", engineLoading: false });
+      this.set({
+        engineError: e instanceof Error ? e.message : "Conversion engine failed to start",
+        engineLoading: false,
+      });
     } finally {
       this.set({ running: false });
     }
@@ -217,9 +240,17 @@ class ConverterEngine {
         if (this.cancelRequested) {
           this.updateJob(job.id, { status: "cancelled" });
         } else {
-          this.updateJob(job.id, { status: "error", error: e instanceof Error ? e.message : String(e), finishedAt: Date.now() });
+          this.updateJob(job.id, {
+            status: "error",
+            error: e instanceof Error ? e.message : String(e),
+            finishedAt: Date.now(),
+          });
           // a crashed worker is unreliable: replace it
-          try { slot.ffmpeg?.terminate(); } catch { /* ignore */ }
+          try {
+            slot.ffmpeg?.terminate();
+          } catch {
+            /* ignore */
+          }
           try {
             slot.ffmpeg = await this.createFFmpeg();
             this.attachProgress(slot);
@@ -254,7 +285,10 @@ class ConverterEngine {
       await ff.writeFile(inName, new Uint8Array(await job.file.arrayBuffer()));
       const code = await ff.exec(buildArgs(inName, outName, spec));
       if (code !== 0) {
-        const hint = logs.filter((l) => /error|invalid|not supported|unknown/i.test(l)).slice(-2).join(" ");
+        const hint = logs
+          .filter((l) => /error|invalid|not supported|unknown/i.test(l))
+          .slice(-2)
+          .join(" ");
         throw new Error(hint || `ffmpeg exited with code ${code}`);
       }
       const data = (await ff.readFile(outName)) as Uint8Array;
@@ -279,12 +313,18 @@ class ConverterEngine {
     if (!this.state.running) return;
     this.cancelRequested = true;
     for (const s of this.slots) {
-      try { s.ffmpeg?.terminate(); } catch { /* ignore */ }
+      try {
+        s.ffmpeg?.terminate();
+      } catch {
+        /* ignore */
+      }
     }
     this.slots = [];
     this.set({
       engineReady: false,
-      jobs: this.state.jobs.map((j) => (j.status === "converting" ? { ...j, status: "cancelled", progress: 0 } : j)),
+      jobs: this.state.jobs.map((j) =>
+        j.status === "converting" ? { ...j, status: "cancelled", progress: 0 } : j,
+      ),
     });
   }
 }
