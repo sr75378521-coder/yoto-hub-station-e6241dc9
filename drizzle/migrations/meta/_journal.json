@@ -22,6 +22,13 @@
       "when": 1794359923081,
       "tag": "0002_create_email_open_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794430000000,
+      "tag": "0003_add_playback_bookmarks",
+      "breakpoints": true
     }
   ]
 }
