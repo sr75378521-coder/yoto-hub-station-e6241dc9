@@ -8,7 +8,7 @@ export const transcribeSegment = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!data.path.startsWith(`${context.userId}/ai-yoto/`) || data.path.includes(".."))
       throw new Error("Invalid audio path.");
-    const { transcribeStored } = await import("./ai.server");
+    const { transcribeStored } = await import("./gemini.server");
     return transcribeStored(context.userId, data.path);
   });
 export const organizeSegments = createServerFn({ method: "POST" })
@@ -34,7 +34,7 @@ export const organizeSegments = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (data.segments.some((s) => !s.path.startsWith(`${context.userId}/ai-yoto/`)))
       throw new Error("Invalid audio path.");
-    const { organizeAudio } = await import("./ai.server");
+    const { organizeAudio } = await import("./gemini.server");
     return organizeAudio(context.userId, data.key, data.segments);
   });
 export const assistant = createServerFn({ method: "POST" })
@@ -43,7 +43,7 @@ export const assistant = createServerFn({ method: "POST" })
     z.object({ key: z.string().uuid(), prompt: z.string().min(1).max(12000) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { askAssistant } = await import("./ai.server");
+    const { askAssistant } = await import("./gemini.server");
     return askAssistant(context.userId, data.key, data.prompt);
   });
 export const generatePixels = createServerFn({ method: "POST" })
@@ -58,7 +58,7 @@ export const generatePixels = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { makePixels } = await import("./ai.server");
+    const { makePixels } = await import("./gemini.server");
     return makePixels(context.userId, data.key, data.prompt, data.animated);
   });
 export const chatEditPlaylist = createServerFn({ method: "POST" })
@@ -87,6 +87,6 @@ export const chatEditPlaylist = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { chatEdit } = await import("./ai.server");
+    const { chatEdit } = await import("./gemini.server");
     return chatEdit(context.userId, data.key, data.history, data.playlist);
   });
