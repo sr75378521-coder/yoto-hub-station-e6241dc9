@@ -16,6 +16,7 @@ import {
   Crown,
   Globe,
   MessagesSquare,
+  Mail,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -37,6 +38,11 @@ export const NAV_ITEMS = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export const ADMIN_NAV_ITEM = { to: "/admin", label: "Admin", icon: ShieldCheck } as const;
+export const ADMIN_NAV_ITEMS = [
+  { to: "/admin", label: "Admin", icon: ShieldCheck },
+  { to: "/email-users", label: "Email users", icon: Mail },
+] as const;
+
+export const ADMIN_NAV_ITEM = ADMIN_NAV_ITEMS[0];
 
 export type NavItem = { to: string; label: string; icon: typeof LayoutDashboard };
