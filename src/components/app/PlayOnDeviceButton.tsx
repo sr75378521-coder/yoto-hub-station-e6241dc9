@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getDashboardData, getPlaylistTracks } from "@/lib/players.functions";
+import { trackGoogleAnalyticsEvent } from "@/lib/analytics";
 import { yotoDevice } from "@/lib/yoto/mqtt-client";
 import { useWebPlayer } from "./WebPlayer";
 
@@ -47,6 +48,7 @@ export function PlayOnDeviceButton({
     setBusyId(deviceId);
     try {
       await yotoDevice.startCard(deviceId, { cardId });
+      trackGoogleAnalyticsEvent("playlist_play", { playback_target: "yoto_player" });
       toast.success("Playing on your Yoto");
       setOpen(false);
     } catch (e) {
@@ -71,6 +73,7 @@ export function PlayOnDeviceButton({
       }
 
       playQueue({ id: cardId, title: res.title, artwork: res.artwork, tracks: playable });
+      trackGoogleAnalyticsEvent("playlist_play", { playback_target: "browser" });
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't load audio");

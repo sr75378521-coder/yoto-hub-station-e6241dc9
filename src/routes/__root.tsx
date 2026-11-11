@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,6 +14,7 @@ import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { trackGoogleAnalyticsEvent } from "../lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -139,7 +141,7 @@ function RootShell({ children }: { children: ReactNode }) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-MGTWXZ53SJ');
+              gtag('config', 'G-MGTWXZ53SJ', { send_page_view: false });
             `,
           }}
         />
@@ -157,9 +159,37 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    if (typeof window === "undefined") return;
+    trackGoogleAnalyticsEvent("page_view", {
+      page_path: pathname,
+      page_location: `${window.location.origin}${pathname}`,
+      page_title: document.title,
+    });
+
+    if (/^\/playlists\/[^/]+/.test(pathname)) {
+      trackGoogleAnalyticsEvent("playlist_open", { page_path: pathname });
+    }
+
+    const featureByPath: Record<string, string> = {
+      "/ai-yoto": "ai_yoto",
+      "/membership": "membership",
+      "/public-playlists": "public_playlists",
+      "/spark-studio": "spark_studio",
+    };
+    const feature = featureByPath[pathname];
+    if (feature) trackGoogleAnalyticsEvent("feature_view", { feature });
+  }, [pathname]);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        trackGoogleAnalyticsEvent("sign_in", {
+          method: session?.user.app_metadata?.provider ?? "unknown",
+        });
+      }
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
