@@ -67,7 +67,7 @@ import { uploadTrack, saveCard, getCardForEdit } from "@/lib/yoto/myo.functions"
 import { getPlaylistsData, type PlaylistSummary } from "@/lib/players.functions";
 import { uploadIcon } from "@/lib/yoto/icons.functions";
 import { useIconSrc } from "@/components/app/IconPicker";
-import { fmtTime } from "@/lib/audio/engine";
+import { concat, decodeAudio, encodeWav, fmtTime } from "@/lib/audio/engine";
 import { playlistTool } from "@/lib/community/community.functions";
 import { TOOL_RANK, type PlaylistTool } from "@/lib/community/rules";
 
@@ -133,7 +133,7 @@ function AiYotoPage() {
     {
       role: "assistant",
       content:
-        'Hi! I\'m AI Yoto. Upload a long audio file and I\'ll split it into chapters, or open one of your Yoto playlists and tell me what to change — like "give every chapter a fun title", "merge chapters 2 and 3" or "move the last chapter to the start".',
+        'Hi! I\'m AI Yoto. Upload a long audio file and I\'ll split it into chapters, or open one of your Yoto playlists and tell me what to change — like "give every chapter a fun title", "merge the short chapters", or "make this story sound like a bedtime story".',
     },
   ]);
   const [proposal, setProposal] = useState<{
@@ -346,6 +346,40 @@ function AiYotoPage() {
       setBusy("");
     }
   }
+
+  async function prepareYotoChapter(chapter: AiChapter): Promise<Array<{ key: string; title: string; trackUrl: string; duration?: number; fileSize?: number; channels?: string; format?: string; icon?: string }>> {
+    const existing = [...(chapter.tracks ?? [])];
+    const hasMultiplePieces = chapter.paths.length > 1 || existing.length > 1;
+    if (!hasMultiplePieces) {
+      return existing.length ? existing : [];
+    }
+
+    const buffers: AudioBuffer[] = [];
+    for (const path of chapter.paths) {
+      const download = await supabase.storage.from("studio-audio").download(path);
+      if (download.error || !download.data) {
+        throw new Error("Could not read chapter audio.");
+      }
+      const buffer = await decodeAudio(await download.data.arrayBuffer());
+      buffers.push(buffer);
+    }
+    if (!buffers.length) return existing;
+
+    const merged = concat(buffers, 0);
+    const file = new File(
+      [encodeWav(merged)],
+      `${(chapter.title || "chapter").replace(/\s+/g, "-").toLowerCase()}.wav`,
+      { type: "audio/wav" },
+    );
+    const form = new FormData();
+    form.set("file", file);
+    const result = await upload({ data: form });
+    if (!result.success || !result.track) {
+      throw new Error(result.error ?? "Yoto upload failed.");
+    }
+    return [result.track];
+  }
+
   async function publish() {
     setBusy("Uploading to Yoto…");
     setError("");
@@ -356,25 +390,9 @@ function AiYotoPage() {
       for (let i = 0; i < next.length; i++) {
         const chapter = next[i];
         if (!chapter) continue;
-        const tracks = [...(chapter.tracks ?? [])];
-        for (let j = tracks.length; j < chapter.paths.length; j++) {
-          const path = chapter.paths[j];
-          if (!path) continue;
-          setBusy(`Uploading chapter ${i + 1}, track ${j + 1}…`);
-          const download = await supabase.storage.from("studio-audio").download(path);
-          if (download.error || !download.data) throw new Error("Could not read chapter audio.");
-          const form = new FormData();
-          form.set(
-            "file",
-            new File([download.data], `${chapter.title}-${j + 1}.wav`, { type: "audio/wav" }),
-          );
-          const result = await upload({ data: form });
-          if (!result.success || !result.track)
-            throw new Error(result.error ?? "Yoto upload failed.");
-          tracks.push(result.track);
-          next[i] = { ...chapter, tracks: [...tracks] };
-          await persist(next);
-        }
+        const prepared = await prepareYotoChapter(chapter);
+        next[i] = { ...chapter, tracks: prepared };
+        await persist(next);
       }
       const result = await publishCard({
         data: {
