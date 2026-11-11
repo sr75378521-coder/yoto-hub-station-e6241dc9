@@ -20,14 +20,14 @@ export interface WireAlarmInput {
   time: string; // HH:MM
   days: number[]; // 1 = Mon ... 7 = Sun
   sound_card_id?: string | null;
-  volume: number; // 1 - 8
+  volume: number; // 1 - 16
   enabled: boolean;
 }
 
 /**
  * Encodes an alarm into Yoto's official wire format:
  * `<7-day-mask>,<HHMM>,<cardId>,,,<volume>,<enabled>`
- * e.g. "1111100,0730,6Mq8g,,,5,1"
+ * e.g. "1111100,0730,6Mq8g,,,16,1"
  */
 function toYotoAlarmString(a: WireAlarmInput): string {
   const mask = Array.from({ length: DAYS_COUNT }, (_, i) =>
@@ -36,7 +36,7 @@ function toYotoAlarmString(a: WireAlarmInput): string {
 
   const timeClean = a.time.replace(":", "").padStart(4, "0").slice(0, 4);
   const cardId = (a.sound_card_id ?? "").trim();
-  const volume = Math.min(8, Math.max(1, Math.round(a.volume || 5)));
+  const volume = Math.min(16, Math.max(1, Math.round(a.volume || 10)));
   const enabledFlag = a.enabled ? 1 : 0;
 
   return `${mask},${timeClean},${cardId},,,${volume},${enabledFlag}`;
@@ -49,7 +49,7 @@ const syncInput = z.object({
       time: z.string(),
       days: z.array(z.number()),
       sound_card_id: z.string().nullable().optional(),
-      volume: z.number().default(5),
+      volume: z.number().default(10),
       enabled: z.boolean(),
     }),
   ),
