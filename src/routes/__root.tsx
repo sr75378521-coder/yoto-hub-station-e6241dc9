@@ -134,17 +134,18 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MGTWXZ53SJ" />
+        {/* Initialize the queue before loading gtag so route events are not lost while it loads. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-MGTWXZ53SJ', { send_page_view: false });
+              window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+              window.gtag('js', new Date());
+              window.gtag('config', 'G-MGTWXZ53SJ', { send_page_view: false });
             `,
           }}
         />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MGTWXZ53SJ" />
         <HeadContent />
       </head>
       <body>
