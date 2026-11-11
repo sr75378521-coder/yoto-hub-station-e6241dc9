@@ -31,6 +31,7 @@ import { Route as AuthenticatedPlaylistsIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedPlaylistsPlaylistIdRouteImport } from './routes/_authenticated/playlists.$playlistId'
 import { Route as AuthenticatedSparkStudioIndexRouteImport } from './routes/_authenticated/spark-studio.index'
 import { Route as AuthenticatedSparkStudioProjectIdRouteImport } from './routes/_authenticated/spark-studio.$projectId'
+import { Route as ApiPublicOpenRouteImport } from './routes/api/public/open'
 import { Route as ApiPublicPodcastRouteImport } from './routes/api/public/podcast'
 import { Route as ApiYotoAudioRouteImport } from './routes/api/yoto/audio'
 import { Route as ApiYotoAuthorizeRouteImport } from './routes/api/yoto/authorize'
@@ -150,6 +151,11 @@ const AuthenticatedSparkStudioProjectIdRoute =
     path: '/spark-studio/$projectId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicOpenRoute = ApiPublicOpenRouteImport.update({
+  id: '/api/public/open',
+  path: '/api/public/open',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPodcastRoute = ApiPublicPodcastRouteImport.update({
   id: '/api/public/podcast',
   path: '/api/public/podcast',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
+  '/api/public/open': typeof ApiPublicOpenRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/tools': typeof AuthenticatedToolsRoute
   '/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
+  '/api/public/open': typeof ApiPublicOpenRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/playlists/$playlistId': typeof AuthenticatedPlaylistsPlaylistIdRoute
   '/_authenticated/spark-studio/$projectId': typeof AuthenticatedSparkStudioProjectIdRoute
+  '/api/public/open': typeof ApiPublicOpenRoute
   '/api/public/podcast': typeof ApiPublicPodcastRoute
   '/api/yoto/audio': typeof ApiYotoAudioRoute
   '/api/yoto/authorize': typeof ApiYotoAuthorizeRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/playlists/$playlistId'
     | '/spark-studio/$projectId'
+    | '/api/public/open'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/playlists/$playlistId'
     | '/spark-studio/$projectId'
+    | '/api/public/open'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tools'
     | '/_authenticated/playlists/$playlistId'
     | '/_authenticated/spark-studio/$projectId'
+    | '/api/public/open'
     | '/api/public/podcast'
     | '/api/yoto/audio'
     | '/api/yoto/authorize'
@@ -343,6 +355,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicOpenRoute: typeof ApiPublicOpenRoute
   ApiPublicPodcastRoute: typeof ApiPublicPodcastRoute
   ApiYotoAudioRoute: typeof ApiYotoAudioRoute
   ApiYotoAuthorizeRoute: typeof ApiYotoAuthorizeRoute
@@ -505,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSparkStudioProjectIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/open': {
+      id: '/api/public/open'
+      path: '/api/public/open'
+      fullPath: '/api/public/open'
+      preLoaderRoute: typeof ApiPublicOpenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/podcast': {
       id: '/api/public/podcast'
       path: '/api/public/podcast'
@@ -588,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicOpenRoute: ApiPublicOpenRoute,
   ApiPublicPodcastRoute: ApiPublicPodcastRoute,
   ApiYotoAudioRoute: ApiYotoAudioRoute,
   ApiYotoAuthorizeRoute: ApiYotoAuthorizeRoute,
