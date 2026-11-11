@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { ADMIN_NAV_ITEM, NAV_ITEMS, type NavItem } from "./nav-items";
+import { ADMIN_NAV_ITEMS, NAV_ITEMS, type NavItem } from "./nav-items";
 
 /** Hamburger slide-out navigation for phones and small tablets. */
 export function MobileNav() {
@@ -13,7 +13,7 @@ export function MobileNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAdmin = useIsAdmin();
 
-  const items: NavItem[] = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : [...NAV_ITEMS];
+  const items: NavItem[] = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : [...NAV_ITEMS];
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
