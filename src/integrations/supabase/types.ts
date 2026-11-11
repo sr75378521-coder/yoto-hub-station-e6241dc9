@@ -246,6 +246,30 @@ export type Database = {
           },
         ]
       }
+      email_batches: {
+        Row: {
+          created_at: string
+          id: string
+          sender_email: string
+          subject_template: string
+          total_recipients: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sender_email: string
+          subject_template: string
+          total_recipients?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sender_email?: string
+          subject_template?: string
+          total_recipients?: number
+        }
+        Relationships: []
+      }
       families: {
         Row: {
           created_at: string
@@ -611,6 +635,62 @@ export type Database = {
         }
         Relationships: []
       }
+      sent_emails: {
+        Row: {
+          batch_id: string
+          error_message: string | null
+          first_opened_at: string | null
+          gmail_message_id: string | null
+          id: string
+          last_opened_at: string | null
+          open_count: number
+          recipient_email: string
+          recipient_label: string
+          sent_at: string
+          status: string
+          subject: string
+          tracking_token: string
+        }
+        Insert: {
+          batch_id: string
+          error_message?: string | null
+          first_opened_at?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          last_opened_at?: string | null
+          open_count?: number
+          recipient_email: string
+          recipient_label?: string
+          sent_at?: string
+          status?: string
+          subject: string
+          tracking_token: string
+        }
+        Update: {
+          batch_id?: string
+          error_message?: string | null
+          first_opened_at?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          last_opened_at?: string | null
+          open_count?: number
+          recipient_email?: string
+          recipient_label?: string
+          sent_at?: string
+          status?: string
+          subject?: string
+          tracking_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_emails_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "email_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_projects: {
         Row: {
           created_at: string
@@ -748,6 +828,7 @@ export type Database = {
         Args: { _family_id: string; _user_id: string }
         Returns: boolean
       }
+      record_email_open: { Args: { _token: string }; Returns: boolean }
       reserve_ai_credits: {
         Args: {
           p_allowance: number
