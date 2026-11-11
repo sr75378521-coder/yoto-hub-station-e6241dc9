@@ -27,11 +27,12 @@ export function TermsGate({ children }: { children: ReactNode }) {
       if (userError || !userResult.user) throw userError ?? new Error("Please sign in again.");
 
       const { data, error } = await supabase
-        .from("terms_acceptances" as never)
+        .from("terms_acceptances")
         .select("accepted_at")
-        .eq("user_id" as never, userResult.user.id)
-        .eq("terms_version" as never, CURRENT_TERMS_VERSION)
+        .eq("user_id", userResult.user.id)
+        .eq("terms_version", CURRENT_TERMS_VERSION)
         .maybeSingle();
+
       if (error) throw error;
       setStatus(data ? "accepted" : "required");
     } catch (error) {
@@ -111,9 +112,18 @@ export function TermsGate({ children }: { children: ReactNode }) {
           <Checkbox checked={checked} onCheckedChange={(value) => setChecked(value === true)} />
           <span>I have read and agree to the Terms and Conditions.</span>
         </label>
+
         {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
+
         <Button className="w-full" disabled={!checked || saving} onClick={() => void accept()}>
-          {saving ? <><Loader2 className="size-4 animate-spin" /> Saving…</> : "Accept and continue"}
+          {saving ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            "Accept and continue"
+          )}
         </Button>
       </DialogContent>
     </Dialog>
