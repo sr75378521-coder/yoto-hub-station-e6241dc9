@@ -15,6 +15,13 @@
       "when": 1794357113043,
       "tag": "0001_restrict_community_audio_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794359923081,
+      "tag": "0002_create_email_open_tracking",
+      "breakpoints": true
     }
   ]
 }
