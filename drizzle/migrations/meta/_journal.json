@@ -8,6 +8,13 @@
       "when": 1794104400821,
       "tag": "0000_restore_ai_and_community_pages",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794357113043,
+      "tag": "0001_restrict_community_audio_reads",
+      "breakpoints": true
     }
   ]
 }
