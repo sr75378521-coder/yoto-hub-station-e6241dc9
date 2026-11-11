@@ -37,9 +37,8 @@ export function AppSidebar() {
           );
         })}
       </nav>
-      <div className="px-4 py-3 border-t border-border/60 text-[11px] text-muted-foreground flex flex-col gap-0.5">
-        <div className="font-medium text-foreground/80">Made by Spencer R &amp; Jordan B</div>
-        <div className="text-[10px] text-muted-foreground/80">v0.1 · early access</div>
+      <div className="px-4 py-3 border-t border-border/60 text-[10px] text-muted-foreground/80">
+        v0.1 · early access
       </div>
     </aside>
   );
