@@ -48,12 +48,14 @@ export const Route = createFileRoute("/_authenticated/alarms")({
       { title: "Alarms · Yoto Control Center" },
       {
         name: "description",
-        content: "View, create and edit wake-up alarms for each Yoto player.",
+        content:
+          "Manage scheduled wakeup alarms and custom sounds synced to your Yoto players.",
       },
       { property: "og:title", content: "Alarms · Yoto Control Center" },
       {
         property: "og:description",
-        content: "View, create and edit wake-up alarms for each Yoto player.",
+        content:
+          "Manage scheduled wakeup alarms and custom sounds synced to your Yoto players.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -62,15 +64,14 @@ export const Route = createFileRoute("/_authenticated/alarms")({
   component: AlarmsPage,
 });
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 interface Alarm {
   id: string;
   device_id: string;
   label: string;
-  time: string;
-  days: number[];
+  time: string; // HH:MM
+  days: number[]; // 1-7
   enabled: boolean;
+  sound_type: string;
   sound_card_id: string | null;
   sound_title: string | null;
   volume: number;
@@ -78,24 +79,38 @@ interface Alarm {
 
 type Draft = Omit<Alarm, "id"> & { id?: string };
 
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
 function AlarmsPage() {
   const qc = useQueryClient();
   const fetchDash = useServerFn(getDashboardData);
-  const fetchLists = useServerFn(getPlaylistsData);
+  const fetchPlaylists = useServerFn(getPlaylistsData);
   const syncAlarmsToCloud = useServerFn(syncPlayerAlarms);
 
-  const players = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDash() });
-  const lists = useQuery({ queryKey: ["playlists"], queryFn: () => fetchLists() });
-  const alarms = useQuery({
-    queryKey: ["alarms"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("player_alarms").select("*").order("time");
-      if (error) throw error;
-      return data as Alarm[];
-    },
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [syncingDevice, setSyncingDevice] = useState<string | null>(null);
+
+  const { data: dash } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => fetchDash(),
   });
 
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const { data: pls } = useQuery({
+    queryKey: ["playlists"],
+    queryFn: () => fetchPlaylists(),
+  });
+
+  const { data: alarms = [], isLoading } = useQuery({
+    queryKey: ["alarms"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("player_alarms")
+        .select("*")
+        .order("time");
+      if (error) throw error;
+      return (data ?? []) as Alarm[];
+    },
+  });
 
   /** Pushes alarms both to Yoto Cloud REST API and over MQTT */
   const pushToPlayer = async (deviceId: string, allAlarms: Alarm[]) => {
@@ -148,43 +163,84 @@ function AlarmsPage() {
       try {
         await pushToPlayer(deviceId, all);
         toast.success("Alarm saved and synced to your Yoto player");
-      } catch (e) {
-        toast.warning(
-          `Saved locally, but couldn't sync with Yoto: ${e instanceof Error ? e.message : ""}`,
-        );
+      } catch (err) {
+        toast.error("Alarm saved locally, but Yoto sync failed: " + (err as Error).message);
       }
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't save alarm"),
+    onError: (e) => toast.error(e.message),
   });
 
-  const remove = async (a: Alarm) => {
-    if (!confirm(`Delete "${a.label}"?`)) return;
-    await supabase.from("player_alarms").delete().eq("id", a.id);
-    const rest = (alarms.data ?? []).filter((x) => x.id !== a.id);
+  const remove = useMutation({
+    mutationFn: async (a: Alarm) => {
+      const { error } = await supabase.from("player_alarms").delete().eq("id", a.id);
+      if (error) throw error;
+      const { data } = await supabase.from("player_alarms").select("*");
+      return { deviceId: a.device_id, all: (data ?? []) as Alarm[] };
+    },
+    onSuccess: async ({ deviceId, all }) => {
+      qc.invalidateQueries({ queryKey: ["alarms"] });
+      try {
+        await pushToPlayer(deviceId, all);
+        toast.success("Alarm deleted and synced to your player");
+      } catch (err) {
+        toast.error("Deleted locally, but Yoto sync failed: " + (err as Error).message);
+      }
+    },
+  });
+
+  const toggle = async (a: Alarm, enabled: boolean) => {
+    const updated = alarms.map((x) => (x.id === a.id ? { ...x, enabled } : x));
+    await supabase.from("player_alarms").update({ enabled }).eq("id", a.id);
     qc.invalidateQueries({ queryKey: ["alarms"] });
-    pushToPlayer(a.device_id, rest).catch(() =>
-      toast.warning("Deleted locally, but couldn't reach player to sync"),
-    );
+    try {
+      await pushToPlayer(a.device_id, updated);
+      toast.success(enabled ? "Alarm turned on" : "Alarm turned off");
+    } catch {
+      toast.warning("Updated locally; will sync when player connects");
+    }
   };
 
-  const toggle = (a: Alarm, enabled: boolean) => save.mutate({ ...a, enabled });
+  const manualSync = async (deviceId: string) => {
+    setSyncingDevice(deviceId);
+    try {
+      await pushToPlayer(deviceId, alarms);
+      toast.success("Alarms pushed to Yoto Cloud and player successfully!");
+    } catch (err) {
+      toast.error("Sync failed: " + (err as Error).message);
+    } finally {
+      setSyncingDevice(null);
+    }
+  };
 
-  const playerList = players.data?.players ?? [];
-  const playlistOptions = lists.data?.playlists ?? [];
-  const loading = players.isLoading || alarms.isLoading;
+  const playerList = useMemo(() => {
+    const list = dash?.players ?? [];
+    return list.map((p) => ({
+      deviceId: p.deviceId ?? (p as unknown as { id: string }).id,
+      name: p.name || "Yoto Player",
+    }));
+  }, [dash]);
+
+  const byPlayer = useMemo(() => {
+    const map = new Map<string, Alarm[]>();
+    for (const a of alarms) {
+      const arr = map.get(a.device_id) ?? [];
+      arr.push(a);
+      map.set(a.device_id, arr);
+    }
+    return map;
+  }, [alarms]);
 
   return (
-    <AppShell title="Alarms">
-      <div className="mx-auto max-w-4xl space-y-6">
+    <AppShell>
+      <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-2xl font-bold">Alarms</h2>
+            <h1 className="font-display text-2xl font-bold tracking-tight">Alarms</h1>
             <p className="text-sm text-muted-foreground">
-              Schedule wake-up alarms and morning playlists on your Yoto players.
+              Wake-up alarms sync directly to Yoto Cloud so your player wakes on time.
             </p>
           </div>
           <Button
-            disabled={!playerList.length}
             onClick={() =>
               setDraft({
                 device_id: playerList[0]?.deviceId ?? "",
@@ -194,7 +250,7 @@ function AlarmsPage() {
                 enabled: true,
                 sound_card_id: null,
                 sound_title: null,
-                volume: 12,
+                volume: 10,
               })
             }
           >
@@ -204,202 +260,222 @@ function AlarmsPage() {
 
         {/* Helpful hardware charging notice */}
         <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
-          <Info className="size-5 shrink-0 text-primary" />
-          <div className="space-y-1 text-muted-foreground">
-            <span className="font-medium text-foreground">How Yoto Player Alarms Work:</span>
-            <p>
-              To ensure alarms sound and wake the player, <strong>keep the player plugged into power</strong> or in night-standby mode. Deeply hibernating players on battery cannot power themselves back on.
+          <Info className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">
+              Keep your player plugged in or in standby for alarms to ring
+            </p>
+            <p className="text-muted-foreground">
+              Yoto players power their internal alarm clocks from cloud schedules. If a battery-powered
+              player goes into a deep sleep, plug it into its charging dock overnight so it stays awake to
+              sound your alarm.
             </p>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading players…
+        {isLoading ? (
+          <div className="flex justify-center p-12">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
         ) : playerList.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              No players found on your connected Yoto account.
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              No Yoto players linked. Connect your Yoto account in the Dashboard first.
             </CardContent>
           </Card>
         ) : (
           playerList.map((p) => {
-            const mine = (alarms.data ?? []).filter((a) => a.device_id === p.deviceId);
+            const list = byPlayer.get(p.deviceId) ?? [];
+            const isSyncing = syncingDevice === p.deviceId;
+
             return (
-              <section key={p.deviceId} className="space-y-3">
+              <div key={p.deviceId} className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">
-                    {p.name}{" "}
-                    <span
-                      className={cn(
-                        "ms-2 text-xs",
-                        p.online ? "text-primary" : "text-muted-foreground",
-                      )}
-                    >
-                      {p.online ? "online" : "offline"}
-                    </span>
-                  </h3>
-                  {mine.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        pushToPlayer(p.deviceId, alarms.data ?? []).then(
-                          () => toast.success("Synced to player"),
-                          (e) => toast.error(String(e?.message ?? e)),
-                        )
-                      }
-                    >
-                      <Send className="size-4" /> Sync now
-                    </Button>
-                  )}
+                  <h2 className="font-display text-lg font-semibold">{p.name}</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isSyncing}
+                    onClick={() => manualSync(p.deviceId)}
+                    className="gap-1.5 text-xs"
+                  >
+                    {isSyncing ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Send className="size-3.5" />
+                    )}
+                    Sync now
+                  </Button>
                 </div>
 
-                {mine.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No alarms set for this player.</p>
+                {list.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                      No alarms set for this player. Click "New alarm" above.
+                    </CardContent>
+                  </Card>
                 ) : (
-                  mine.map((a) => (
-                    <Card key={a.id} className={cn(!a.enabled && "opacity-60")}>
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <AlarmClock className="size-6 text-primary" />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-display text-3xl font-bold tabular-nums">
-                            {a.time}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {list.map((a) => (
+                      <Card key={a.id} className={cn(!a.enabled && "opacity-60")}>
+                        <CardContent className="flex items-center gap-4 p-4">
+                          <AlarmClock className="size-6 text-primary" />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-display text-3xl font-bold tabular-nums">
+                              {a.time}
+                            </div>
+                            <div className="truncate text-sm text-muted-foreground">
+                              {a.label} ·{" "}
+                              {a.days.length === 7
+                                ? "Every day"
+                                : a.days.map((d) => DAYS[d - 1]).join(", ") || "Once"}{" "}
+                              · Vol {a.volume ?? 10}/16 · {a.sound_title ?? "Default Yoto alarm"}
+                            </div>
                           </div>
-                          <div className="truncate text-sm text-muted-foreground">
-                            {a.label} ·{" "}
-                            {a.days.length === 7
-                              ? "Every day"
-                              : a.days.map((d) => DAYS[d - 1]).join(", ") || "Once"}{" "}
-                            · Vol {a.volume ?? 10}/16 · {a.sound_title ?? "Default Yoto alarm"}
-                          </div>
-                        </div>
-                        <Switch
-                          checked={a.enabled}
-                          onCheckedChange={(v) => toggle(a, v)}
-                          aria-label="Alarm on"
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDraft(a)}
-                          aria-label="Edit"
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => void remove(a)}
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))
+                          <Switch
+                            checked={a.enabled}
+                            onCheckedChange={(v) => toggle(a, v)}
+                            aria-label="Alarm on"
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setDraft(a)}
+                            aria-label="Edit alarm"
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => remove.mutate(a)}
+                            aria-label="Delete alarm"
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
-              </section>
+              </div>
             );
           })
         )}
-      </div>
 
-      {draft && (
-        <AlarmDialog
-          draft={draft}
-          players={playerList.map((p) => ({ id: p.deviceId, name: p.name }))}
-          playlists={playlistOptions.map((p) => ({ id: p.playlistId, name: p.name }))}
-          saving={save.isPending}
-          onClose={() => setDraft(null)}
-          onSave={(d) => save.mutate(d)}
-          onUploaded={() => qc.invalidateQueries({ queryKey: ["playlists"] })}
-        />
-      )}
+        {draft && (
+          <AlarmDialog
+            draft={draft}
+            players={playerList}
+            playlists={pls?.cards ?? []}
+            onClose={() => setDraft(null)}
+            onSave={(d) => save.mutate(d)}
+            isSaving={save.isPending}
+          />
+        )}
+      </div>
     </AppShell>
   );
+}
+
+interface AlarmDialogProps {
+  draft: Draft;
+  players: { deviceId: string; name: string }[];
+  playlists: Array<{ cardId?: string; id?: string; title?: string }>;
+  onClose: () => void;
+  onSave: (d: Draft) => void;
+  isSaving: boolean;
 }
 
 function AlarmDialog({
   draft,
   players,
   playlists,
-  saving,
   onClose,
   onSave,
-  onUploaded,
-}: {
-  draft: Draft;
-  players: { id: string; name: string }[];
-  playlists: { id: string; name: string }[];
-  saving: boolean;
-  onClose: () => void;
-  onSave: (d: Draft) => void;
-  onUploaded: () => void;
-}) {
+  isSaving,
+}: AlarmDialogProps) {
   const [d, setD] = useState<Draft>(draft);
-  const [uploading, setUploading] = useState(false);
-  const upload = useServerFn(uploadTrack);
-  const append = useServerFn(appendTracks);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadFn = useServerFn(uploadTrack);
+  const appendFn = useServerFn(appendTracks);
+  const qc = useQueryClient();
 
-  const options = useMemo(() => {
-    const has = d.sound_card_id && !playlists.some((p) => p.id === d.sound_card_id);
-    return has
-      ? [{ id: d.sound_card_id!, name: d.sound_title ?? "Ringtone" }, ...playlists]
-      : playlists;
-  }, [playlists, d.sound_card_id, d.sound_title]);
+  const toggleDay = (dayNum: number) => {
+    const next = d.days.includes(dayNum)
+      ? d.days.filter((x) => x !== dayNum)
+      : [...d.days, dayNum].sort((a, b) => a - b);
+    setD({ ...d, days: next });
+  };
 
-  const onFile = async (file: File) => {
-    setUploading(true);
+  const handleCustomAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const up = await upload({ data: fd });
-      if (!up.success || !up.track) throw new Error(up.error ?? "Upload failed");
-      const title = `Alarm · ${up.track.title}`;
-      const res = await append({ data: { newTitle: title, tracks: [up.track] } });
-      if (!res.success || !res.cardId)
-        throw new Error(res.error ?? "Couldn't make ringtone playlist");
-      setD((x) => ({ ...x, sound_card_id: res.cardId!, sound_title: title }));
-      onUploaded();
-      toast.success("Ringtone uploaded to your library");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      const up = await uploadFn({
+        data: {
+          filename: file.name,
+          contentType: file.type || "audio/mpeg",
+          sizeBytes: file.size,
+        },
+      });
+
+      await fetch(up.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "audio/mpeg" },
+        body: file,
+      });
+
+      const res = await appendFn({
+        data: {
+          playlistTitle: `Alarm: ${d.label || file.name.replace(/\.[^/.]+$/, "")}`,
+          tracks: [
+            {
+              title: d.label || file.name.replace(/\.[^/.]+$/, ""),
+              trackUrl: up.trackUrl,
+              durationSeconds: 30,
+              format: "mp3",
+            },
+          ],
+        },
+      });
+
+      setD({
+        ...d,
+        sound_card_id: res.cardId,
+        sound_title: `Custom: ${file.name.replace(/\.[^/.]+$/, "")}`,
+      });
+      qc.invalidateQueries({ queryKey: ["playlists"] });
+      toast.success("Custom alarm audio uploaded and saved to your MYO library!");
+    } catch (err) {
+      toast.error("Upload failed: " + (err as Error).message);
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{d.id ? "Edit alarm" : "New alarm"}</DialogTitle>
+          <DialogTitle>{d.id ? "Edit Alarm" : "New Alarm"}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Input
-            type="time"
-            value={d.time}
-            onChange={(e) => setD({ ...d, time: e.target.value })}
-            className="h-16 text-center font-display text-4xl font-bold"
-          />
-
+        <div className="space-y-4 py-2">
           <div className="space-y-1">
-            <Label>Alarm Name</Label>
-            <Input value={d.label} onChange={(e) => setD({ ...d, label: e.target.value })} />
-          </div>
-
-          <div className="space-y-1">
-            <Label>Player</Label>
-            <Select value={d.device_id} onValueChange={(v) => setD({ ...d, device_id: v })}>
+            <Label>Target Player</Label>
+            <Select
+              value={d.device_id}
+              onValueChange={(v) => setD({ ...d, device_id: v })}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select a player" />
               </SelectTrigger>
               <SelectContent>
                 {players.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
+                  <SelectItem key={p.deviceId} value={p.deviceId}>
                     {p.name}
                   </SelectItem>
                 ))}
@@ -407,26 +483,45 @@ function AlarmDialog({
             </Select>
           </div>
 
-          <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Time</Label>
+              <Input
+                type="time"
+                value={d.time}
+                onChange={(e) => setD({ ...d, time: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Label</Label>
+              <Input
+                value={d.label}
+                onChange={(e) => setD({ ...d, label: e.target.value })}
+                placeholder="Wake up"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>Repeat Days</Label>
-            <div className="flex flex-wrap gap-1">
-              {DAYS.map((name, i) => {
-                const on = d.days.includes(i + 1);
+            <div className="flex gap-1.5">
+              {DAYS.map((name, idx) => {
+                const dayNum = idx + 1;
+                const active = d.days.includes(dayNum);
                 return (
-                  <Button
+                  <button
                     key={name}
                     type="button"
-                    size="sm"
-                    variant={on ? "default" : "outline"}
-                    onClick={() =>
-                      setD({
-                        ...d,
-                        days: on ? d.days.filter((x) => x !== i + 1) : [...d.days, i + 1].sort(),
-                      })
-                    }
+                    onClick={() => toggleDay(dayNum)}
+                    className={cn(
+                      "flex-1 rounded-md border py-1.5 text-xs font-semibold transition-colors",
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted",
+                    )}
                   >
-                    {name}
-                  </Button>
+                    {name.slice(0, 2)}
+                  </button>
                 );
               })}
             </div>
@@ -460,59 +555,60 @@ function AlarmDialog({
                   ...d,
                   sound_card_id: v === "none" ? null : v,
                   sound_title:
-                    v === "none" ? null : (options.find((o) => o.id === v)?.name ?? null),
+                    v === "none"
+                      ? null
+                      : playlists.find((p) => (p.cardId ?? p.id) === v)?.title ?? null,
                 })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Default Yoto sound" />
+                <SelectValue placeholder="Default Yoto wake up tone" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Default Yoto alarm sound</SelectItem>
-                {options.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
+                {playlists.map((pl) => {
+                  const id = pl.cardId ?? pl.id;
+                  if (!id) return null;
+                  return (
+                    <SelectItem key={id} value={id}>
+                      {pl.title || "Untitled playlist"}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
+          </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              disabled={uploading}
-              asChild
-            >
-              <label className="cursor-pointer">
-                {uploading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Upload className="size-4" />
-                )}
-                {uploading ? "Uploading…" : "Upload a custom MP3 sound"}
-                <input
-                  type="file"
-                  accept="audio/*"
-                  hidden
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void onFile(f);
-                  }}
-                />
-              </label>
-            </Button>
+          <div className="rounded-lg border border-dashed border-border p-3 text-center">
+            <p className="text-xs font-medium">Or upload custom audio for this alarm</p>
+            <p className="text-[11px] text-muted-foreground">
+              Upload an MP3; it will automatically create a private Yoto card sound.
+            </p>
+            <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted">
+              {isUploading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Upload className="size-3.5" />
+              )}
+              {isUploading ? "Uploading..." : "Choose audio file"}
+              <input
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                disabled={isUploading}
+                onChange={handleCustomAudio}
+              />
+            </label>
           </div>
         </div>
 
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose} disabled={saving}>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={() => onSave(d)} disabled={saving || d.days.length === 0}>
-            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            {d.id ? "Update Alarm" : "Save Alarm"}
+          <Button onClick={() => onSave(d)} disabled={isSaving || isUploading}>
+            {isSaving && <Loader2 className="size-4 animate-spin" />}
+            Save alarm
           </Button>
         </DialogFooter>
       </DialogContent>
