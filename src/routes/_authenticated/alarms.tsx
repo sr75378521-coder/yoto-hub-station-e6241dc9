@@ -2,7 +2,17 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlarmClock, Loader2, Pencil, Plus, Send, Trash2, Upload } from "lucide-react";
+import {
+  AlarmClock,
+  Info,
+  Loader2,
+  Pencil,
+  Plus,
+  Send,
+  Trash2,
+  Upload,
+  Volume2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +38,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardData, getPlaylistsData } from "@/lib/players.functions";
 import { appendTracks, uploadTrack } from "@/lib/yoto/myo.functions";
+import { syncPlayerAlarms } from "@/lib/yoto/alarms.functions";
 import { yotoDevice } from "@/lib/yoto/mqtt-client";
 import { cn } from "@/lib/utils";
 
@@ -66,21 +78,12 @@ interface Alarm {
 
 type Draft = Omit<Alarm, "id"> & { id?: string };
 
-/** Build Yoto's alarm list for a player and send it over the live connection. */
-async function pushToPlayer(deviceId: string, alarms: Alarm[]) {
-  const list = alarms
-    .filter((a) => a.device_id === deviceId)
-    .map((a) => {
-      const mask = DAYS.map((_, i) => (a.days.includes(i + 1) ? "1" : "0")).join("");
-      return `${mask},${a.time.replace(":", "")},${a.sound_card_id ?? ""},,,${a.enabled ? 1 : 0}`;
-    });
-  await yotoDevice.setConfig(deviceId, { alarms: list });
-}
-
 function AlarmsPage() {
   const qc = useQueryClient();
   const fetchDash = useServerFn(getDashboardData);
   const fetchLists = useServerFn(getPlaylistsData);
+  const syncAlarmsToCloud = useServerFn(syncPlayerAlarms);
+
   const players = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDash() });
   const lists = useQuery({ queryKey: ["playlists"], queryFn: () => fetchLists() });
   const alarms = useQuery({
@@ -91,17 +94,51 @@ function AlarmsPage() {
       return data as Alarm[];
     },
   });
+
   const [draft, setDraft] = useState<Draft | null>(null);
+
+  /** Pushes alarms both to Yoto Cloud REST API and over MQTT */
+  const pushToPlayer = async (deviceId: string, allAlarms: Alarm[]) => {
+    const playerAlarms = allAlarms.filter((a) => a.device_id === deviceId);
+
+    // 1. Persist to official Yoto Cloud API
+    const res = await syncAlarmsToCloud({
+      data: {
+        deviceId,
+        alarms: playerAlarms.map((a) => ({
+          time: a.time,
+          days: a.days,
+          sound_card_id: a.sound_card_id,
+          volume: a.volume ?? 5,
+          enabled: a.enabled,
+        })),
+      },
+    });
+
+    // 2. Also notify the player via MQTT if it is currently awake
+    try {
+      await yotoDevice.setConfig(deviceId, { alarms: res.alarms, alarmsEnabled: 1 });
+    } catch {
+      // Ignore MQTT offline errors since cloud persistence is primary
+    }
+  };
 
   const save = useMutation({
     mutationFn: async (d: Draft) => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Please sign in again");
-      const row = { ...d, user_id: u.user.id, sound_type: "playlist" };
+      const row = {
+        ...d,
+        user_id: u.user.id,
+        sound_type: "playlist",
+        volume: Math.min(8, Math.max(1, d.volume || 5)),
+      };
+
       const { error } = d.id
         ? await supabase.from("player_alarms").update(row).eq("id", d.id)
         : await supabase.from("player_alarms").insert(row);
       if (error) throw error;
+
       const { data } = await supabase.from("player_alarms").select("*");
       return { deviceId: d.device_id, all: (data ?? []) as Alarm[] };
     },
@@ -110,14 +147,14 @@ function AlarmsPage() {
       setDraft(null);
       try {
         await pushToPlayer(deviceId, all);
-        toast.success("Alarm saved and sent to the player");
+        toast.success("Alarm saved and synced to your Yoto player");
       } catch (e) {
         toast.warning(
-          `Saved, but couldn't reach the player: ${e instanceof Error ? e.message : ""}`,
+          `Saved locally, but couldn't sync with Yoto: ${e instanceof Error ? e.message : ""}`,
         );
       }
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't save"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Couldn't save alarm"),
   });
 
   const remove = async (a: Alarm) => {
@@ -126,7 +163,7 @@ function AlarmsPage() {
     const rest = (alarms.data ?? []).filter((x) => x.id !== a.id);
     qc.invalidateQueries({ queryKey: ["alarms"] });
     pushToPlayer(a.device_id, rest).catch(() =>
-      toast.warning("Deleted, but couldn't reach the player"),
+      toast.warning("Deleted locally, but couldn't reach player to sync"),
     );
   };
 
@@ -142,7 +179,9 @@ function AlarmsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-2xl font-bold">Alarms</h2>
-            <p className="text-sm text-muted-foreground">Wake up to any playlist on any player.</p>
+            <p className="text-sm text-muted-foreground">
+              Schedule wake-up alarms and morning playlists on your Yoto players.
+            </p>
           </div>
           <Button
             disabled={!playerList.length}
@@ -155,7 +194,7 @@ function AlarmsPage() {
                 enabled: true,
                 sound_card_id: null,
                 sound_title: null,
-                volume: 8,
+                volume: 5,
               })
             }
           >
@@ -163,14 +202,25 @@ function AlarmsPage() {
           </Button>
         </div>
 
+        {/* Helpful hardware charging notice */}
+        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+          <Info className="size-5 shrink-0 text-primary" />
+          <div className="space-y-1 text-muted-foreground">
+            <span className="font-medium text-foreground">How Yoto Player Alarms Work:</span>
+            <p>
+              To ensure alarms sound and wake the player, <strong>keep the player plugged into power</strong> or in night-standby mode. Deeply hibernating players on battery cannot power themselves back on.
+            </p>
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading…
+            <Loader2 className="size-4 animate-spin" /> Loading players…
           </div>
         ) : playerList.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              No players found on your Yoto account.
+              No players found on your connected Yoto account.
             </CardContent>
           </Card>
         ) : (
@@ -196,17 +246,18 @@ function AlarmsPage() {
                       variant="ghost"
                       onClick={() =>
                         pushToPlayer(p.deviceId, alarms.data ?? []).then(
-                          () => toast.success("Sent"),
+                          () => toast.success("Synced to player"),
                           (e) => toast.error(String(e?.message ?? e)),
                         )
                       }
                     >
-                      <Send className="size-4" /> Resend
+                      <Send className="size-4" /> Sync now
                     </Button>
                   )}
                 </div>
+
                 {mine.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No alarms yet.</p>
+                  <p className="text-sm text-muted-foreground">No alarms set for this player.</p>
                 ) : (
                   mine.map((a) => (
                     <Card key={a.id} className={cn(!a.enabled && "opacity-60")}>
@@ -221,7 +272,7 @@ function AlarmsPage() {
                             {a.days.length === 7
                               ? "Every day"
                               : a.days.map((d) => DAYS[d - 1]).join(", ") || "Once"}{" "}
-                            · {a.sound_title ?? "Default sound"}
+                            · Vol {a.volume ?? 5}/8 · {a.sound_title ?? "Default Yoto alarm"}
                           </div>
                         </div>
                         <Switch
@@ -291,6 +342,7 @@ function AlarmDialog({
   const [uploading, setUploading] = useState(false);
   const upload = useServerFn(uploadTrack);
   const append = useServerFn(appendTracks);
+
   const options = useMemo(() => {
     const has = d.sound_card_id && !playlists.some((p) => p.id === d.sound_card_id);
     return has
@@ -311,7 +363,7 @@ function AlarmDialog({
         throw new Error(res.error ?? "Couldn't make ringtone playlist");
       setD((x) => ({ ...x, sound_card_id: res.cardId!, sound_title: title }));
       onUploaded();
-      toast.success("Ringtone uploaded");
+      toast.success("Ringtone uploaded to your library");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -325,6 +377,7 @@ function AlarmDialog({
         <DialogHeader>
           <DialogTitle>{d.id ? "Edit alarm" : "New alarm"}</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <Input
             type="time"
@@ -332,10 +385,12 @@ function AlarmDialog({
             onChange={(e) => setD({ ...d, time: e.target.value })}
             className="h-16 text-center font-display text-4xl font-bold"
           />
+
           <div className="space-y-1">
-            <Label>Name</Label>
+            <Label>Alarm Name</Label>
             <Input value={d.label} onChange={(e) => setD({ ...d, label: e.target.value })} />
           </div>
+
           <div className="space-y-1">
             <Label>Player</Label>
             <Select value={d.device_id} onValueChange={(v) => setD({ ...d, device_id: v })}>
@@ -351,8 +406,9 @@ function AlarmDialog({
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-1">
-            <Label>Repeat</Label>
+            <Label>Repeat Days</Label>
             <div className="flex flex-wrap gap-1">
               {DAYS.map((name, i) => {
                 const on = d.days.includes(i + 1);
@@ -375,8 +431,28 @@ function AlarmDialog({
               })}
             </div>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label className="flex items-center gap-1.5">
+                <Volume2 className="size-4" /> Alarm Volume
+              </Label>
+              <span className="font-semibold">{d.volume ?? 5} / 8</span>
+            </div>
+            <Slider
+              min={1}
+              max={8}
+              step={1}
+              value={[d.volume ?? 5]}
+              onValueChange={([v]) => setD({ ...d, volume: v })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Yoto limits alarms to volume 8 maximum to protect children's hearing.
+            </p>
+          </div>
+
           <div className="space-y-1">
-            <Label>Ringtone</Label>
+            <Label>Alarm Sound or Playlist</Label>
             <Select
               value={d.sound_card_id ?? "none"}
               onValueChange={(v) =>
@@ -389,10 +465,10 @@ function AlarmDialog({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Default sound" />
+                <SelectValue placeholder="Default Yoto sound" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Default Yoto sound</SelectItem>
+                <SelectItem value="none">Default Yoto alarm sound</SelectItem>
                 {options.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -400,11 +476,12 @@ function AlarmDialog({
                 ))}
               </SelectContent>
             </Select>
+
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-2"
+              className="mt-2 w-full"
               disabled={uploading}
               asChild
             >
@@ -414,7 +491,7 @@ function AlarmDialog({
                 ) : (
                   <Upload className="size-4" />
                 )}
-                {uploading ? "Uploading…" : "Upload a sound file"}
+                {uploading ? "Uploading…" : "Upload a custom MP3 sound"}
                 <input
                   type="file"
                   accept="audio/*"
@@ -428,12 +505,14 @@ function AlarmDialog({
             </Button>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button disabled={saving || uploading || !d.device_id} onClick={() => onSave(d)}>
-            {saving && <Loader2 className="size-4 animate-spin" />} Save
+          <Button onClick={() => onSave(d)} disabled={saving || d.days.length === 0}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+            {d.id ? "Update Alarm" : "Save Alarm"}
           </Button>
         </DialogFooter>
       </DialogContent>
