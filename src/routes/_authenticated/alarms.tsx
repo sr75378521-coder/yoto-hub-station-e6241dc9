@@ -109,7 +109,7 @@ function AlarmsPage() {
           time: a.time,
           days: a.days,
           sound_card_id: a.sound_card_id,
-          volume: a.volume ?? 5,
+          volume: a.volume ?? 10,
           enabled: a.enabled,
         })),
       },
@@ -131,7 +131,7 @@ function AlarmsPage() {
         ...d,
         user_id: u.user.id,
         sound_type: "playlist",
-        volume: Math.min(8, Math.max(1, d.volume || 5)),
+        volume: Math.min(16, Math.max(1, d.volume || 10)),
       };
 
       const { error } = d.id
@@ -194,7 +194,7 @@ function AlarmsPage() {
                 enabled: true,
                 sound_card_id: null,
                 sound_title: null,
-                volume: 5,
+                volume: 12,
               })
             }
           >
@@ -272,7 +272,7 @@ function AlarmsPage() {
                             {a.days.length === 7
                               ? "Every day"
                               : a.days.map((d) => DAYS[d - 1]).join(", ") || "Once"}{" "}
-                            · Vol {a.volume ?? 5}/8 · {a.sound_title ?? "Default Yoto alarm"}
+                            · Vol {a.volume ?? 10}/16 · {a.sound_title ?? "Default Yoto alarm"}
                           </div>
                         </div>
                         <Switch
@@ -437,17 +437,17 @@ function AlarmDialog({
               <Label className="flex items-center gap-1.5">
                 <Volume2 className="size-4" /> Alarm Volume
               </Label>
-              <span className="font-semibold">{d.volume ?? 5} / 8</span>
+              <span className="font-semibold">{d.volume ?? 10} / 16</span>
             </div>
             <Slider
               min={1}
-              max={8}
+              max={16}
               step={1}
-              value={[d.volume ?? 5]}
+              value={[d.volume ?? 10]}
               onValueChange={([v]) => setD({ ...d, volume: v })}
             />
             <p className="text-xs text-muted-foreground">
-              Yoto limits alarms to volume 8 maximum to protect children's hearing.
+              Yoto full volume range (1–16). Level 16 is maximum volume.
             </p>
           </div>
 
