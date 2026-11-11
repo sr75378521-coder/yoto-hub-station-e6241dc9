@@ -17,6 +17,7 @@ import {
   Globe,
   MessagesSquare,
   Mail,
+  Activity,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -41,6 +42,7 @@ export const NAV_ITEMS = [
 export const ADMIN_NAV_ITEMS = [
   { to: "/admin", label: "Admin", icon: ShieldCheck },
   { to: "/email-users", label: "Email users", icon: Mail },
+  { to: "/analytics", label: "Analytics", icon: Activity },
 ] as const;
 
 export const ADMIN_NAV_ITEM = ADMIN_NAV_ITEMS[0];
