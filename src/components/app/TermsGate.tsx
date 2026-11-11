@@ -105,7 +105,6 @@ export function TermsGate({ children }: { children: ReactNode }) {
           <p><strong>Availability and risk.</strong> The service is provided as available. Features may change or be unavailable, and device commands or content operations may not always succeed. To the extent permitted by law, the service operator is not responsible for loss resulting from use of the app.</p>
           <p><strong>Privacy.</strong> The app processes account information and, when you connect Yoto, authorization data needed to provide its features. Do not share your password or authorization codes. See the app's privacy notice for details on data handling and retention.</p>
           <p><strong>Changes.</strong> These terms may be updated. A new version may require you to review and accept the updated terms before continuing.</p>
-          <p className="text-xs text-muted-foreground">Version {CURRENT_TERMS_VERSION}. These are starter terms for product acceptance, not legal advice. Have a qualified lawyer review them and publish a complete privacy notice before relying on them as binding legal terms.</p>
         </div>
 
         <label className="flex cursor-pointer items-start gap-3 text-sm">
