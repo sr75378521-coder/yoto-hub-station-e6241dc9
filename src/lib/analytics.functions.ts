@@ -32,6 +32,33 @@ export interface AdminPageVisit {
   visited_at: string;
 }
 
+async function fetchUserEmailsForIds(
+  supabaseAdmin: any,
+  userIds: string[],
+): Promise<Map<string, string | null>> {
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))];
+  const emails = new Map<string, string | null>();
+
+  if (uniqueUserIds.length === 0) return emails;
+
+  const batchSize = 25;
+  for (let index = 0; index < uniqueUserIds.length; index += batchSize) {
+    const batch = uniqueUserIds.slice(index, index + batchSize);
+    const results = await Promise.allSettled(
+      batch.map((userId) => supabaseAdmin.auth.admin.getUserById(userId)),
+    );
+
+    for (const result of results) {
+      if (result.status !== "fulfilled") continue;
+      const user = result.value?.data?.user;
+      if (!user?.id) continue;
+      emails.set(user.id, user.email ?? null);
+    }
+  }
+
+  return emails;
+}
+
 /** List recent visits; both the admin check and data access happen server-side. */
 export const getAdminPageVisits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -47,19 +74,20 @@ export const getAdminPageVisits = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const admin = supabaseAdmin as any;
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const [{ data: rows, error }, { data: users, error: usersError }] = await Promise.all([
-      admin
-        .from("analytics_page_visits")
-        .select("id, user_id, page_path, visited_at")
-        .gte("visited_at", since)
-        .order("visited_at", { ascending: false })
-        .limit(1000),
-      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    ]);
-    if (error) throw new Error("Could not load page visits");
-    if (usersError) throw new Error("Could not load user accounts");
+    const { data: rows, error } = await admin
+      .from("analytics_page_visits")
+      .select("id, user_id, page_path, visited_at")
+      .gte("visited_at", since)
+      .order("visited_at", { ascending: false })
+      .limit(1000);
 
-    const emails = new Map((users?.users ?? []).map((user) => [user.id, user.email ?? null]));
+    if (error) throw new Error("Could not load page visits");
+
+    const userIds = [...new Set((rows ?? []).map((row: { user_id: string }) => row.user_id))];
+    const emails = userIds.length
+      ? await fetchUserEmailsForIds(supabaseAdmin, userIds)
+      : new Map<string, string | null>();
+
     return {
       visits: (rows ?? []).map((row: Omit<AdminPageVisit, "email"> & { user_id: string }) => ({
         id: row.id,
