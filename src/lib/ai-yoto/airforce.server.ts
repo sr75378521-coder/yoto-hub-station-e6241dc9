@@ -10,33 +10,35 @@ import {
 } from "./plans";
 import { wavSeconds } from "./stream";
 
-const DEFAULT_MODEL = "deepseek-v3";
+const DEFAULT_HUGGINGFACE_MODEL = "deepseek-ai/DeepSeek-V3-0324";
+const HUGGINGFACE_BASE_URL = "https://router.huggingface.co/v1";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
-function airforceConfig() {
-  const apiKey = process.env["AIRFORCE_API_KEY"];
-  if (!apiKey) throw new Error("Airforce AI is not configured. Set AIRFORCE_API_KEY in the server environment.");
+function huggingFaceConfig() {
+  // HUGGINGFACE_API_KEY is the app-facing variable; HF_TOKEN is also accepted
+  // as Hugging Face's conventional environment variable name.
+  const apiKey = process.env["HUGGINGFACE_API_KEY"] ?? process.env["HF_TOKEN"];
+  if (!apiKey)
+    throw new Error(
+      "Hugging Face AI is not configured. Set HUGGINGFACE_API_KEY (or HF_TOKEN) in the server environment.",
+    );
   return {
     apiKey,
-    model: process.env["AIRFORCE_MODEL"]?.trim() || DEFAULT_MODEL,
-    baseUrl: (process.env["AIRFORCE_BASE_URL"]?.trim() || "https://api.airforce/v1").replace(/\/$/, ""),
+    model: process.env["HUGGINGFACE_MODEL"]?.trim() || DEFAULT_HUGGINGFACE_MODEL,
+    baseUrl: (process.env["HUGGINGFACE_BASE_URL"]?.trim() || HUGGINGFACE_BASE_URL).replace(/\/$/, ""),
   };
 }
 
-async function generateAirforce(messages: ChatMessage[], json = false): Promise<string> {
-  const config = airforceConfig();
+async function generateHuggingFace(messages: ChatMessage[]): Promise<string> {
+  const config = huggingFaceConfig();
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      ...(json ? { response_format: { type: "json_object" } } : {}),
-    }),
+    body: JSON.stringify({ model: config.model, messages }),
   });
   const body = (await response.json().catch(() => ({}))) as {
     error?: { message?: string } | string;
@@ -44,11 +46,11 @@ async function generateAirforce(messages: ChatMessage[], json = false): Promise<
   };
   if (!response.ok) {
     const detail = typeof body.error === "string" ? body.error : body.error?.message;
-    throw new Error(detail ?? `Airforce API request failed (${response.status}).`);
+    throw new Error(detail ?? `Hugging Face request failed (${response.status}).`);
   }
   const content = body.choices?.[0]?.message?.content;
   const text = Array.isArray(content) ? content.map((part) => part.text ?? "").join("") : content;
-  if (!text?.trim()) throw new Error("Airforce returned no answer.");
+  if (!text?.trim()) throw new Error("Hugging Face returned no answer.");
   return text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
 }
 
@@ -57,31 +59,27 @@ async function generateJson<T>(
   prompt: string,
   parse: (value: unknown) => T,
 ): Promise<T> {
-  const text = await generateAirforce(
-    [
-      { role: "system", content: `${instructions}\nReturn a valid JSON object only.` },
-      { role: "user", content: prompt },
-    ],
-    true,
-  );
+  const text = await generateHuggingFace([
+    { role: "system", content: `${instructions}\nReturn a valid JSON object only.` },
+    { role: "user", content: prompt },
+  ]);
   try {
     return parse(JSON.parse(text) as unknown);
   } catch (error) {
-    if (error instanceof SyntaxError) throw new Error("Airforce returned invalid JSON.");
+    if (error instanceof SyntaxError) throw new Error("Hugging Face returned invalid JSON.");
     throw error;
   }
 }
 
 /**
- * Airforce's DeepSeek V3 chat-completions model is text-only. Audio transcription
- * remains on Gemini and requires GOOGLE_GENERATIVE_AI_API_KEY; do not send audio
- * to DeepSeek V3 or claim it supports audio input.
+ * DeepSeek V3 on Hugging Face is used for text-only AI. Audio transcription is
+ * kept on Gemini and requires GOOGLE_GENERATIVE_AI_API_KEY.
  */
 export async function transcribeStored(userId: string, path: string) {
   const geminiKey = process.env["GOOGLE_GENERATIVE_AI_API_KEY"];
   if (!geminiKey)
     throw new Error(
-      "Audio transcription needs GOOGLE_GENERATIVE_AI_API_KEY because DeepSeek V3 does not accept audio input.",
+      "Audio transcription needs GOOGLE_GENERATIVE_AI_API_KEY; the configured DeepSeek V3 model is text-only.",
     );
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const download = await supabaseAdmin.storage.from("studio-audio").download(path);
@@ -93,21 +91,20 @@ export async function transcribeStored(userId: string, path: string) {
     throw new Error("Audio segments must be at most five minutes.");
 
   return withCredits(userId, `transcribe:${path}`, transcriptionCost(duration), "transcribe", async () => {
+    const model = process.env["GEMINI_MODEL"]?.trim() || "gemini-2.5-flash";
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env["GEMINI_MODEL"]?.trim() || "gemini-2.5-flash")}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": geminiKey },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: "Transcribe this audio accurately and verbatim. Return only the spoken words, without commentary or labels." },
-                { inlineData: { mimeType: "audio/wav", data: Buffer.from(bytes).toString("base64") } },
-              ],
-            },
-          ],
+          contents: [{
+            role: "user",
+            parts: [
+              { text: "Transcribe this audio accurately and verbatim. Return only the spoken words, without commentary or labels." },
+              { inlineData: { mimeType: "audio/wav", data: Buffer.from(bytes).toString("base64") } },
+            ],
+          }],
         }),
       },
     );
@@ -128,10 +125,9 @@ export async function organizeAudio(userId: string, key: string, segments: Audio
     const output = await generateJson(
       "Group consecutive audio segments into coherent story chapters. Every segment must appear exactly once and in the original order. Boundaries are zero-based inclusive segment indexes. Do not invent missing audio. Return an object with a chapters array; each item has title, first, and last.",
       JSON.stringify(segments.map((segment, index) => ({ index, transcript: segment.transcript }))),
-      (value) =>
-        z.object({
-          chapters: z.array(z.object({ title: z.string(), first: z.number().int(), last: z.number().int() })),
-        }).parse(value),
+      (value) => z.object({
+        chapters: z.array(z.object({ title: z.string(), first: z.number().int(), last: z.number().int() })),
+      }).parse(value),
     );
     return validateChapterRanges(output.chapters, segments);
   });
@@ -139,7 +135,7 @@ export async function organizeAudio(userId: string, key: string, segments: Audio
 
 export async function askAssistant(userId: string, key: string, prompt: string) {
   return withCredits(userId, `assistant:${key}`, AI_COSTS.assistant, "assistant", async () => ({
-    text: await generateAirforce([
+    text: await generateHuggingFace([
       {
         role: "system",
         content: "You help people prepare audio stories and playlists for Yoto. Give concise practical answers. Never claim to change the account, audio, or player; you only answer questions.",
@@ -179,8 +175,8 @@ export async function makePixels(userId: string, key: string, prompt: string, an
     animated ? AI_COSTS.animated : AI_COSTS.icon,
     animated ? "animated" : "icon",
     async () => {
-      const instructions = `You are a pixel artist making a 16x16 icon for a Yoto kids audio player. ${animated ? "Return exactly 4 frames for a smooth looping animation." : "Return exactly 1 frame."} Return a JSON object with palette (2-10 six-digit hex colors without #) and frames (arrays of 16 strings, each a row of 16 digits). Each digit refers to a palette index.`;
-      let lastError = "Airforce returned an invalid pixel icon.";
+      const instructions = `You are a pixel artist making a 16x16 icon for a Yoto kids audio player. ${animated ? "Return exactly 4 frames for a smooth looping animation." : "Return exactly 1 frame."} Return a JSON object with palette (2-10 six-digit hex colors without #) and frames (arrays of 16 strings, each a row of 16 digits).`;
+      let lastError = "Hugging Face returned an invalid pixel icon.";
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const raw = await generateJson(
